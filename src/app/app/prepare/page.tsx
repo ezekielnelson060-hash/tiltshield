@@ -26,6 +26,29 @@ const KIT_DEFAULTS: KitItem[] = [
 const KIT_KEY = "tiltshield_kit_checks";
 const VENDOR_KEY = "tiltshield_vendors";
 
+const RECIPES = [
+  {
+    title: "Rice + beans skillet",
+    needs: "Rice, dry beans or lentils, oil, salt, any shelf spices",
+    steps: "Soak/cook beans · cook rice · combine with oil and spice · stretch with canned veg if you have it",
+  },
+  {
+    title: "Oat breakfast base",
+    needs: "Rolled oats, powdered milk or water, honey/sugar, dried fruit",
+    steps: "Hot water + oats · stir · add sweetener and fruit · stores well in bulk",
+  },
+  {
+    title: "Pasta emergency bowl",
+    needs: "Dry pasta, jar/can tomato or oil + garlic, salt",
+    steps: "Boil pasta · warm sauce or oil · combine · optional canned protein",
+  },
+  {
+    title: "Broth + grain recovery",
+    needs: "Bouillon or stock cubes, rice or noodles, any veg can",
+    steps: "Boil water + bouillon · add grain · stir in veg · soft food when stress is high",
+  },
+];
+
 export default function PreparePage() {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -58,14 +81,16 @@ export default function PreparePage() {
 
   function addVendor() {
     if (!name.trim()) return;
-    const v: Vendor = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      category,
-      phone: phone.trim(),
-      note: note.trim(),
-    };
-    saveVendors([v, ...vendors]);
+    saveVendors([
+      {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        category,
+        phone: phone.trim(),
+        note: note.trim(),
+      },
+      ...vendors,
+    ]);
     setName("");
     setPhone("");
     setNote("");
@@ -120,6 +145,30 @@ export default function PreparePage() {
         </section>
       ))}
 
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-50">Recipes from shelf stock</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Simple meals from food you can store — practice cooking them before you need them.
+          </p>
+        </div>
+        <div className="space-y-2">
+          {RECIPES.map((r) => (
+            <div key={r.title} className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+              <p className="text-sm font-medium text-zinc-100">{r.title}</p>
+              <p className="mt-1 text-xs text-zinc-500">
+                <span className="text-zinc-400">Stock: </span>
+                {r.needs}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                <span className="text-zinc-400">Do: </span>
+                {r.steps}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-zinc-50">Local vendors</h2>
@@ -127,7 +176,6 @@ export default function PreparePage() {
             People and shops in your city — food, pharmacy, fuel, repair — you can reach without only relying on one app.
           </p>
         </div>
-
         <div className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
           <input
             value={name}
@@ -160,7 +208,6 @@ export default function PreparePage() {
             Add vendor
           </Button>
         </div>
-
         <ul className="space-y-2">
           {vendors.map((v) => (
             <li
