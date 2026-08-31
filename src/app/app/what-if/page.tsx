@@ -67,14 +67,15 @@ export default function WhatIfPage() {
 
   const a = session.answers;
   const runway = Math.round((a.emergency_fund_months || 0) * 30);
+  const expensesLabel = (a.monthly_expenses || 0).toLocaleString();
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">What If?</h1>
-        <p className="mt-1 text-sm text-zinc-500">Built from your answers \u2014 not generic advice.</p>
+        <p className="mt-1 text-sm text-zinc-500">Built from your answers — not generic advice.</p>
         <p className="mt-3 text-xs text-zinc-600">
-          Your baseline: ~{runway} day cash runway \u00b7 ${"(a.monthly_expenses || 0).toLocaleString()"}/mo essentials \u00b7{" "}
+          Your baseline: ~{runway} day cash runway · ${expensesLabel}/mo essentials ·{" "}
           {a.income_sources} income source{a.income_sources === 1 ? "" : "s"}
         </p>
       </div>
@@ -90,10 +91,10 @@ export default function WhatIfPage() {
             >
               <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
                 {s.label}
-                {!s.free && !premium ? " \u00b7 Full plan" : ""}
+                {!s.free && !premium ? " · Full plan" : ""}
               </p>
               <p className="mt-2 text-sm font-medium text-zinc-100">{s.prompt}</p>
-              <p className="mt-3 text-xs text-emerald-500">Run simulation \u2192</p>
+              <p className="mt-3 text-xs text-emerald-500">Run simulation →</p>
             </button>
           ))}
         </div>
@@ -109,12 +110,12 @@ export default function WhatIfPage() {
             }}
             className="text-xs text-zinc-500 hover:text-zinc-300"
           >
-            \u2190 All scenarios
+            ← All scenarios
           </button>
 
           {running && (
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 text-center">
-              <p className="text-sm text-zinc-400">Running against your data\u2026</p>
+              <p className="text-sm text-zinc-400">Running against your data…</p>
             </div>
           )}
 
@@ -133,7 +134,7 @@ export default function WhatIfPage() {
                 <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">{result.title}</p>
                 <p className="mt-3 text-xl font-semibold text-zinc-50">{result.summary}</p>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-400">{result.detail}</p>
-                <p className="mt-4 text-[10px] uppercase tracking-wider text-zinc-600">Exposure \u00b7 {result.severity}</p>
+                <p className="mt-4 text-[10px] uppercase tracking-wider text-zinc-600">Exposure · {result.severity}</p>
               </div>
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
                 <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">What you should do</p>
