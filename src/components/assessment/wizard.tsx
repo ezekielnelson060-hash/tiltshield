@@ -49,7 +49,7 @@ export function AssessmentWizard({ onComplete }: Props) {
   const current = answers[q.id];
 
   return (
-    <div className="mx-auto max-w-lg space-y-8 px-4 py-10">
+    <div className="mx-auto max-w-lg space-y-7 px-4 py-8">
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm text-zinc-400">
           <span>
@@ -148,7 +148,7 @@ export function AssessmentWizard({ onComplete }: Props) {
           Back
         </Button>
         <Button onClick={next} className="flex-1">
-          {step === ASSESSMENT_QUESTIONS.length - 1 ? "See my results" : "Next"}
+          {step === ASSESSMENT_QUESTIONS.length - 1 ? "Show my results" : "Continue"}
         </Button>
       </div>
     </div>

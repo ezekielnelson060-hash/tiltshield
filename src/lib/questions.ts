@@ -16,7 +16,7 @@ export const ASSESSMENT_QUESTIONS: Question[] = [
   {
     id: "monthly_expenses",
     title: "What are your essential monthly expenses?",
-    help: "Housing, food, utilities, transport, minimum debt payments — not lifestyle spending.",
+    help: "Only what you must pay: housing, food, utilities, transport, minimum debt \u2014 not lifestyle.",
     type: "number",
     min: 0,
     step: 50,
@@ -25,7 +25,7 @@ export const ASSESSMENT_QUESTIONS: Question[] = [
   {
     id: "emergency_fund_months",
     title: "How many months of expenses do you currently have saved?",
-    help: "Liquid savings you could access within a few days.",
+    help: "Savings you could access within a few days if you had to.",
     type: "slider",
     min: 0,
     max: 12,
@@ -35,7 +35,7 @@ export const ASSESSMENT_QUESTIONS: Question[] = [
   {
     id: "income_sources",
     title: "How many independent income sources do you have?",
-    help: "Job, side business, rental, investments that pay regularly, etc.",
+    help: "Job, side business, rental, or anything that pays you regularly.",
     type: "choice",
     choices: [
       { label: "1 (single source)", value: 1 },
@@ -46,19 +46,19 @@ export const ASSESSMENT_QUESTIONS: Question[] = [
   {
     id: "alt_payment_method",
     title: "Do you have an alternative payment method if your main bank/card stops working?",
-    help: "Cash reserve, secondary card, or other method you have tested.",
+    help: "Cash, a second card, or another method you've actually tested.",
     type: "boolean",
   },
   {
     id: "has_offline_docs",
     title: "Do you have offline copies of your most important documents?",
-    help: "IDs, insurance, property docs, recovery codes — not only in email or cloud.",
+    help: "IDs, insurance, property papers, recovery codes \u2014 not only in email or the cloud.",
     type: "boolean",
   },
   {
     id: "cloud_dependency",
     title: "How dependent are you on cloud services for daily life?",
-    help: "1 = almost nothing critical in the cloud, 5 = nearly everything lives online.",
+    help: "1 = almost nothing critical online. 5 = nearly everything lives in the cloud.",
     type: "slider",
     min: 1,
     max: 5,
@@ -76,7 +76,7 @@ export const ASSESSMENT_QUESTIONS: Question[] = [
   {
     id: "food_buffer_days",
     title: "Roughly how many days could your household eat without shopping?",
-    help: "Including what is already in the pantry and fridge.",
+    help: "Count what's already in your pantry and fridge.",
     type: "slider",
     min: 0,
     max: 30,
@@ -91,7 +91,7 @@ export const ASSESSMENT_QUESTIONS: Question[] = [
   {
     id: "phone_backup_plan",
     title: "If your phone was lost today, could you recover critical accounts?",
-    help: "2FA backups, secondary email/phone, recovery codes stored elsewhere.",
+    help: "Recovery codes, a second email or phone, or another device you can sign in from.",
     type: "boolean",
   },
 ];
