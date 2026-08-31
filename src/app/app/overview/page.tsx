@@ -59,14 +59,23 @@ export default function OverviewPage() {
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const runwayDays = Math.round((answers.emergency_fund_months || 0) * 30);
   const expenses = answers.monthly_expenses || 0;
+  const income = answers.monthly_income || 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
       <div>
         <p className="text-sm text-zinc-500">{greeting}</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-50">
-          How exposed are you?
+          Ready for what might come next?
         </h1>
+        {(income > 0 || expenses > 0) && (
+          <p className="mt-2 text-xs text-zinc-500">
+            {income > 0 && <>Take-home ~${income.toLocaleString()}/mo</>}
+            {income > 0 && expenses > 0 && " · "}
+            {expenses > 0 && <>Essentials ~${expenses.toLocaleString()}/mo</>}
+            {" · "}~{runwayDays} day runway
+          </p>
+        )}
       </div>
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
@@ -122,9 +131,12 @@ export default function OverviewPage() {
           {move.time_estimate} · {move.difficulty}
         </p>
         <p className="mt-3 text-sm text-zinc-400">{move.why}</p>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button asChild size="sm" variant="outline">
             <Link href="/app/actions">Open actions</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/app/prepare">Prepare home</Link>
           </Button>
         </div>
       </section>
