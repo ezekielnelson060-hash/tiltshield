@@ -8,15 +8,18 @@ import {
   calculateVulnerabilities,
 } from "@/lib/scoring";
 import { saveSession } from "@/lib/session";
+import { persistAssessmentToCloud } from "@/lib/persist";
 import Link from "next/link";
 
 export default function AssessmentPage() {
   const router = useRouter();
 
-  function handleComplete(answers: AssessmentAnswers) {
+  async function handleComplete(answers: AssessmentAnswers) {
     const scores = calculateCategoryScores(answers);
     const vulnerabilities = calculateVulnerabilities(answers, scores);
-    saveSession({ answers, scores, vulnerabilities });
+    const session = { answers, scores, vulnerabilities };
+    saveSession(session);
+    void persistAssessmentToCloud(session);
     router.push("/app/overview");
   }
 

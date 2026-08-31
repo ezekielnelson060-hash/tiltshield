@@ -53,7 +53,7 @@ export function SiteNav() {
                 Pricing
               </a>
               <Link
-                href="/assessment"
+                href="/login"
                 className="block rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
               >
                 Log in
@@ -61,7 +61,7 @@ export function SiteNav() {
             </div>
           </details>
           <Link
-            href="/assessment"
+            href="/login"
             className="hidden text-sm text-zinc-400 hover:text-zinc-200 sm:inline"
           >
             Log in
