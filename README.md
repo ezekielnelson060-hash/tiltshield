@@ -2,7 +2,7 @@
 
 **Know what could break. Fix it before it does.**
 
-Personal Independence OS — assessment, ranked vulnerabilities, daily actions, and a What If? simulator.
+Personal Independence OS — assessment, vulnerabilities, daily actions, What If? simulator.
 
 ## Quick start
 
@@ -12,14 +12,17 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000
+## Payments (global, USD)
 
-## Flutterwave
+Flutterwave one-time **$29 USD** founding unlock.
 
-Set `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_AMOUNT`, `FLUTTERWAVE_CURRENCY`, and `NEXT_PUBLIC_APP_URL`.
-
-Without keys, unlock runs in demo mode.
+```
+FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-...
+FLUTTERWAVE_AMOUNT=29
+FLUTTERWAVE_CURRENCY=USD
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+```
 
 ## Deploy
 
-Import this repo on Vercel, add env vars, deploy.
+Import this repo on Vercel. Add the env vars above. Redeploy after every push to main.
