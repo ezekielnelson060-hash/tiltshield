@@ -26,13 +26,16 @@ export default function AssessmentPage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <header className="border-b border-zinc-800 px-4 py-4">
+    <main className="min-h-screen bg-zinc-950">
+      <header className="border-b border-zinc-900 px-4 py-3.5">
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <Link href="/" className="font-semibold tracking-tight text-zinc-50">
+          <Link
+            href="/"
+            className="text-sm font-semibold tracking-tight text-zinc-50"
+          >
             Tiltshield
           </Link>
-          <span className="text-xs text-zinc-500">2 min · be honest</span>
+          <span className="text-xs text-zinc-500">About 2 minutes</span>
         </div>
       </header>
       <AssessmentWizard onComplete={handleComplete} />
