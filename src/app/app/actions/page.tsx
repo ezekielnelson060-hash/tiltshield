@@ -56,7 +56,7 @@ export default function ActionsPage() {
         <p className="mt-1 text-xs text-zinc-500">
           {move.time_estimate} · {move.difficulty}
         </p>
-        <p className="mt-3 text-sm text-zinc-400">{move.why || move.description}</p>
+        <p className="mt-3 text-sm text-zinc-400">{move.why}</p>
         <ul className="mt-4 space-y-2">
           {move.steps.map((s, i) => (
             <li key={i} className="flex gap-2 text-sm text-zinc-300">
