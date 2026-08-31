@@ -1,17 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { loadSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type KitItem = { id: string; label: string; group: string };
 type Vendor = { id: string; name: string; category: string; phone: string; note: string };
+type Recipe = {
+  id: string;
+  title: string;
+  needs: string[];
+  steps: string;
+  daysStretch: number;
+  minPantryDays: number;
+};
 
 const KIT_DEFAULTS: KitItem[] = [
   { id: "water", label: "Drinking water (3+ days)", group: "Home stock" },
   { id: "food_shelf", label: "Shelf-stable food (7–30 days)", group: "Home stock" },
-  { id: "recipes", label: "Simple recipes using what you stock", group: "Home stock" },
+  { id: "recipes", label: "Practiced 2+ shelf recipes", group: "Home stock" },
   { id: "light", label: "Flashlight / lantern + batteries", group: "Home kit" },
   { id: "powerbank", label: "Charged power bank", group: "Home kit" },
   { id: "cash", label: "Small cash float for local spend", group: "Home kit" },
@@ -23,35 +32,67 @@ const KIT_DEFAULTS: KitItem[] = [
   { id: "seeds", label: "Hardware wallet seed / recovery offline", group: "Documents" },
 ];
 
-const KIT_KEY = "tiltshield_kit_checks";
-const VENDOR_KEY = "tiltshield_vendors";
-
-const RECIPES = [
+const RECIPES: Recipe[] = [
   {
+    id: "rice_beans",
     title: "Rice + beans skillet",
-    needs: "Rice, dry beans or lentils, oil, salt, any shelf spices",
-    steps: "Soak/cook beans · cook rice · combine with oil and spice · stretch with canned veg if you have it",
+    needs: ["Rice", "Dry beans or lentils", "Oil", "Salt", "Shelf spices"],
+    steps: "Cook beans · cook rice · combine with oil and spice · add canned veg if available",
+    daysStretch: 5,
+    minPantryDays: 14,
   },
   {
+    id: "oats",
     title: "Oat breakfast base",
-    needs: "Rolled oats, powdered milk or water, honey/sugar, dried fruit",
-    steps: "Hot water + oats · stir · add sweetener and fruit · stores well in bulk",
+    needs: ["Rolled oats", "Water or powdered milk", "Honey or sugar", "Dried fruit"],
+    steps: "Hot water + oats · stir · sweeten · add fruit",
+    daysStretch: 7,
+    minPantryDays: 7,
   },
   {
+    id: "pasta",
     title: "Pasta emergency bowl",
-    needs: "Dry pasta, jar/can tomato or oil + garlic, salt",
-    steps: "Boil pasta · warm sauce or oil · combine · optional canned protein",
+    needs: ["Dry pasta", "Tomato jar/can or oil + garlic", "Salt"],
+    steps: "Boil pasta · warm sauce · combine · optional canned protein",
+    daysStretch: 4,
+    minPantryDays: 10,
   },
   {
+    id: "broth",
     title: "Broth + grain recovery",
-    needs: "Bouillon or stock cubes, rice or noodles, any veg can",
-    steps: "Boil water + bouillon · add grain · stir in veg · soft food when stress is high",
+    needs: ["Bouillon cubes", "Rice or noodles", "Canned vegetables"],
+    steps: "Boil water + bouillon · add grain · stir in veg",
+    daysStretch: 3,
+    minPantryDays: 5,
+  },
+  {
+    id: "peanut",
+    title: "Peanut / seed calorie packs",
+    needs: ["Peanut butter or seeds", "Crackers or flatbread", "Honey optional"],
+    steps: "No cook · portion for quick energy when fuel is limited",
+    daysStretch: 3,
+    minPantryDays: 3,
+  },
+  {
+    id: "eggs_alt",
+    title: "Shelf protein stretch",
+    needs: ["Canned fish or beans", "Rice or pasta", "Oil"],
+    steps: "Warm protein · serve over grain · salt and oil",
+    daysStretch: 4,
+    minPantryDays: 14,
   },
 ];
+
+const KIT_KEY = "tiltshield_kit_checks";
+const VENDOR_KEY = "tiltshield_vendors";
+const RECIPE_DONE_KEY = "tiltshield_recipes_practiced";
 
 export default function PreparePage() {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [practiced, setPracticed] = useState<Record<string, boolean>>({});
+  const [pantryDays, setPantryDays] = useState(0);
+  const [supplyWeeks, setSupplyWeeks] = useState(0);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Food");
   const [phone, setPhone] = useState("");
@@ -61,15 +102,39 @@ export default function PreparePage() {
     try {
       setChecks(JSON.parse(localStorage.getItem(KIT_KEY) || "{}"));
       setVendors(JSON.parse(localStorage.getItem(VENDOR_KEY) || "[]"));
+      setPracticed(JSON.parse(localStorage.getItem(RECIPE_DONE_KEY) || "{}"));
     } catch {
       /* */
     }
+    const s = loadSession();
+    if (s?.answers) {
+      setPantryDays(s.answers.food_buffer_days || 0);
+      setSupplyWeeks(s.answers.emergency_supply_weeks || 0);
+    }
   }, []);
+
+  const totalFoodDays = pantryDays + Math.round(supplyWeeks * 7);
+
+  const prioritized = useMemo(() => {
+    return [...RECIPES].sort((a, b) => {
+      const aNeed = pantryDays < a.minPantryDays ? 0 : 1;
+      const bNeed = pantryDays < b.minPantryDays ? 0 : 1;
+      return aNeed - bNeed;
+    });
+  }, [pantryDays]);
 
   function toggle(id: string) {
     setChecks((prev) => {
       const next = { ...prev, [id]: !prev[id] };
       localStorage.setItem(KIT_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function toggleRecipe(id: string) {
+    setPracticed((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      localStorage.setItem(RECIPE_DONE_KEY, JSON.stringify(next));
       return next;
     });
   }
@@ -98,18 +163,27 @@ export default function PreparePage() {
 
   const groups = Array.from(new Set(KIT_DEFAULTS.map((k) => k.group)));
   const done = KIT_DEFAULTS.filter((k) => checks[k.id]).length;
+  const recipesDone = RECIPES.filter((r) => practiced[r.id]).length;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Prepare</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Stock the home. Build kits. Know who to call in your city when systems are slow or offline.
+          Stock the home. Practice meals. Know who to call in your city.
         </p>
         <p className="mt-2 text-xs text-zinc-600">
-          {done} of {KIT_DEFAULTS.length} checklist items ready
+          {done}/{KIT_DEFAULTS.length} kit items · {recipesDone}/{RECIPES.length} recipes practiced
+          {totalFoodDays > 0 && <> · ~{totalFoodDays} food days on file</>}
         </p>
       </div>
+
+      {pantryDays < 14 && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
+          Your assessment shows about <strong>{pantryDays}</strong> pantry days. Aim for 14+ of food
+          you already eat, then expand emergency stores.
+        </div>
+      )}
 
       {groups.map((g) => (
         <section key={g} className="space-y-2">
@@ -147,25 +221,59 @@ export default function PreparePage() {
 
       <section className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-50">Recipes from shelf stock</h2>
+          <h2 className="text-lg font-semibold text-zinc-50">Recipe planner</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Simple meals from food you can store — practice cooking them before you need them.
+            Priority order uses your pantry days ({pantryDays || "—"}). Mark a recipe once you have
+            cooked it once.
           </p>
         </div>
         <div className="space-y-2">
-          {RECIPES.map((r) => (
-            <div key={r.title} className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-              <p className="text-sm font-medium text-zinc-100">{r.title}</p>
-              <p className="mt-1 text-xs text-zinc-500">
-                <span className="text-zinc-400">Stock: </span>
-                {r.needs}
-              </p>
-              <p className="mt-1 text-xs text-zinc-500">
-                <span className="text-zinc-400">Do: </span>
-                {r.steps}
-              </p>
-            </div>
-          ))}
+          {prioritized.map((r) => {
+            const priority = pantryDays < r.minPantryDays;
+            return (
+              <div
+                key={r.id}
+                className={cn(
+                  "rounded-xl border px-4 py-3",
+                  practiced[r.id]
+                    ? "border-emerald-500/25 bg-emerald-500/5"
+                    : priority
+                      ? "border-amber-500/20 bg-amber-500/5"
+                      : "border-zinc-800 bg-zinc-900/40"
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">
+                      {r.title}
+                      {priority && !practiced[r.id] && (
+                        <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-amber-400">
+                          Priority
+                        </span>
+                      )}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">Stock: {r.needs.join(", ")}</p>
+                    <p className="mt-1 text-xs text-zinc-500">Do: {r.steps}</p>
+                    <p className="mt-1 text-[10px] text-zinc-600">
+                      ~{r.daysStretch} days stretch when ingredients are stocked
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleRecipe(r.id)}
+                    className={cn(
+                      "shrink-0 rounded-lg border px-2 py-1 text-[10px] font-medium",
+                      practiced[r.id]
+                        ? "border-emerald-500/40 text-emerald-400"
+                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                    )}
+                  >
+                    {practiced[r.id] ? "Practiced" : "Mark practiced"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -173,7 +281,7 @@ export default function PreparePage() {
         <div>
           <h2 className="text-lg font-semibold text-zinc-50">Local vendors</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            People and shops in your city — food, pharmacy, fuel, repair — you can reach without only relying on one app.
+            Food, pharmacy, fuel, repair — contacts in your city beyond a single app.
           </p>
         </div>
         <div className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
@@ -233,7 +341,7 @@ export default function PreparePage() {
           ))}
           {vendors.length === 0 && (
             <p className="text-sm text-zinc-500">
-              No vendors yet. Add one market, pharmacy, or repair contact you trust.
+              No vendors yet. Add one market, pharmacy, or repair contact.
             </p>
           )}
         </ul>
@@ -241,10 +349,13 @@ export default function PreparePage() {
 
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm">
-          <Link href="/app/actions">Today&apos;s actions</Link>
+          <Link href="/app/actions">Today's actions</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
           <Link href="/app/calculators">Calculators</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href="/assessment">Update pantry days</Link>
         </Button>
       </div>
     </div>
