@@ -92,7 +92,7 @@ const VULN_TEMPLATES: Record<
   food: {
     title: "Food supply gap",
     current: (a) =>
-      `Emergency food covers roughly ${a.emergency_supply_weeks} week(s).`,
+      `Emergency food covers roughly ${a.emergency_supply_weeks} week(s); pantry buffer ~${a.food_buffer_days} day(s).`,
     next: "Stock a 30-day non-perishable food reserve for your household.",
     target: "30 days of food",
     difficulty: "Medium",
@@ -125,8 +125,10 @@ const VULN_TEMPLATES: Record<
   },
   documents: {
     title: "Document accessibility",
-    current: () =>
-      "Important documents are not reliably accessible offline.",
+    current: (a) =>
+      a.has_offline_docs
+        ? "You keep offline copies of important documents."
+        : "Important documents are not reliably accessible offline.",
     next: "Download and securely store offline copies of IDs, insurance, deeds, and account recovery info.",
     target: "Encrypted offline vault of critical docs",
     difficulty: "Easy",
@@ -138,7 +140,7 @@ const VULN_TEMPLATES: Record<
     current: (a) =>
       a.income_sources <= 1
         ? "Income depends on a single source."
-        : "Limited secondary skills documented for disruption scenarios.",
+        : `You report ${a.income_sources} income sources — still document a disruption skill path.`,
     next: "Identify one skill or side income path you can activate within 30 days.",
     target: "At least one backup income or high-value skill",
     difficulty: "Hard",
@@ -147,8 +149,8 @@ const VULN_TEMPLATES: Record<
   },
   home: {
     title: "Household readiness gap",
-    current: () =>
-      "Home is not prepared for multi-day disruption of utilities or supply chains.",
+    current: (a) =>
+      `Emergency stores ~${a.emergency_supply_weeks} week(s). Home kit readiness still limited for multi-day disruption.`,
     next: "Assemble a 72-hour home kit: water, light, basic medical, cash.",
     target: "72-hour household kit complete",
     difficulty: "Medium",
@@ -157,8 +159,8 @@ const VULN_TEMPLATES: Record<
   },
   emergency: {
     title: "Short-term survival capacity",
-    current: () =>
-      "Current combination of cash, food, and alternatives leaves short windows of resilience.",
+    current: (a) =>
+      `Cash runway ~${Math.round(a.emergency_fund_months * 30)} days combined with food/payment backups.`,
     next: "Prioritize the highest-impact gap (usually money or food) this week.",
     target: "30-day self-sufficiency baseline",
     difficulty: "Medium",
@@ -217,88 +219,127 @@ export function runWhatIf(
   scenario: WhatIfScenario,
   answers: AssessmentAnswers
 ): WhatIfResult {
+  const expenses = Math.max(0, answers.monthly_expenses || 0);
+  const months = Math.max(0, answers.emergency_fund_months || 0);
+  const savings = months * expenses;
+  const runwayDays = expenses > 0 ? Math.round(months * 30) : Math.round(months * 30);
+
   switch (scenario) {
     case "income_stops": {
-      const days = Math.round(answers.emergency_fund_months * 30);
       const severity =
-        days < 14 ? "critical" : days < 45 ? "high" : days < 90 ? "medium" : "low";
+        runwayDays < 14
+          ? "critical"
+          : runwayDays < 45
+            ? "high"
+            : runwayDays < 90
+              ? "medium"
+              : "low";
+      const incomeNote =
+        answers.income_sources <= 1
+          ? " You depend on a single income source, so this scenario hits harder."
+          : answers.income_sources === 2
+            ? " Two income sources may cushion a partial loss, but a full stop still drains your buffer."
+            : " Multiple income sources help, but a simultaneous stop still tests your cash runway.";
       return {
         scenario,
-        title: "What if my income stops?",
-        summary: `You can currently operate for approximately ${days} days.`,
+        title: "What if your income stopped today?",
+        summary:
+          runwayDays === 0
+            ? "You have effectively no cash runway at your current expense level."
+            : `You can operate for about ${runwayDays} days on savings alone.`,
         detail:
-          days < 30
-            ? "Your emergency buffer is below the 30-day minimum most households need for job loss or disruption."
-            : "You have a measurable runway. Stretching it toward 90 days sharply reduces stress and bad decisions.",
+          expenses > 0
+            ? `At $${expenses.toLocaleString()}/month essential spend and ~$${Math.round(savings).toLocaleString()} accessible savings, the math is savings ÷ daily burn.${incomeNote}`
+            : `Set your essential monthly expenses in a new assessment so this number is precise.${incomeNote}`,
         severity,
         recommendation:
-          days < 90
-            ? "Open a dedicated buffer account and automate a weekly transfer until you hit 90 days of expenses."
-            : "Maintain the buffer and review it quarterly.",
+          runwayDays < 90
+            ? `Target 90 days of expenses (about $${Math.round(expenses * 3).toLocaleString()}). Open a dedicated buffer and automate a small weekly transfer until you get there.`
+            : "Maintain at least 90 days of expenses and review the number every quarter.",
       };
     }
     case "banking_down": {
       const hasAlt = answers.alt_payment_method;
       return {
         scenario,
-        title: "What if banking is unavailable for 72 hours?",
+        title: "What if banking is down for 72 hours?",
         summary: hasAlt
-          ? "You have at least one alternative payment method."
-          : "\u26a0\ufe0f You currently have no alternative payment method.",
+          ? "You reported an alternative payment method you can actually use."
+          : "You have no alternative payment method if cards and bank apps fail.",
         detail: hasAlt
-          ? "Cash, secondary card, or other method reduces short outage risk."
-          : "Most people discover this gap only when cards and apps stop working.",
+          ? "Cash, a second card, or another tested method covers short outages. Confirm it still works this month."
+          : "For 72 hours you could not pay transport or food without a backup. This is one of the most common real disruptions.",
         severity: hasAlt ? "low" : "critical",
         recommendation: hasAlt
-          ? "Keep a small cash reserve refreshed and test the backup method once a quarter."
-          : "Withdraw a modest cash reserve and store it securely. Add one non-primary payment option.",
+          ? "Keep a modest cash reserve refreshed and test your backup method once a quarter."
+          : "Today: withdraw a cash reserve you can store safely, and activate one non-primary card or payment option. Test both.",
       };
     }
     case "phone_lost": {
-      const ok =
-        answers.phone_backup_plan && answers.offline_contacts && answers.has_offline_docs;
-      const partial =
-        answers.phone_backup_plan || answers.offline_contacts || answers.has_offline_docs;
+      const recovery = [
+        answers.phone_backup_plan ? "account recovery plan" : null,
+        answers.offline_contacts ? "offline contacts" : null,
+        answers.has_offline_docs ? "offline documents" : null,
+      ].filter(Boolean) as string[];
+      const missing = [
+        !answers.phone_backup_plan ? "2FA / account recovery" : null,
+        !answers.offline_contacts ? "offline contact list" : null,
+        !answers.has_offline_docs ? "offline document copies" : null,
+      ].filter(Boolean) as string[];
+      const ok = recovery.length === 3;
+      const partial = recovery.length > 0;
       return {
         scenario,
-        title: "What if your phone is lost?",
+        title: "What if your phone was lost today?",
         summary: ok
-          ? "You have recovery paths for contacts and key documents."
+          ? "You have recovery paths for accounts, contacts, and documents."
           : partial
-            ? "\u26a0\ufe0f Partial recovery plan \u2014 several critical accounts still depend on this device."
-            : "\u26a0\ufe0f Critical accounts and contacts depend heavily on this single device.",
-        detail:
-          "Phone loss is one of the most common real-world disruptions. Offline contacts + 2FA backups + document copies close the gap.",
+            ? `Partial protection — you have ${recovery.join(", ")}. Still missing: ${missing.join(", ")}.`
+            : "Critical accounts, contacts, and documents still depend on this one device.",
+        detail: ok
+          ? "Losing the handset would be painful but recoverable."
+          : "Phone loss is common. Without offline contacts and recovery codes, banking, email, and identity recovery stall for days.",
         severity: ok ? "low" : partial ? "high" : "critical",
-        recommendation:
-          "Write down recovery codes, print critical contacts, and confirm you can reset accounts from another device.",
+        recommendation: missing.length
+          ? `Do this next: fix ${missing[0]}. Export recovery codes, write key numbers on paper, and keep offline copies of IDs.`
+          : "Re-test recovery from a second device every six months.",
       };
     }
     case "food_prices_double": {
-      const monthlyFoodProxy = answers.monthly_expenses * 0.25;
-      const extra = Math.round(monthlyFoodProxy);
-      const coveredByBuffer =
-        answers.emergency_fund_months * answers.monthly_expenses >= extra * 3;
+      const monthlyFood = Math.round(expenses * 0.25);
+      const extra = monthlyFood;
+      const bufferCash = savings;
+      const monthsCovered = extra > 0 ? Math.floor(bufferCash / extra) : 99;
+      const pantryDays = Math.max(0, answers.food_buffer_days || 0);
+      const supplyWeeks = Math.max(0, answers.emergency_supply_weeks || 0);
       return {
         scenario,
-        title: "What if food prices double?",
-        summary: `Your estimated monthly food exposure roughly doubles by about the equivalent of ${extra.toLocaleString()} in current currency units.`,
-        detail: coveredByBuffer
-          ? "Your existing buffer can absorb several months of elevated prices."
-          : "Without extra stores or buffer, higher prices force immediate lifestyle cuts.",
-        severity: coveredByBuffer ? "medium" : "high",
+        title: "What if food prices doubled?",
+        summary:
+          expenses > 0
+            ? `Your food line roughly jumps by about $${extra.toLocaleString()} per month (≈25% of essential spend).`
+            : "Add monthly expenses in your assessment to size food exposure in dollars.",
+        detail: `You currently report ~${pantryDays} days of food on hand and ~${supplyWeeks} weeks of emergency stores. Your cash buffer covers roughly ${monthsCovered} month(s) of that extra food cost before other essentials suffer.`,
+        severity:
+          monthsCovered >= 6 && pantryDays >= 14
+            ? "low"
+            : monthsCovered >= 3 || pantryDays >= 7
+              ? "medium"
+              : "high",
         recommendation:
-          "Increase non-perishable reserves and treat food storage as part of your emergency fund strategy.",
+          pantryDays < 14
+            ? `Build toward 14+ days of food you already eat, then expand shelf-stable stores. The extra $${extra.toLocaleString()}/month pressure is real if prices spike.`
+            : "Keep rotating pantry stock and treat food reserves as part of your emergency fund, not optional.",
       };
     }
     default:
       return {
         scenario,
-        title: "Unknown scenario",
-        summary: "No data",
+        title: "Scenario",
+        summary: "Unavailable",
         detail: "",
         severity: "medium",
-        recommendation: "",
+        recommendation: "Re-run your assessment.",
       };
   }
 }
