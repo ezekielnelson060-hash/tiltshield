@@ -1,14 +1,25 @@
 import { createClient } from "@/lib/supabase/client";
-import type { TiltSession } from "@/lib/session";
+import type { TiltSession, HistoryEntry } from "@/lib/session";
+import { getActiveMemberId } from "@/lib/family";
+import type { FamilyMember } from "@/lib/family";
 
-/** Save assessment to Supabase when the user is logged in. Never throws. */
-export async function persistAssessmentToCloud(session: TiltSession): Promise<boolean> {
+function isUuid(s: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    s
+  );
+}
+
+export async function persistAssessmentToCloud(
+  session: TiltSession
+): Promise<boolean> {
   try {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return false;
+
+    const memberId = session.memberId || getActiveMemberId();
 
     await supabase.from("profiles").upsert(
       {
@@ -33,7 +44,17 @@ export async function persistAssessmentToCloud(session: TiltSession): Promise<bo
         phone_backup_plan: session.answers.phone_backup_plan,
         alt_payment_method: session.answers.alt_payment_method,
         monthly_expenses: session.answers.monthly_expenses,
+        monthly_income: session.answers.monthly_income,
         food_buffer_days: session.answers.food_buffer_days,
+        offline_value_store: session.answers.offline_value_store,
+        digital_payment_dependency: session.answers.digital_payment_dependency,
+        food_source_diversity: session.answers.food_source_diversity,
+        has_med_kit: session.answers.has_med_kit,
+        has_local_vendors: session.answers.has_local_vendors,
+        has_hard_assets: session.answers.has_hard_assets,
+        answers_json: session.answers,
+        overall_score: session.scores.overall,
+        member_id: memberId !== "self" && isUuid(memberId) ? memberId : null,
       })
       .select("id")
       .single();
@@ -71,6 +92,7 @@ export async function persistAssessmentToCloud(session: TiltSession): Promise<bo
           target: v.target ?? null,
           difficulty: v.difficulty ?? null,
           impact: v.impact ?? null,
+          is_resolved: false,
         }))
       );
     }
@@ -79,5 +101,102 @@ export async function persistAssessmentToCloud(session: TiltSession): Promise<bo
   } catch (e) {
     console.warn("persistAssessmentToCloud", e);
     return false;
+  }
+}
+
+export async function loadHistoryFromCloud(): Promise<HistoryEntry[]> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from("category_scores")
+      .select("overall, money, food, digital, emergency, updated_at, assessment_id")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: true })
+      .limit(48);
+
+    if (error || !data) {
+      console.warn("loadHistoryFromCloud", error?.message);
+      return [];
+    }
+
+    return data.map((row) => ({
+      date: row.updated_at || new Date().toISOString(),
+      overall: row.overall ?? 0,
+      money: row.money ?? undefined,
+      food: row.food ?? undefined,
+      digital: row.digital ?? undefined,
+      emergency: row.emergency ?? undefined,
+      source: "cloud" as const,
+    }));
+  } catch (e) {
+    console.warn("loadHistoryFromCloud", e);
+    return [];
+  }
+}
+
+export async function syncFamilyToCloud(members: FamilyMember[]): Promise<void> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    for (const m of members) {
+      if (m.id === "self") continue;
+      if (isUuid(m.id)) {
+        await supabase.from("family_members").upsert({
+          id: m.id,
+          owner_id: user.id,
+          name: m.name,
+          relationship: m.relationship,
+          is_primary: m.isPrimary,
+          readiness_score: m.readinessScore ?? 0,
+        });
+      } else {
+        await supabase.from("family_members").insert({
+          owner_id: user.id,
+          name: m.name,
+          relationship: m.relationship,
+          is_primary: m.isPrimary,
+          readiness_score: m.readinessScore ?? 0,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("syncFamilyToCloud", e);
+  }
+}
+
+export async function loadFamilyFromCloud(): Promise<FamilyMember[]> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from("family_members")
+      .select("*")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: true });
+
+    if (error || !data) return [];
+
+    return data.map((r) => ({
+      id: r.id as string,
+      name: r.name as string,
+      relationship: (r.relationship as FamilyMember["relationship"]) || "other",
+      isPrimary: !!r.is_primary,
+      readinessScore: r.readiness_score ?? 0,
+    }));
+  } catch {
+    return [];
   }
 }
