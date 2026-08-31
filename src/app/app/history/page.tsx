@@ -6,20 +6,34 @@ import {
   loadSession,
   loadHistory,
   daysSinceLastAssessment,
+  mergeCloudHistory,
   type TiltSession,
   type HistoryEntry,
 } from "@/lib/session";
+import { loadHistoryFromCloud } from "@/lib/persist";
+import { getActiveMemberId } from "@/lib/family";
 import { Button } from "@/components/ui/button";
 
 export default function HistoryPage() {
   const [session, setSession] = useState<TiltSession | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [daysSince, setDaysSince] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    setSession(loadSession());
-    setHistory(loadHistory());
-    setDaysSince(daysSinceLastAssessment());
+    const mid = getActiveMemberId();
+    setSession(loadSession(mid));
+    setHistory(loadHistory(mid));
+    setDaysSince(daysSinceLastAssessment(mid));
+    setSyncing(true);
+    void (async () => {
+      const cloud = await loadHistoryFromCloud();
+      if (cloud.length) {
+        mergeCloudHistory(cloud);
+        setHistory(loadHistory(mid));
+      }
+      setSyncing(false);
+    })();
   }, []);
 
   if (!session && history.length === 0) {
@@ -44,14 +58,14 @@ export default function HistoryPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">History</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Re-take the assessment monthly. Watch whether preparation is actually moving the score.
+          Local + cloud score history. Retake monthly to see preparation move the needle.
+          {syncing && " Syncing…"}
         </p>
       </div>
 
       {daysSince != null && daysSince >= 28 && (
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-          Last full assessment was about <strong>{daysSince} days</strong> ago. Income and stores
-          change — retake to keep your plan honest.
+          Last full assessment was about <strong>{daysSince} days</strong> ago.
           <div className="mt-3">
             <Button asChild size="sm">
               <Link href="/assessment">Retake assessment</Link>
@@ -105,7 +119,9 @@ export default function HistoryPage() {
               <span className="text-[10px] tabular-nums text-zinc-500">{h.overall}</span>
               <div
                 className="w-full max-w-[48px] rounded-t bg-emerald-500/80"
-                style={{ height: `${Math.max(8, (h.overall / maxScore) * 100)}%` }}
+                style={{
+                  height: `${Math.max(8, (h.overall / maxScore) * 100)}%`,
+                }}
               />
               <span className="text-[9px] text-zinc-600">
                 {new Date(h.date).toLocaleDateString(undefined, {
@@ -137,6 +153,9 @@ export default function HistoryPage() {
                         · {h.runwayDays}d runway
                       </span>
                     )}
+                    {h.source === "cloud" && (
+                      <span className="ml-2 text-[10px] text-zinc-600">cloud</span>
+                    )}
                   </p>
                   <p className="text-xs text-zinc-500">
                     {new Date(h.date).toLocaleString()}
@@ -158,15 +177,15 @@ export default function HistoryPage() {
 
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
         <p className="text-sm text-zinc-400">
-          Complete actions under Prepare and Actions, then retake. Rising score means less dependence
-          when systems shift.
+          Complete Prepare and Actions, then retake. Rising score means less dependence when systems
+          shift.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button asChild size="sm">
             <Link href="/assessment">Retake assessment</Link>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href="/app/prepare">Prepare home</Link>
+            <Link href="/app/family">Family profiles</Link>
           </Button>
         </div>
       </section>
