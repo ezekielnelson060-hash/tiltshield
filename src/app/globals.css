@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-zinc-950 text-zinc-100 antialiased;
+}
+
+.bg-grid {
+  background-image: linear-gradient(
+      to right,
+      rgb(39 39 42 / 0.4) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(39 39 42 / 0.4) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
