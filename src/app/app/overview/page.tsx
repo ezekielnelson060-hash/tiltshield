@@ -40,7 +40,16 @@ export default function OverviewPage() {
     }
   }
 
-  if (!session) return null;
+  if (!session) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <p className="text-zinc-400">Complete your assessment to see your overview.</p>
+        <Button asChild className="mt-4">
+          <Link href="/assessment">Get my score</Link>
+        </Button>
+      </div>
+    );
+  }
 
   const { scores, vulnerabilities, answers } = session;
   const top = vulnerabilities[0];
@@ -48,6 +57,8 @@ export default function OverviewPage() {
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const runwayDays = Math.round((answers.emergency_fund_months || 0) * 30);
+  const expenses = answers.monthly_expenses || 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
@@ -70,72 +81,62 @@ export default function OverviewPage() {
         </div>
         <p className="mt-2 text-sm text-zinc-400">
           {scores.overall >= 70
-            ? "You're more prepared than most — keep closing the remaining gaps."
+            ? `Strong baseline. Your cash runway is about ${runwayDays} days at $${expenses.toLocaleString()}/month essential spend.`
             : scores.overall >= 40
-              ? "Prepared for some disruptions. Exposed to others."
-              : "More dependent than you thought. That's useful data."}
+              ? `Mixed readiness. Cash runway ≈ ${runwayDays} days. Biggest gap: ${top?.title ?? "see My Risk"}.`
+              : `More dependent than you thought. Runway ≈ ${runwayDays} days. Start with: ${top?.title ?? "your top exposure"}.`}
         </p>
         <Link
           href="/app/risk"
-          className="mt-4 inline-block text-sm text-emerald-400 hover:text-emerald-300"
+          className="mt-4 inline-block text-sm text-emerald-400 hover:underline"
         >
-          View score breakdown →
+          See all categories →
         </Link>
       </section>
 
       {top && (
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+        <section className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-red-400">
             Your biggest exposure
           </p>
-          <div className="mt-3">
-            <h2 className="text-lg font-semibold text-zinc-50">{top.title}</h2>
-            <p className="mt-1 text-xs uppercase tracking-wide text-red-400">
-              {top.severity}
-            </p>
-          </div>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-            {top.current_state}
+          <h2 className="mt-2 text-lg font-semibold text-zinc-50">{top.title}</h2>
+          <p className="mt-2 text-sm text-zinc-400">{top.current_state}</p>
+          <p className="mt-3 text-sm text-zinc-300">
+            <span className="text-zinc-500">Next: </span>
+            {top.next_action}
           </p>
-          {top.category === "money" && (
-            <p className="mt-4 text-3xl font-bold tabular-nums text-zinc-50">
-              {Math.round(answers.emergency_fund_months * 30)}{" "}
-              <span className="text-base font-normal text-zinc-500">
-                days of essential expenses covered
-              </span>
-            </p>
-          )}
-          <div className="mt-5">
+          <div className="mt-4">
             <Button asChild size="sm">
-              <Link href="/app/actions">Fix this first →</Link>
+              <Link href="/app/actions">Fix this first</Link>
             </Button>
           </div>
         </section>
       )}
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+      <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
         <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">
           Today&apos;s move
         </p>
         <h2 className="mt-2 text-lg font-semibold text-zinc-50">{move.title}</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          {move.time_estimate} · {move.difficulty} · High impact
+          {move.time_estimate} · {move.difficulty}
         </p>
         <p className="mt-3 text-sm text-zinc-400">{move.why}</p>
-        <div className="mt-5">
-          <Button asChild>
-            <Link href="/app/actions">Start action</Link>
+        <div className="mt-4">
+          <Button asChild size="sm" variant="outline">
+            <Link href="/app/actions">Open actions</Link>
           </Button>
         </div>
       </section>
 
       {!premium && (
-        <section className="rounded-2xl border border-dashed border-zinc-700 p-5 text-center">
-          <p className="text-sm text-zinc-400">
-            Unlock the full plan for every vulnerability, scenario, and action.
+        <section className="rounded-2xl border border-zinc-800 p-6 text-center">
+          <p className="text-sm text-zinc-300">
+            Unlock full risk map, all What If scenarios, and history.
           </p>
-          <Button onClick={unlock} className="mt-4" size="sm" disabled={paying}>
-            {paying ? "Opening…" : "Unlock — $29 lifetime"}
+          <p className="mt-1 text-xs text-zinc-500">$29 lifetime · founding member</p>
+          <Button className="mt-4" onClick={unlock} disabled={paying}>
+            {paying ? "Opening…" : "Become a founding member"}
           </Button>
         </section>
       )}
