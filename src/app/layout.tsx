@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { NativeInit } from "@/components/native-init";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} min-h-screen bg-zinc-950 font-sans text-zinc-100 antialiased`}
       >
+        <NativeInit />
         {children}
       </body>
     </html>
