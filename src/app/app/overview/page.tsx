@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { loadSession, isPremium, setPremium, type TiltSession } from "@/lib/session";
+import {
+  loadSession,
+  isPremium,
+  setPremium,
+  daysSinceLastAssessment,
+  type TiltSession,
+} from "@/lib/session";
 import { pickTodaysMove } from "@/lib/scoring";
 import { computeBufferPlan } from "@/lib/buffer";
 import { Button } from "@/components/ui/button";
@@ -11,10 +17,12 @@ export default function OverviewPage() {
   const [session, setSession] = useState<TiltSession | null>(null);
   const [premium, setPrem] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [daysSince, setDaysSince] = useState<number | null>(null);
 
   useEffect(() => {
     setSession(loadSession());
     setPrem(isPremium());
+    setDaysSince(daysSinceLastAssessment());
   }, []);
 
   async function unlock() {
@@ -85,14 +93,22 @@ export default function OverviewPage() {
         )}
       </div>
 
+      {daysSince != null && daysSince >= 28 && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
+          It has been about {daysSince} days since your last assessment. Retake to refresh income
+          and stores.{" "}
+          <Link href="/assessment" className="text-emerald-400 hover:underline">
+            Retake →
+          </Link>
+        </div>
+      )}
+
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
         <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
           Readiness score
         </p>
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-5xl font-bold tracking-tight text-zinc-50">
-            {scores.overall}
-          </span>
+          <span className="text-5xl font-bold tracking-tight text-zinc-50">{scores.overall}</span>
           <span className="text-zinc-600">/ 100</span>
         </div>
         <p className="mt-2 text-sm text-zinc-400">
@@ -112,9 +128,7 @@ export default function OverviewPage() {
           Buffer plan · from your income
         </p>
         <h2 className="mt-2 text-lg font-semibold text-zinc-50">
-          {plan.onTrack
-            ? "You meet the 90-day cash target"
-            : "Path to 90 days of essentials"}
+          {plan.onTrack ? "You meet the 90-day cash target" : "Path to 90 days of essentials"}
         </h2>
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl border border-zinc-800 px-3 py-2">
@@ -169,7 +183,7 @@ export default function OverviewPage() {
         {plan.onTrack && (
           <p className="mt-4 text-sm text-zinc-400">
             Maintain the buffer and review it when income or rent changes. Next focus: food stores
-            and local options under Prepare.
+            under Prepare.
           </p>
         )}
         <div className="mt-4">
