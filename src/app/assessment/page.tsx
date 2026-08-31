@@ -32,7 +32,7 @@ export default function AssessmentPage() {
           <Link href="/" className="font-semibold tracking-tight text-zinc-50">
             Tiltshield
           </Link>
-          <span className="text-xs text-zinc-500">Assessment</span>
+          <span className="text-xs text-zinc-500">2 min · be honest</span>
         </div>
       </header>
       <AssessmentWizard onComplete={handleComplete} />
