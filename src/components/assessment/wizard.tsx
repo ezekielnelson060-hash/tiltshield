@@ -87,14 +87,26 @@ export function AssessmentWizard({ onComplete }: Props) {
         )}
 
         {q.type === "number" && (
-          <input
-            type="number"
-            min={q.min}
-            step={q.step}
-            value={Number(current)}
-            onChange={(e) => setValue(parseFloat(e.target.value) || 0)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-lg text-zinc-50 focus:border-emerald-500 focus:outline-none"
-          />
+          <div className="relative">
+            {q.unit === "currency" && (
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-zinc-500">
+                $
+              </span>
+            )}
+            <input
+              type="number"
+              min={q.min}
+              step={q.step}
+              value={Number(current)}
+              onChange={(e) => setValue(parseFloat(e.target.value) || 0)}
+              className={
+                q.unit === "currency"
+                  ? "w-full rounded-lg border border-zinc-700 bg-zinc-900 py-3 pl-9 pr-4 text-lg text-zinc-50 focus:border-emerald-500 focus:outline-none"
+                  : "w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-lg text-zinc-50 focus:border-emerald-500 focus:outline-none"
+              }
+              placeholder={q.unit === "currency" ? "0" : undefined}
+            />
+          </div>
         )}
 
         {q.type === "boolean" && (
