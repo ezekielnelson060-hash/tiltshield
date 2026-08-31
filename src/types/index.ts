@@ -1,0 +1,77 @@
+export type SubscriptionStatus = "free" | "lifetime" | "active";
+
+export interface Profile {
+  id: string;
+  created_at: string;
+  display_name: string | null;
+  readiness_score: number;
+  subscription_status: SubscriptionStatus;
+  assessment_completed: boolean;
+}
+
+export interface AssessmentAnswers {
+  emergency_fund_months: number;
+  income_sources: number;
+  monthly_expenses: number;
+  has_offline_docs: boolean;
+  cloud_dependency: number;
+  emergency_supply_weeks: number;
+  offline_contacts: boolean;
+  phone_backup_plan: boolean;
+  alt_payment_method: boolean;
+  food_buffer_days: number;
+}
+
+export interface CategoryScores {
+  money: number;
+  food: number;
+  digital: number;
+  communication: number;
+  documents: number;
+  skills: number;
+  home: number;
+  emergency: number;
+  overall: number;
+}
+
+export type Severity = "critical" | "high" | "medium" | "low";
+
+export interface Vulnerability {
+  id?: string;
+  rank: number;
+  category: keyof Omit<CategoryScores, "overall">;
+  title: string;
+  severity: Severity;
+  current_state: string;
+  next_action: string;
+  target: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  impact: "Low" | "Medium" | "High" | "Very High";
+  is_resolved?: boolean;
+}
+
+export interface ActionItem {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  why: string;
+  time_estimate: string;
+  steps: string[];
+  difficulty: string;
+}
+
+export type WhatIfScenario =
+  | "income_stops"
+  | "banking_down"
+  | "phone_lost"
+  | "food_prices_double";
+
+export interface WhatIfResult {
+  scenario: WhatIfScenario;
+  title: string;
+  summary: string;
+  detail: string;
+  severity: Severity;
+  recommendation: string;
+}
