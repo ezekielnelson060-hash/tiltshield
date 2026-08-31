@@ -1,7 +1,18 @@
 import type { Vulnerability } from "@/types";
 
+export type ActionItem = {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  why: string;
+  time_estimate: string;
+  steps: string[];
+  difficulty: string;
+};
+
 /** Pre-built action library mapped to categories */
-export const ACTION_LIBRARY = [
+export const ACTION_LIBRARY: ActionItem[] = [
   {
     id: "money-buffer-1",
     category: "money",
@@ -123,12 +134,12 @@ export const ACTION_LIBRARY = [
     ],
     difficulty: "Medium",
   },
-] as const;
+];
 
 export function pickTodaysMove(
   vulnerabilities: Vulnerability[],
   completedActionIds: string[] = []
-) {
+): ActionItem {
   for (const v of vulnerabilities) {
     const candidates = ACTION_LIBRARY.filter(
       (a) =>
