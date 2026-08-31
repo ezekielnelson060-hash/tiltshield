@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SiteNav } from "@/components/landing/site-nav";
 
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
@@ -17,27 +18,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="sticky top-0 z-50 border-b border-zinc-900/80 bg-zinc-950/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="text-sm font-semibold tracking-tight text-zinc-50">
-            Tiltshield
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
-            <a href="#product" className="hover:text-zinc-200">Product</a>
-            <a href="#what-if" className="hover:text-zinc-200">What If?</a>
-            <a href="#how" className="hover:text-zinc-200">How it works</a>
-            <a href="#pricing" className="hover:text-zinc-200">Pricing</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/assessment" className="hidden text-sm text-zinc-400 hover:text-zinc-200 sm:inline">
-              Log in
-            </Link>
-            <Button asChild size="sm">
-              <Link href="/assessment">Get my score</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteNav />
 
       <section className="border-b border-zinc-900">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 lg:grid-cols-2 lg:py-20">
@@ -108,7 +89,6 @@ export default function HomePage() {
           <p className="text-center text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">Inside Tiltshield</p>
           <h2 className="mt-3 text-center text-2xl font-semibold text-zinc-50 sm:text-3xl">A clearer picture of your life</h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-zinc-400">One system. One picture. One next move.</p>
-
           <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-3">
               <PhoneFrame>
@@ -125,7 +105,6 @@ export default function HomePage() {
               </PhoneFrame>
               <p className="text-center text-xs text-zinc-500">Overview</p>
             </div>
-
             <div className="space-y-3">
               <PhoneFrame>
                 <div className="space-y-2 px-3 pb-4 pt-3">
@@ -140,7 +119,6 @@ export default function HomePage() {
               </PhoneFrame>
               <p className="text-center text-xs text-zinc-500">What If?</p>
             </div>
-
             <div className="space-y-3">
               <PhoneFrame>
                 <div className="space-y-1.5 px-3 pb-4 pt-3">
@@ -155,7 +133,6 @@ export default function HomePage() {
               </PhoneFrame>
               <p className="text-center text-xs text-zinc-500">My Risk</p>
             </div>
-
             <div className="space-y-3">
               <PhoneFrame>
                 <div className="space-y-3 px-3 pb-4 pt-3">
