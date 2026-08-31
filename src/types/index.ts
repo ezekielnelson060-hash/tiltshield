@@ -10,9 +10,10 @@ export interface Profile {
 }
 
 export interface AssessmentAnswers {
+  monthly_income: number;
+  monthly_expenses: number;
   emergency_fund_months: number;
   income_sources: number;
-  monthly_expenses: number;
   has_offline_docs: boolean;
   cloud_dependency: number;
   emergency_supply_weeks: number;
@@ -23,6 +24,9 @@ export interface AssessmentAnswers {
   offline_value_store: number;
   digital_payment_dependency: number;
   food_source_diversity: boolean;
+  has_med_kit: boolean;
+  has_local_vendors: boolean;
+  has_hard_assets: boolean;
 }
 
 export interface CategoryScores {
