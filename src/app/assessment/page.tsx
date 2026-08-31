@@ -7,6 +7,7 @@ import {
   calculateCategoryScores,
   calculateVulnerabilities,
 } from "@/lib/scoring";
+import { saveSession } from "@/lib/session";
 import Link from "next/link";
 
 export default function AssessmentPage() {
@@ -15,14 +16,8 @@ export default function AssessmentPage() {
   function handleComplete(answers: AssessmentAnswers) {
     const scores = calculateCategoryScores(answers);
     const vulnerabilities = calculateVulnerabilities(answers, scores);
-
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(
-        "tiltshield_session",
-        JSON.stringify({ answers, scores, vulnerabilities })
-      );
-    }
-    router.push("/results");
+    saveSession({ answers, scores, vulnerabilities });
+    router.push("/app/overview");
   }
 
   return (
