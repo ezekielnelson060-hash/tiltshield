@@ -8,9 +8,10 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 const defaults: AssessmentAnswers = {
+  monthly_income: 3000,
+  monthly_expenses: 2000,
   emergency_fund_months: 1,
   income_sources: 1,
-  monthly_expenses: 2000,
   has_offline_docs: false,
   cloud_dependency: 4,
   emergency_supply_weeks: 0.5,
@@ -21,6 +22,9 @@ const defaults: AssessmentAnswers = {
   offline_value_store: 0,
   digital_payment_dependency: 4,
   food_source_diversity: false,
+  has_med_kit: false,
+  has_local_vendors: false,
+  has_hard_assets: false,
 };
 
 interface Props {
@@ -64,9 +68,7 @@ export function AssessmentWizard({ onComplete }: Props) {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-2xl font-semibold tracking-tight text-zinc-50">
-          {q.title}
-        </h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-zinc-50">{q.title}</h2>
         {q.help && <p className="text-sm text-zinc-400">{q.help}</p>}
       </div>
 
@@ -154,12 +156,7 @@ export function AssessmentWizard({ onComplete }: Props) {
       </div>
 
       <div className="flex gap-3">
-        <Button
-          variant="outline"
-          onClick={back}
-          disabled={step === 0}
-          className="flex-1"
-        >
+        <Button variant="outline" onClick={back} disabled={step === 0} className="flex-1">
           Back
         </Button>
         <Button onClick={next} className="flex-1">

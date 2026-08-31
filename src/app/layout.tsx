@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { NativeInit } from "@/components/native-init";
+import { InstallPrompt } from "@/components/install-prompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -9,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tiltshield — Know what could break. Fix it before it does.",
+  title: "Tiltshield — Prepare for what might come next",
   description:
-    "Personal Independence OS. Assessment engine, What If? simulator, and daily actions to reduce your single points of failure.",
+    "Income-based readiness. What If planning, home kits, local vendors, and daily actions when systems change.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -38,6 +39,7 @@ export default function RootLayout({
         className={`${inter.variable} min-h-screen bg-zinc-950 font-sans text-zinc-100 antialiased`}
       >
         <NativeInit />
+        <InstallPrompt />
         {children}
       </body>
     </html>
