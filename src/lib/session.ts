@@ -1,10 +1,12 @@
 import type { AssessmentAnswers, CategoryScores, Vulnerability } from "@/types";
+import { getActiveMemberId, updateMemberScore } from "@/lib/family";
 
 export interface TiltSession {
   answers: AssessmentAnswers;
   scores: CategoryScores;
   vulnerabilities: Vulnerability[];
   completedAt?: string;
+  memberId?: string;
 }
 
 export interface HistoryEntry {
@@ -17,16 +19,34 @@ export interface HistoryEntry {
   runwayDays?: number;
   monthlyIncome?: number;
   monthlyExpenses?: number;
+  memberId?: string;
+  source?: "local" | "cloud";
 }
 
-const KEY = "tiltshield_session";
 const PREMIUM_KEY = "tiltshield_lifetime";
 const HISTORY_KEY = "tiltshield_history";
 
-export function loadSession(): TiltSession | null {
+function sessionKey(memberId?: string) {
+  const id =
+    memberId ||
+    (typeof window !== "undefined" ? getActiveMemberId() : "self");
+  return `tiltshield_session_${id}`;
+}
+
+export function loadSession(memberId?: string): TiltSession | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
+    const key = sessionKey(memberId);
+    const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
+    if (
+      !raw &&
+      (!memberId || memberId === "self" || getActiveMemberId() === "self")
+    ) {
+      const legacy =
+        sessionStorage.getItem("tiltshield_session") ||
+        localStorage.getItem("tiltshield_session");
+      if (legacy) return JSON.parse(legacy) as TiltSession;
+    }
     if (!raw) return null;
     return JSON.parse(raw) as TiltSession;
   } catch {
@@ -36,13 +56,24 @@ export function loadSession(): TiltSession | null {
 
 export function saveSession(data: TiltSession) {
   if (typeof window === "undefined") return;
-  const payload = {
+  const memberId = data.memberId || getActiveMemberId();
+  const payload: TiltSession = {
     ...data,
+    memberId,
     completedAt: data.completedAt || new Date().toISOString(),
   };
-  sessionStorage.setItem(KEY, JSON.stringify(payload));
-  localStorage.setItem(KEY, JSON.stringify(payload));
-
+  const key = sessionKey(memberId);
+  sessionStorage.setItem(key, JSON.stringify(payload));
+  localStorage.setItem(key, JSON.stringify(payload));
+  if (memberId === "self") {
+    sessionStorage.setItem("tiltshield_session", JSON.stringify(payload));
+    localStorage.setItem("tiltshield_session", JSON.stringify(payload));
+  }
+  try {
+    updateMemberScore(memberId, payload.scores.overall);
+  } catch {
+    /* */
+  }
   try {
     const hist = loadHistory();
     const entry: HistoryEntry = {
@@ -55,10 +86,13 @@ export function saveSession(data: TiltSession) {
       runwayDays: Math.round((payload.answers.emergency_fund_months || 0) * 30),
       monthlyIncome: payload.answers.monthly_income,
       monthlyExpenses: payload.answers.monthly_expenses,
+      memberId,
+      source: "local",
     };
     const last = hist[hist.length - 1];
     if (
       last &&
+      last.memberId === memberId &&
       Math.abs(new Date(entry.date).getTime() - new Date(last.date).getTime()) <
         10 * 60 * 1000
     ) {
@@ -66,9 +100,9 @@ export function saveSession(data: TiltSession) {
     } else {
       hist.push(entry);
     }
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(-24)));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(-48)));
   } catch {
-    /* ignore */
+    /* */
   }
 }
 
@@ -83,18 +117,39 @@ export function setPremium(v: boolean) {
   else localStorage.removeItem(PREMIUM_KEY);
 }
 
-export function loadHistory(): HistoryEntry[] {
+export function loadHistory(memberId?: string): HistoryEntry[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]") as HistoryEntry[];
+    const all = JSON.parse(
+      localStorage.getItem(HISTORY_KEY) || "[]"
+    ) as HistoryEntry[];
+    if (!memberId) return all;
+    return all.filter((h) => !h.memberId || h.memberId === memberId);
   } catch {
     return [];
   }
 }
 
-export function daysSinceLastAssessment(): number | null {
-  const hist = loadHistory();
-  const session = loadSession();
+export function mergeCloudHistory(cloud: HistoryEntry[]) {
+  if (typeof window === "undefined") return;
+  const local = loadHistory();
+  const map = new Map<string, HistoryEntry>();
+  for (const h of local) {
+    map.set(`${h.date}|${h.overall}|${h.memberId || "self"}`, h);
+  }
+  for (const h of cloud) {
+    const k = `${h.date}|${h.overall}|${h.memberId || "self"}`;
+    if (!map.has(k)) map.set(k, { ...h, source: "cloud" });
+  }
+  const merged = Array.from(map.values()).sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(merged.slice(-48)));
+}
+
+export function daysSinceLastAssessment(memberId?: string): number | null {
+  const hist = loadHistory(memberId);
+  const session = loadSession(memberId);
   const last = hist[hist.length - 1]?.date || session?.completedAt || null;
   if (!last) return null;
   return Math.floor(
