@@ -1,73 +1,67 @@
 # Tiltshield native shells (Capacitor)
 
-The product UI stays Next.js on Vercel. Capacitor wraps it in **Android** and **iOS** WebView apps so you can demo and distribute as a native binary.
+Next.js on Vercel = product brain.  
+Capacitor = Android / iOS shells for demos and stores.
 
-## Prerequisites
-
-- Node 18+
-- **Android:** Android Studio (SDK 33+)
-- **iOS:** Mac + Xcode 15+ (required to build / archive)
-
-## One-time setup (on your machine)
+## Quick start (your machine)
 
 ```bash
 git pull
-npm install
-npx cap add android
-npx cap add ios   # Mac only
-npx cap sync
+chmod +x scripts/setup-native.sh
+./scripts/setup-native.sh
+npm run cap:android    # or cap:ios on Mac
 ```
 
-## Open in IDE
+## Prerequisites
+
+| Platform | Need |
+|----------|------|
+| Android | Android Studio + device/emulator |
+| iOS | Mac + Xcode 15+ |
+
+## What the app loads
+
+Default WebView URL: `https://tiltshield.vercel.app`
+
+Local device against your laptop:
 
 ```bash
-npm run cap:android   # Android Studio
-npm run cap:ios       # Xcode (Mac)
+CAP_SERVER_URL=http://192.168.x.x:3000 npx cap sync
+npx next dev -H 0.0.0.0
 ```
 
-Then press Run on a physical phone or emulator.
+## App identity
 
-## What the shell loads
+| Key | Value |
+|-----|--------|
+| appId | `app.tiltshield.mobile` |
+| Name | Tiltshield |
+| Theme | `#09090b` |
 
-By default the WebView opens:
+## Icons and splash
 
-`https://tiltshield.vercel.app`
-
-Override for local device testing:
+- PWA: `public/icon-192.png`, `public/icon-512.png`
+- Capacitor source: `resources/icon.png`, `resources/splash.png` (copy from public icons after clone)
 
 ```bash
-# Machine and phone on same Wi-Fi; use your LAN IP
-CAP_SERVER_URL=http://192.168.1.20:3000 npx cap sync
+mkdir -p resources
+cp public/icon-512.png resources/icon.png
+cp public/icon-512.png resources/splash.png
 ```
 
-Then run `npx next dev -H 0.0.0.0` so the phone can reach your machine.
+## Investor demo checklist
 
-## Demo flow for investors
-
-1. Deploy latest web app to Vercel.
-2. `npx cap sync`
-3. Run on a physical phone from Android Studio / Xcode.
-4. App opens full-screen with dark splash — same product as production.
-
-## App IDs
-
-| Platform | ID |
-|----------|-----|
-| Bundle / applicationId | `app.tiltshield.mobile` |
-| Display name | Tiltshield |
-
-Change in `capacitor.config.ts` + native project settings before store submission.
-
-## Store notes
-
-- Apple requires a Mac to archive and upload.
-- Privacy policy URL required.
-- Sign in with Apple if you add other social logins later.
+1. Latest deploy is Ready on Vercel  
+2. `./scripts/setup-native.sh` completed  
+3. Run on a physical phone  
+4. Flow: Sign up → Assessment → Overview → What If → Actions → Vault  
+5. Pitch line: *Native shell + production web core — ship weekly without store delays*
 
 ## Scripts
 
-| Script | Purpose |
-|--------|--------|
-| `npm run cap:sync` | Copy config + plugins into native projects |
-| `npm run cap:android` | Open Android Studio |
-| `npm run cap:ios` | Open Xcode |
+| Command | Action |
+|---------|--------|
+| `./scripts/setup-native.sh` | install + add platforms + sync |
+| `npm run cap:sync` | re-sync after config changes |
+| `npm run cap:android` | open Android Studio |
+| `npm run cap:ios` | open Xcode |
