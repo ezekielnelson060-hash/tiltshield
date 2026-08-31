@@ -1,4 +1,4 @@
-export type SubscriptionStatus = "free" | "lifetime" | "active";
+export type SubscriptionStatus = "free" | "lifetime" | "active" | "family";
 
 export interface Profile {
   id: string;
@@ -20,6 +20,9 @@ export interface AssessmentAnswers {
   phone_backup_plan: boolean;
   alt_payment_method: boolean;
   food_buffer_days: number;
+  offline_value_store: number;
+  digital_payment_dependency: number;
+  food_source_diversity: boolean;
 }
 
 export interface CategoryScores {
@@ -61,11 +64,24 @@ export interface ActionItem {
   difficulty: string;
 }
 
+export interface UserAction {
+  id: string;
+  action_id: string;
+  status: "pending" | "in_progress" | "completed";
+  completed_at?: string;
+  notes?: string;
+}
+
 export type WhatIfScenario =
   | "income_stops"
   | "banking_down"
   | "phone_lost"
-  | "food_prices_double";
+  | "food_prices_double"
+  | "internet_outage"
+  | "job_loss"
+  | "medical_emergency"
+  | "power_grid"
+  | "digital_payments_only";
 
 export interface WhatIfResult {
   scenario: WhatIfScenario;
