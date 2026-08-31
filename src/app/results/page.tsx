@@ -22,6 +22,7 @@ function ResultsInner() {
   const [premium, setPremium] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("tiltshield_session");
@@ -34,8 +35,7 @@ function ResultsInner() {
     } catch {
       router.replace("/assessment");
     }
-    const paid = localStorage.getItem("tiltshield_lifetime") === "1";
-    setPremium(paid);
+    setPremium(localStorage.getItem("tiltshield_lifetime") === "1");
   }, [router]);
 
   useEffect(() => {
@@ -43,9 +43,7 @@ function ResultsInner() {
     const status = searchParams.get("status");
     const transactionId =
       searchParams.get("transaction_id") || searchParams.get("transactionId");
-
     if (payment !== "flutterwave") return;
-
     if (status === "successful" || status === "completed") {
       if (transactionId) {
         fetch(`/api/flutterwave/verify?transaction_id=${transactionId}`)
@@ -77,15 +75,13 @@ function ResultsInner() {
         body: JSON.stringify({}),
       });
       const json = await res.json();
-
       if (json.link) {
         window.location.href = json.link;
         return;
       }
-
       if (json.demo || res.status === 503) {
         const ok = window.confirm(
-          "Flutterwave is not configured yet.\n\nUnlock full plan for demo? (Add FLUTTERWAVE_SECRET_KEY for real payments.)"
+          "Flutterwave is not configured yet.\n\nUnlock full plan for demo?"
         );
         if (ok) {
           localStorage.setItem("tiltshield_lifetime", "1");
@@ -93,7 +89,6 @@ function ResultsInner() {
         }
         return;
       }
-
       setPayError(json.error || "Could not start payment");
     } catch {
       setPayError("Network error. Try again.");
@@ -112,83 +107,73 @@ function ResultsInner() {
 
   const { answers, scores, vulnerabilities } = data;
   const move = pickTodaysMove(vulnerabilities);
+  const top = vulnerabilities[0];
+  const lockedCount = Math.max(0, vulnerabilities.length - 1);
 
   return (
-    <main className="min-h-screen pb-16">
-      <header className="border-b border-zinc-800 px-4 py-4">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Link href="/" className="font-semibold text-zinc-50">
+    <main className="min-h-screen pb-20">
+      <header className="border-b border-zinc-800/80 px-4 py-4">
+        <div className="mx-auto flex max-w-lg items-center justify-between">
+          <Link href="/" className="text-sm font-semibold tracking-tight text-zinc-50">
             Tiltshield
           </Link>
           <div className="flex items-center gap-3 text-sm">
-            <span className="rounded-full bg-zinc-900 px-3 py-1 text-zinc-300">
-              Score {scores.overall}/100
-            </span>
-            {!premium && (
-              <Button size="sm" onClick={unlock} disabled={paying}>
-                {paying ? "Opening…" : "Unlock"}
-              </Button>
-            )}
-            {premium && (
+            {premium ? (
               <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
                 Lifetime
               </span>
+            ) : (
+              <Button size="sm" onClick={unlock} disabled={paying}>
+                {paying ? "Opening…" : "Unlock $29"}
+              </Button>
             )}
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-2xl space-y-10 px-4 py-8">
-        <section>
-          <h1 className="text-2xl font-bold text-zinc-50">
-            Your top vulnerabilities
-          </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Ranked by impact × gap. Fix the highest first.
+      <div className="mx-auto max-w-lg space-y-10 px-4 py-8">
+        <section className="text-center">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-zinc-500">
+            How exposed are you?
           </p>
-          <div className="mt-6 space-y-4">
-            {vulnerabilities.map((v, i) => (
-              <VulnerabilityCard
-                key={v.rank}
-                v={v}
-                locked={!premium && i > 0}
-              />
-            ))}
+          <div className="mt-4 flex items-baseline justify-center gap-2">
+            <span className="text-6xl font-bold tracking-tight text-zinc-50">
+              {scores.overall}
+            </span>
+            <span className="text-lg text-zinc-600">/ 100</span>
           </div>
-          {!premium && (
-            <div className="mt-4">
-              <Button
-                onClick={unlock}
-                className="w-full"
-                size="lg"
-                disabled={paying}
-              >
-                {paying ? "Opening payment…" : "Unlock full plan — founding price"}
-              </Button>
-              {payError && (
-                <p className="mt-2 text-center text-sm text-red-400">{payError}</p>
-              )}
-              <p className="mt-2 text-center text-xs text-zinc-500">
-                One-time payment via Flutterwave. No subscription.
-              </p>
-            </div>
-          )}
+          <p className="mt-3 text-sm text-zinc-400">
+            {scores.overall >= 70
+              ? "You're more prepared than most — and still have gaps worth closing."
+              : scores.overall >= 40
+                ? "You're prepared for some disruptions. You're exposed to others."
+                : "You're more dependent than you thought. That's useful to know."}
+          </p>
         </section>
 
-        <section className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-emerald-500">
-            Today&apos;s move
+        {top && (
+          <section>
+            <VulnerabilityCard v={top} locked={false} />
+            {!premium && lockedCount > 0 && (
+              <p className="mt-3 text-center text-xs text-zinc-500">
+                + {lockedCount} more vulnerabilit{lockedCount === 1 ? "y" : "ies"} in the full plan
+              </p>
+            )}
+          </section>
+        )}
+
+        <section className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <p className="text-xs font-medium uppercase tracking-wider text-emerald-500">
+            One move
           </p>
-          <h2 className="mt-2 text-lg font-semibold text-zinc-50">
-            {move.title}
-          </h2>
-          <p className="mt-1 text-sm text-zinc-400">{move.why}</p>
-          <p className="mt-3 text-xs text-zinc-500">
-            Time: {move.time_estimate} · {move.difficulty}
+          <h2 className="mt-2 text-lg font-semibold text-zinc-50">{move.title}</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            {move.time_estimate} · {move.difficulty} · High impact
           </p>
-          <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+          <p className="mt-3 text-sm text-zinc-400">{move.why}</p>
+          <ul className="mt-4 space-y-2">
             {move.steps.map((s, i) => (
-              <li key={i} className="flex gap-2">
+              <li key={i} className="flex gap-2 text-sm text-zinc-300">
                 <span className="text-emerald-500">□</span>
                 <span>{s}</span>
               </li>
@@ -204,16 +189,46 @@ function ResultsInner() {
           />
         </section>
 
-        <section className="rounded-xl border border-dashed border-zinc-700 p-5 text-center text-sm text-zinc-400">
-          <p>
-            Re-take the assessment anytime. Your plan updates from your latest
-            answers.
-          </p>
-          <div className="mt-4">
-            <Button asChild variant="outline">
-              <Link href="/assessment">Retake assessment</Link>
+        {(premium || showAll) && (
+          <section className="space-y-4">
+            <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+              All vulnerabilities
+            </h2>
+            {vulnerabilities.map((v, i) => (
+              <VulnerabilityCard key={v.rank} v={v} locked={!premium && i > 0} />
+            ))}
+          </section>
+        )}
+
+        {!premium && (
+          <section className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 text-center">
+            <p className="text-sm text-zinc-300">
+              You just found where you&apos;re most exposed.
+            </p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Unlock the full plan to see every gap and every fix.
+            </p>
+            <Button onClick={unlock} className="mt-5 w-full" size="lg" disabled={paying}>
+              {paying ? "Opening payment…" : "Unlock full plan — $29 lifetime"}
             </Button>
-          </div>
+            {payError && <p className="mt-2 text-sm text-red-400">{payError}</p>}
+            <p className="mt-3 text-xs text-zinc-600">One-time · Founding price · No subscription</p>
+            {!showAll && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="mt-4 text-xs text-zinc-500 underline-offset-2 hover:underline"
+              >
+                Preview locked items
+              </button>
+            )}
+          </section>
+        )}
+
+        <section className="text-center">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/assessment">Retake assessment</Link>
+          </Button>
         </section>
       </div>
     </main>
