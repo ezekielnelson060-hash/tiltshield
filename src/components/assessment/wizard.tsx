@@ -18,6 +18,9 @@ const defaults: AssessmentAnswers = {
   phone_backup_plan: false,
   alt_payment_method: false,
   food_buffer_days: 3,
+  offline_value_store: 0,
+  digital_payment_dependency: 4,
+  food_source_diversity: false,
 };
 
 interface Props {
