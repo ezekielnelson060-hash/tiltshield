@@ -2,8 +2,6 @@ import type {
   AssessmentAnswers,
   CategoryScores,
   Vulnerability,
-  WhatIfResult,
-  WhatIfScenario,
 } from "@/types";
 
 /** Calculate 0-100 readiness scores per category */
@@ -11,12 +9,19 @@ export function calculateCategoryScores(
   a: AssessmentAnswers
 ): CategoryScores {
   const moneyBase = Math.min((a.emergency_fund_months / 6) * 100, 100);
-  const money =
+  let money =
     a.income_sources <= 1 ? Math.max(0, moneyBase - 20) : moneyBase;
+  if ((a.offline_value_store || 0) >= 3) money = Math.min(100, money + 18);
+  else if ((a.offline_value_store || 0) === 2) money = Math.min(100, money + 12);
+  else if ((a.offline_value_store || 0) === 1) money = Math.min(100, money + 8);
+  if ((a.digital_payment_dependency || 3) >= 4 && !a.alt_payment_method) {
+    money = Math.max(0, money - 12);
+  }
 
-  const food =
+  let food =
     Math.min((a.emergency_supply_weeks / 4) * 70, 70) +
     Math.min((a.food_buffer_days / 14) * 30, 30);
+  if (a.food_source_diversity) food = Math.min(100, food + 10);
 
   const digital =
     (a.has_offline_docs ? 40 : 0) +
@@ -81,8 +86,18 @@ const VULN_TEMPLATES: Record<
 > = {
   money: {
     title: "Financial dependency",
-    current: (a) =>
-      `You have ~${Math.round(a.emergency_fund_months * 30)} days of expenses covered.`,
+    current: (a) => {
+      const days = Math.round(a.emergency_fund_months * 30);
+      const off =
+        (a.offline_value_store || 0) >= 3
+          ? " You also hold cash and self-custody value outside pure bank apps."
+          : (a.offline_value_store || 0) === 2
+            ? " You hold some self-custody (e.g. hardware wallet) outside bank apps."
+            : (a.offline_value_store || 0) === 1
+              ? " You keep some cash outside the banking app."
+              : " Almost all value sits in banks or apps.";
+      return `You have ~${days} days of expenses covered.${off}`;
+    },
     next: "Build an emergency buffer equal to at least 90 days of expenses.",
     target: "90 days of runway",
     difficulty: "Medium",
@@ -140,7 +155,7 @@ const VULN_TEMPLATES: Record<
     current: (a) =>
       a.income_sources <= 1
         ? "Income depends on a single source."
-        : `You report ${a.income_sources} income sources — still document a disruption skill path.`,
+        : `You report ${a.income_sources} income sources \u2014 still document a disruption skill path.`,
     next: "Identify one skill or side income path you can activate within 30 days.",
     target: "At least one backup income or high-value skill",
     difficulty: "Hard",
@@ -215,133 +230,5 @@ export function calculateVulnerabilities(
   });
 }
 
-export function runWhatIf(
-  scenario: WhatIfScenario,
-  answers: AssessmentAnswers
-): WhatIfResult {
-  const expenses = Math.max(0, answers.monthly_expenses || 0);
-  const months = Math.max(0, answers.emergency_fund_months || 0);
-  const savings = months * expenses;
-  const runwayDays = expenses > 0 ? Math.round(months * 30) : Math.round(months * 30);
-
-  switch (scenario) {
-    case "income_stops": {
-      const severity =
-        runwayDays < 14
-          ? "critical"
-          : runwayDays < 45
-            ? "high"
-            : runwayDays < 90
-              ? "medium"
-              : "low";
-      const incomeNote =
-        answers.income_sources <= 1
-          ? " You depend on a single income source, so this scenario hits harder."
-          : answers.income_sources === 2
-            ? " Two income sources may cushion a partial loss, but a full stop still drains your buffer."
-            : " Multiple income sources help, but a simultaneous stop still tests your cash runway.";
-      return {
-        scenario,
-        title: "What if your income stopped today?",
-        summary:
-          runwayDays === 0
-            ? "You have effectively no cash runway at your current expense level."
-            : `You can operate for about ${runwayDays} days on savings alone.`,
-        detail:
-          expenses > 0
-            ? `At $${expenses.toLocaleString()}/month essential spend and ~$${Math.round(savings).toLocaleString()} accessible savings, the math is savings ÷ daily burn.${incomeNote}`
-            : `Set your essential monthly expenses in a new assessment so this number is precise.${incomeNote}`,
-        severity,
-        recommendation:
-          runwayDays < 90
-            ? `Target 90 days of expenses (about $${Math.round(expenses * 3).toLocaleString()}). Open a dedicated buffer and automate a small weekly transfer until you get there.`
-            : "Maintain at least 90 days of expenses and review the number every quarter.",
-      };
-    }
-    case "banking_down": {
-      const hasAlt = answers.alt_payment_method;
-      return {
-        scenario,
-        title: "What if banking is down for 72 hours?",
-        summary: hasAlt
-          ? "You reported an alternative payment method you can actually use."
-          : "You have no alternative payment method if cards and bank apps fail.",
-        detail: hasAlt
-          ? "Cash, a second card, or another tested method covers short outages. Confirm it still works this month."
-          : "For 72 hours you could not pay transport or food without a backup. This is one of the most common real disruptions.",
-        severity: hasAlt ? "low" : "critical",
-        recommendation: hasAlt
-          ? "Keep a modest cash reserve refreshed and test your backup method once a quarter."
-          : "Today: withdraw a cash reserve you can store safely, and activate one non-primary card or payment option. Test both.",
-      };
-    }
-    case "phone_lost": {
-      const recovery = [
-        answers.phone_backup_plan ? "account recovery plan" : null,
-        answers.offline_contacts ? "offline contacts" : null,
-        answers.has_offline_docs ? "offline documents" : null,
-      ].filter(Boolean) as string[];
-      const missing = [
-        !answers.phone_backup_plan ? "2FA / account recovery" : null,
-        !answers.offline_contacts ? "offline contact list" : null,
-        !answers.has_offline_docs ? "offline document copies" : null,
-      ].filter(Boolean) as string[];
-      const ok = recovery.length === 3;
-      const partial = recovery.length > 0;
-      return {
-        scenario,
-        title: "What if your phone was lost today?",
-        summary: ok
-          ? "You have recovery paths for accounts, contacts, and documents."
-          : partial
-            ? `Partial protection — you have ${recovery.join(", ")}. Still missing: ${missing.join(", ")}.`
-            : "Critical accounts, contacts, and documents still depend on this one device.",
-        detail: ok
-          ? "Losing the handset would be painful but recoverable."
-          : "Phone loss is common. Without offline contacts and recovery codes, banking, email, and identity recovery stall for days.",
-        severity: ok ? "low" : partial ? "high" : "critical",
-        recommendation: missing.length
-          ? `Do this next: fix ${missing[0]}. Export recovery codes, write key numbers on paper, and keep offline copies of IDs.`
-          : "Re-test recovery from a second device every six months.",
-      };
-    }
-    case "food_prices_double": {
-      const monthlyFood = Math.round(expenses * 0.25);
-      const extra = monthlyFood;
-      const bufferCash = savings;
-      const monthsCovered = extra > 0 ? Math.floor(bufferCash / extra) : 99;
-      const pantryDays = Math.max(0, answers.food_buffer_days || 0);
-      const supplyWeeks = Math.max(0, answers.emergency_supply_weeks || 0);
-      return {
-        scenario,
-        title: "What if food prices doubled?",
-        summary:
-          expenses > 0
-            ? `Your food line roughly jumps by about $${extra.toLocaleString()} per month (≈25% of essential spend).`
-            : "Add monthly expenses in your assessment to size food exposure in dollars.",
-        detail: `You currently report ~${pantryDays} days of food on hand and ~${supplyWeeks} weeks of emergency stores. Your cash buffer covers roughly ${monthsCovered} month(s) of that extra food cost before other essentials suffer.`,
-        severity:
-          monthsCovered >= 6 && pantryDays >= 14
-            ? "low"
-            : monthsCovered >= 3 || pantryDays >= 7
-              ? "medium"
-              : "high",
-        recommendation:
-          pantryDays < 14
-            ? `Build toward 14+ days of food you already eat, then expand shelf-stable stores. The extra $${extra.toLocaleString()}/month pressure is real if prices spike.`
-            : "Keep rotating pantry stock and treat food reserves as part of your emergency fund, not optional.",
-      };
-    }
-    default:
-      return {
-        scenario,
-        title: "Scenario",
-        summary: "Unavailable",
-        detail: "",
-        severity: "medium",
-        recommendation: "Re-run your assessment.",
-      };
-  }
-}
-
+export { runWhatIf } from "./whatif";
 export { ACTION_LIBRARY, pickTodaysMove } from "./actions";
