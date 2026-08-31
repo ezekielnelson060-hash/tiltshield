@@ -12,6 +12,7 @@ const NAV = [
   { href: "/app/risk", label: "My Risk", icon: "\u25c7" },
   { href: "/app/what-if", label: "What If?", icon: "\u25c7" },
   { href: "/app/calculators", label: "Calculators", icon: "\u25c7" },
+  { href: "/app/prepare", label: "Prepare", icon: "\u25c7" },
   { href: "/app/actions", label: "Actions", icon: "\u25c7" },
   { href: "/app/vault", label: "Vault", icon: "\u25c7" },
   { href: "/app/guides", label: "Guides", icon: "\u25c7" },
@@ -20,7 +21,7 @@ const NAV = [
 
 const MOBILE_NAV = [
   { href: "/app/overview", label: "Home" },
-  { href: "/app/risk", label: "Risk" },
+  { href: "/app/prepare", label: "Prepare" },
   { href: "/app/what-if", label: "What If" },
   { href: "/app/calculators", label: "Calc" },
   { href: "/app/actions", label: "Actions" },
@@ -118,10 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </div>
-          <Link
-            href="/app/settings"
-            className="mt-4 block text-xs text-zinc-600 hover:text-zinc-400"
-          >
+          <Link href="/app/settings" className="mt-4 block text-xs text-zinc-600 hover:text-zinc-400">
             Settings
           </Link>
           <Link href="/" className="mt-1 block text-xs text-zinc-700 hover:text-zinc-500">
@@ -133,9 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-12 items-center justify-between border-b border-zinc-900 px-4 lg:px-8">
           <p className="text-xs text-zinc-500 lg:hidden">Tiltshield</p>
-          <p className="hidden text-xs text-zinc-500 lg:block">
-            Score {scores.overall}/100
-          </p>
+          <p className="hidden text-xs text-zinc-500 lg:block">Score {scores.overall}/100</p>
           <div className="flex items-center gap-3 text-xs">
             <Link href="/app/settings" className="text-zinc-500 hover:text-zinc-300">
               Settings
