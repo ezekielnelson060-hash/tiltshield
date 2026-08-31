@@ -11,6 +11,7 @@ const NAV = [
   { href: "/app/overview", label: "Overview", icon: "\u25c9" },
   { href: "/app/risk", label: "My Risk", icon: "\u25c7" },
   { href: "/app/what-if", label: "What If?", icon: "\u25c7" },
+  { href: "/app/calculators", label: "Calculators", icon: "\u25c7" },
   { href: "/app/actions", label: "Actions", icon: "\u25c7" },
   { href: "/app/vault", label: "Vault", icon: "\u25c7" },
   { href: "/app/guides", label: "Guides", icon: "\u25c7" },
@@ -21,8 +22,8 @@ const MOBILE_NAV = [
   { href: "/app/overview", label: "Home" },
   { href: "/app/risk", label: "Risk" },
   { href: "/app/what-if", label: "What If" },
+  { href: "/app/calculators", label: "Calc" },
   { href: "/app/actions", label: "Actions" },
-  { href: "/app/history", label: "More" },
 ];
 
 const RESILIENCE_KEYS: (keyof CategoryScores)[] = [
@@ -67,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">
-        Loading\u2026
+        Loading…
       </div>
     );
   }
