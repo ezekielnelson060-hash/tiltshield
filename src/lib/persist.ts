@@ -1,12 +1,25 @@
 import { createClient } from "@/lib/supabase/client";
 import type { TiltSession, HistoryEntry } from "@/lib/session";
-import { getActiveMemberId } from "@/lib/family";
-import type { FamilyMember } from "@/lib/family";
+import {
+  getActiveMemberId,
+  loadFamilyMembers,
+  saveFamilyMembers,
+  patchMemberCloudId,
+  type FamilyMember,
+} from "@/lib/family";
 
 function isUuid(s: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     s
   );
+}
+
+function resolveMemberUuid(memberId: string): string | null {
+  if (memberId === "self") return null;
+  const m = loadFamilyMembers().find((x) => x.id === memberId);
+  if (m?.cloudId && isUuid(m.cloudId)) return m.cloudId;
+  if (isUuid(memberId)) return memberId;
+  return null;
 }
 
 export async function persistAssessmentToCloud(
@@ -20,6 +33,7 @@ export async function persistAssessmentToCloud(
     if (!user) return false;
 
     const memberId = session.memberId || getActiveMemberId();
+    const memberUuid = resolveMemberUuid(memberId);
 
     await supabase.from("profiles").upsert(
       {
@@ -54,7 +68,7 @@ export async function persistAssessmentToCloud(
         has_hard_assets: session.answers.has_hard_assets,
         answers_json: session.answers,
         overall_score: session.scores.overall,
-        member_id: memberId !== "self" && isUuid(memberId) ? memberId : null,
+        member_id: memberUuid,
       })
       .select("id")
       .single();
@@ -114,15 +128,12 @@ export async function loadHistoryFromCloud(): Promise<HistoryEntry[]> {
 
     const { data, error } = await supabase
       .from("category_scores")
-      .select("overall, money, food, digital, emergency, updated_at, assessment_id")
+      .select("overall, money, food, digital, emergency, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: true })
       .limit(48);
 
-    if (error || !data) {
-      console.warn("loadHistoryFromCloud", error?.message);
-      return [];
-    }
+    if (error || !data) return [];
 
     return data.map((row) => ({
       date: row.updated_at || new Date().toISOString(),
@@ -133,13 +144,61 @@ export async function loadHistoryFromCloud(): Promise<HistoryEntry[]> {
       emergency: row.emergency ?? undefined,
       source: "cloud" as const,
     }));
-  } catch (e) {
-    console.warn("loadHistoryFromCloud", e);
+  } catch {
     return [];
   }
 }
 
-export async function syncFamilyToCloud(members: FamilyMember[]): Promise<void> {
+export async function syncFamilyToCloud(): Promise<FamilyMember[]> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return loadFamilyMembers();
+
+    const members = loadFamilyMembers();
+
+    for (const m of members) {
+      if (m.id === "self") continue;
+
+      if (m.cloudId && isUuid(m.cloudId)) {
+        await supabase.from("family_members").upsert({
+          id: m.cloudId,
+          owner_id: user.id,
+          name: m.name,
+          relationship: m.relationship,
+          is_primary: m.isPrimary,
+          readiness_score: m.readinessScore ?? 0,
+        });
+        continue;
+      }
+
+      const { data, error } = await supabase
+        .from("family_members")
+        .insert({
+          owner_id: user.id,
+          name: m.name,
+          relationship: m.relationship,
+          is_primary: m.isPrimary,
+          readiness_score: m.readinessScore ?? 0,
+        })
+        .select("id")
+        .single();
+
+      if (!error && data?.id) {
+        patchMemberCloudId(m.id, data.id as string);
+      }
+    }
+
+    return loadFamilyMembers();
+  } catch (e) {
+    console.warn("syncFamilyToCloud", e);
+    return loadFamilyMembers();
+  }
+}
+
+export async function loadFamilyFromCloud(): Promise<void> {
   try {
     const supabase = createClient();
     const {
@@ -147,56 +206,57 @@ export async function syncFamilyToCloud(members: FamilyMember[]): Promise<void> 
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    for (const m of members) {
-      if (m.id === "self") continue;
-      if (isUuid(m.id)) {
-        await supabase.from("family_members").upsert({
-          id: m.id,
-          owner_id: user.id,
-          name: m.name,
-          relationship: m.relationship,
-          is_primary: m.isPrimary,
-          readiness_score: m.readinessScore ?? 0,
-        });
-      } else {
-        await supabase.from("family_members").insert({
-          owner_id: user.id,
-          name: m.name,
-          relationship: m.relationship,
-          is_primary: m.isPrimary,
-          readiness_score: m.readinessScore ?? 0,
-        });
-      }
-    }
-  } catch (e) {
-    console.warn("syncFamilyToCloud", e);
-  }
-}
-
-export async function loadFamilyFromCloud(): Promise<FamilyMember[]> {
-  try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return [];
-
     const { data, error } = await supabase
       .from("family_members")
       .select("*")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true });
 
-    if (error || !data) return [];
+    if (error || !data?.length) return;
 
-    return data.map((r) => ({
-      id: r.id as string,
-      name: r.name as string,
-      relationship: (r.relationship as FamilyMember["relationship"]) || "other",
-      isPrimary: !!r.is_primary,
-      readinessScore: r.readiness_score ?? 0,
-    }));
+    const local = loadFamilyMembers();
+    const self = local.find((m) => m.id === "self") || {
+      id: "self",
+      name: "Me",
+      relationship: "self" as const,
+      isPrimary: true,
+    };
+
+    const merged: FamilyMember[] = [self];
+    for (const r of data) {
+      const cloudId = r.id as string;
+      const existing = local.find((m) => m.cloudId === cloudId);
+      merged.push({
+        id: existing?.id || cloudId,
+        cloudId,
+        name: r.name as string,
+        relationship: (r.relationship as FamilyMember["relationship"]) || "other",
+        isPrimary: !!r.is_primary,
+        readinessScore: r.readiness_score ?? 0,
+      });
+    }
+    saveFamilyMembers(merged);
   } catch {
-    return [];
+    /* */
+  }
+}
+
+export async function setSubscriptionOnProfile(
+  status: "lifetime" | "family" | "active"
+): Promise<void> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase
+      .from("profiles")
+      .upsert(
+        { id: user.id, subscription_status: status },
+        { onConflict: "id" }
+      );
+  } catch {
+    /* */
   }
 }
