@@ -6,189 +6,149 @@ import {
   loadSession,
   loadHistory,
   daysSinceLastAssessment,
-  mergeCloudHistory,
-  type TiltSession,
   type HistoryEntry,
 } from "@/lib/session";
 import { loadHistoryFromCloud } from "@/lib/persist";
 import { getActiveMemberId } from "@/lib/family";
+import { AppTopBar } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function HistoryPage() {
-  const [session, setSession] = useState<TiltSession | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [daysSince, setDaysSince] = useState<number | null>(null);
-  const [syncing, setSyncing] = useState(false);
+  const [overall, setOverall] = useState(0);
 
   useEffect(() => {
     const mid = getActiveMemberId();
-    setSession(loadSession(mid));
+    const s = loadSession(mid);
+    setOverall(s?.scores.overall ?? 0);
     setHistory(loadHistory(mid));
     setDaysSince(daysSinceLastAssessment(mid));
-    setSyncing(true);
     void (async () => {
-      const cloud = await loadHistoryFromCloud();
-      if (cloud.length) {
-        mergeCloudHistory(cloud);
-        setHistory(loadHistory(mid));
-      }
-      setSyncing(false);
+      await loadHistoryFromCloud();
+      setHistory(loadHistory(mid));
     })();
   }, []);
 
-  if (!session && history.length === 0) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-zinc-400">No assessments yet.</p>
-        <Button asChild className="mt-4">
-          <Link href="/assessment">Get my readiness score</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  const current =
-    session?.scores.overall ?? history[history.length - 1]?.overall ?? 0;
-  const prev = history.length >= 2 ? history[history.length - 2].overall : null;
-  const delta = prev != null ? current - prev : null;
-  const maxScore = Math.max(...history.map((h) => h.overall), current, 1);
+  const latest = history[0]?.overall ?? overall;
+  const prev = history[1]?.overall;
+  const change = prev != null ? latest - prev : null;
+  const maxScore = Math.max(100, ...history.map((h) => h.overall), 1);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">History</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Local + cloud score history. Retake monthly to see preparation move the needle.
-          {syncing && " Syncing…"}
-        </p>
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+      <AppTopBar title="History" backHref="/app/more" />
+      <p className="-mt-2 text-sm text-zinc-500">
+        Your resilience score over time. Retake after real changes — cash, food,
+        family, or work — to see the needle move.
+      </p>
+
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: "Latest", value: String(latest) },
+          {
+            label: "Change",
+            value:
+              change == null ? "—" : change > 0 ? `+${change}` : String(change),
+          },
+          { label: "Checks", value: String(history.length || 1) },
+        ].map((c) => (
+          <div
+            key={c.label}
+            className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-4 text-center"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              {c.label}
+            </p>
+            <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-50">
+              {c.value}
+            </p>
+          </div>
+        ))}
       </div>
 
-      {daysSince != null && daysSince >= 28 && (
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-          Last full assessment was about <strong>{daysSince} days</strong> ago.
-          <div className="mt-3">
-            <Button asChild size="sm">
-              <Link href="/assessment">Retake assessment</Link>
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <section className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500">Latest</p>
-          <p className="mt-1 text-2xl font-bold text-zinc-50">{current}</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500">Change</p>
-          <p
-            className={`mt-1 text-2xl font-bold ${
-              delta == null
-                ? "text-zinc-500"
-                : delta > 0
-                  ? "text-emerald-400"
-                  : delta < 0
-                    ? "text-red-400"
-                    : "text-zinc-400"
-            }`}
-          >
-            {delta != null ? (delta > 0 ? `+${delta}` : delta) : "—"}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-          <p className="text-[10px] uppercase tracking-wider text-zinc-500">Checks</p>
-          <p className="mt-1 text-2xl font-bold text-zinc-50">{history.length || 1}</p>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+      <section className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
           Score timeline
         </p>
-        <div className="mt-6 flex h-36 items-end gap-1.5 sm:gap-2">
-          {(history.length > 0
-            ? history
-            : [
-                {
-                  date: session?.completedAt || new Date().toISOString(),
-                  overall: current,
-                },
-              ]
-          ).map((h, i) => (
-            <div key={i} className="flex flex-1 flex-col items-center gap-1">
-              <span className="text-[10px] tabular-nums text-zinc-500">{h.overall}</span>
-              <div
-                className="w-full max-w-[48px] rounded-t bg-emerald-500/80"
-                style={{
-                  height: `${Math.max(8, (h.overall / maxScore) * 100)}%`,
-                }}
-              />
-              <span className="text-[9px] text-zinc-600">
-                {new Date(h.date).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {history.length > 0 && (
-        <section className="space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-            Assessment log
+        {history.length === 0 ? (
+          <p className="mt-6 text-center text-sm text-zinc-500">
+            Complete an assessment to start your timeline.
           </p>
-          <ul className="space-y-2">
-            {[...history].reverse().map((h, i) => (
-              <li
-                key={`${h.date}-${i}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-800 px-4 py-3 text-sm"
-              >
-                <div>
-                  <p className="font-medium text-zinc-200">
-                    Score {h.overall}
-                    {h.runwayDays != null && (
-                      <span className="ml-2 text-xs font-normal text-zinc-500">
-                        · {h.runwayDays}d runway
-                      </span>
-                    )}
-                    {h.source === "cloud" && (
-                      <span className="ml-2 text-[10px] text-zinc-600">cloud</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    {new Date(h.date).toLocaleString()}
-                    {h.monthlyIncome != null && h.monthlyIncome > 0 && (
-                      <> · income ${h.monthlyIncome.toLocaleString()}</>
-                    )}
-                  </p>
+        ) : (
+          <div className="mt-6 flex h-36 items-end gap-2">
+            {[...history].reverse().slice(-8).map((h) => {
+              const pct = Math.max(8, (h.overall / maxScore) * 100);
+              const d = new Date(h.at);
+              const label = d.toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "short",
+              });
+              return (
+                <div
+                  key={h.at + h.overall}
+                  className="flex flex-1 flex-col items-center gap-2"
+                >
+                  <span className="text-[10px] tabular-nums text-zinc-400">
+                    {h.overall}
+                  </span>
+                  <div
+                    className="w-full max-w-[36px] rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400"
+                    style={{ height: `${pct}%` }}
+                  />
+                  <span className="text-[9px] text-zinc-600">{label}</span>
                 </div>
-                <div className="flex gap-2 text-[10px] text-zinc-500">
-                  {h.money != null && <span>Money {h.money}</span>}
-                  {h.food != null && <span>Food {h.food}</span>}
-                  {h.digital != null && <span>Digital {h.digital}</span>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-        <p className="text-sm text-zinc-400">
-          Complete Prepare and Actions, then retake. Rising score means less dependence when systems
-          shift.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button asChild size="sm">
-            <Link href="/assessment">Retake assessment</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/app/family">Family profiles</Link>
-          </Button>
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
+
+      <section className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Assessment log
+        </p>
+        {history.map((h) => (
+          <div
+            key={h.at + String(h.overall)}
+            className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
+          >
+            <div>
+              <p className="text-sm font-medium text-zinc-100">Score {h.overall}</p>
+              <p className="text-xs text-zinc-500">
+                {new Date(h.at).toLocaleString()}
+              </p>
+            </div>
+            <span
+              className={cn(
+                "text-xs font-medium",
+                h.overall >= 60 ? "text-emerald-400" : "text-amber-400"
+              )}
+            >
+              {h.overall >= 60 ? "Stronger" : "Build up"}
+            </span>
+          </div>
+        ))}
+        {history.length === 0 && (
+          <p className="text-sm text-zinc-500">No log entries yet.</p>
+        )}
+      </section>
+
+      <div className="flex flex-wrap gap-2">
+        <Button asChild size="sm">
+          <Link href="/assessment">Retake assessment</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href="/app/overview">Back to Today</Link>
+        </Button>
+      </div>
+
+      {daysSince != null && (
+        <p className="text-center text-xs text-zinc-600">
+          Last assessed {daysSince === 0 ? "today" : `${daysSince} day(s) ago`}
+        </p>
+      )}
     </div>
   );
 }
