@@ -36,6 +36,22 @@ const CATEGORY_TILES: {
   { key: "emergency", label: "Emergency", tint: "from-orange-500/20 to-orange-500/5" },
 ];
 
+function Sparkline() {
+  const pts = "0,28 20,22 40,24 60,14 80,16 100,8";
+  return (
+    <svg viewBox="0 0 100 32" className="mt-2 h-8 w-full max-w-[120px] text-emerald-400/80">
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={pts}
+      />
+    </svg>
+  );
+}
+
 function ScoreRing({ score }: { score: number }) {
   const r = 36;
   const c = 2 * Math.PI * r;
@@ -207,7 +223,7 @@ export default function TodayPage() {
             Resilience Score
           </p>
           <div className="mt-3 flex items-center gap-4">
-            <div className="relative">
+            <div className="relative shrink-0">
               <ScoreRing score={scores.overall} />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-2xl font-bold tabular-nums text-zinc-50">
@@ -216,10 +232,11 @@ export default function TodayPage() {
                 <span className="text-[10px] text-zinc-600">/ 100</span>
               </div>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-emerald-400">{label}</p>
               <p className="mt-1 text-xs text-zinc-500">Based on your latest assessment</p>
-              <Link href="/app/history" className="mt-2 inline-block text-xs text-emerald-500 hover:underline">
+              <Sparkline />
+              <Link href="/app/history" className="mt-1 inline-block text-xs text-emerald-500 hover:underline">
                 View trend →
               </Link>
             </div>
@@ -331,7 +348,7 @@ export default function TodayPage() {
             </Link>
           </div>
           <div className="mt-3 space-y-2 text-sm text-zinc-300">
-            {["Pharmacy", "Grocery Store", "ATM", "Medical Clinic"].map((label, i) => (
+            {["Pharmacy", "Grocery Store", "ATM", "Medical Clinic"].map((label) => (
               <div
                 key={label}
                 className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-[#0a0f18] px-3 py-2"
