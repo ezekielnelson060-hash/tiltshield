@@ -15,6 +15,19 @@ export type IntelItem = {
 
 export const INTEL_LIBRARY: IntelItem[] = [
   {
+    id: "payment-rails",
+    scope: "for_you",
+    title: "Heavy reliance on a single payment rail increases exposure",
+    summary:
+      "If cards, one bank app, or one network fails, households without cash or a second method lose access to essentials quickly.",
+    impact: "high",
+    category: "Financial",
+    hoursAgo: 1,
+    relevanceKeys: ["money", "digital", "alt_payment"],
+    actionHint:
+      "Confirm one backup payment method and a small cash float for essentials. Test both this month.",
+  },
+  {
     id: "pay-net",
     scope: "global",
     title: "Major payment network disruption reported",
@@ -107,7 +120,8 @@ export function personalizeIntel(opts: {
     )
       score += 3;
     if (opts.incomeSources === 1 && item.id === "jobs") score += 4;
-    if (opts.hasAltPayment === false && item.id === "pay-net") score += 3;
+    if (opts.hasAltPayment === false && (item.id === "pay-net" || item.id === "payment-rails"))
+      score += 3;
     if (opts.overall < 50 && item.impact !== "low") score += 1;
     return { item, score };
   });
