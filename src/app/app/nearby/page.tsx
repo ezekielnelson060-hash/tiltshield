@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import {
   NEARBY_CATEGORIES,
   searchNearbyPlaces,
-  osmEmbedUrl,
   type NearbyCategory,
   type NearbyPlace,
 } from "@/lib/nearby";
@@ -12,6 +12,18 @@ import { formatDistance } from "@/lib/locale";
 import { AppTopBar } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const NearbyMap = dynamic(
+  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-56 items-center justify-center rounded-2xl border border-white/[0.08] text-xs text-zinc-500 sm:h-72">
+        Loading map…
+      </div>
+    ),
+  }
+);
 
 export default function NearbyPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -24,7 +36,7 @@ export default function NearbyPage() {
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setError("Location unavailable — search still works worldwide.");
+      setError("Location unavailable — search still works.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -36,39 +48,36 @@ export default function NearbyPage() {
 
   const cat = NEARBY_CATEGORIES.find((c) => c.id === active);
 
-  async function runSearch(term: string) {
-    const q = term.trim();
-    if (!q) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const results = await searchNearbyPlaces(q, coords);
-      setPlaces(results);
-      setSelected(results[0] || null);
-      if (!results.length) setError("No venues found. Try another term.");
-    } catch {
-      setError("Search failed. Check connection and try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const runSearch = useCallback(
+    async (term: string) => {
+      const q = term.trim();
+      if (!q) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const results = await searchNearbyPlaces(q, coords);
+        setPlaces(results);
+        setSelected(results[0] || null);
+        if (!results.length) setError("No venues found. Try another term.");
+      } catch {
+        setError("Search failed. Check connection.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [coords]
+  );
 
   useEffect(() => {
     if (cat) void runSearch(cat.query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, coords?.lat, coords?.lng]);
 
-  const mapUrl = useMemo(() => {
-    if (selected) return osmEmbedUrl(selected.lat, selected.lon);
-    if (coords) return osmEmbedUrl(coords.lat, coords.lng);
-    return null;
-  }, [selected, coords]);
-
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 lg:px-8">
       <AppTopBar title="Nearby" backHref="/app/overview" />
       <p className="-mt-2 text-sm text-zinc-500">
-        Search venues inside Tiltshield — map + results stay in the app.
+        Search inside Tiltshield — multi-pin map, results stay here.
       </p>
 
       <div className="relative">
@@ -113,31 +122,24 @@ export default function NearbyPage() {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a1018]">
-        {mapUrl ? (
-          <iframe
-            title="Nearby map"
-            src={mapUrl}
-            className="h-52 w-full border-0 sm:h-64"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-52 items-center justify-center text-xs text-zinc-500 sm:h-64">
-            Locating map…
-          </div>
-        )}
-        <div className="border-t border-white/[0.06] px-4 py-3">
-          <p className="text-sm font-medium text-zinc-100">
-            {selected?.name || cat?.label || "Search"}
-          </p>
-          <p className="mt-0.5 text-[11px] text-zinc-500">
-            {selected?.address
-              ? selected.address.slice(0, 90) +
-                (selected.address.length > 90 ? "…" : "")
-              : error || "Pick a result below"}
-          </p>
+      <NearbyMap
+        places={places}
+        selected={selected}
+        user={coords}
+        onSelect={setSelected}
+      />
+
+      {selected && (
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 px-4 py-3">
+          <p className="text-sm font-medium text-zinc-50">{selected.name}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">{selected.address}</p>
+          {selected.distanceKm != null && (
+            <p className="mt-1 text-[11px] text-emerald-400/90">
+              {formatDistance(selected.distanceKm)} away
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
       <section className="space-y-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -157,7 +159,7 @@ export default function NearbyPage() {
                   : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
               )}
             >
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-sm text-emerald-400">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
                 📍
               </span>
               <div className="min-w-0 flex-1">
@@ -173,7 +175,7 @@ export default function NearbyPage() {
         })}
         {!loading && places.length === 0 && (
           <p className="py-8 text-center text-sm text-zinc-500">
-            Search or tap a category to load venues near you.
+            {error || "Search or tap a category to load venues."}
           </p>
         )}
       </section>
