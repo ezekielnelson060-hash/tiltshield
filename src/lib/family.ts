@@ -6,10 +6,12 @@ export interface FamilyMember {
   relationship: FamilyRelation;
   isPrimary: boolean;
   readinessScore?: number;
+  cloudId?: string;
 }
 
 const MEMBERS_KEY = "tiltshield_family_members";
 const ACTIVE_KEY = "tiltshield_active_member";
+const FAMILY_KEY = "tiltshield_family";
 
 export function loadFamilyMembers(): FamilyMember[] {
   if (typeof window === "undefined") return [];
@@ -44,6 +46,9 @@ export function getActiveMemberId(): string {
 export function setActiveMemberId(id: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem(ACTIVE_KEY, id);
+  window.dispatchEvent(
+    new CustomEvent("tiltshield:member-change", { detail: { id } })
+  );
 }
 
 export function getActiveMember(): FamilyMember {
@@ -69,29 +74,37 @@ export function addFamilyMember(
 
 export function removeFamilyMember(id: string) {
   if (id === "self") return;
-  const members = loadFamilyMembers().filter((m) => m.id !== id);
-  saveFamilyMembers(members);
+  saveFamilyMembers(loadFamilyMembers().filter((m) => m.id !== id));
   if (getActiveMemberId() === id) setActiveMemberId("self");
 }
 
 export function updateMemberScore(id: string, score: number) {
-  const members = loadFamilyMembers().map((m) =>
-    m.id === id ? { ...m, readinessScore: score } : m
+  saveFamilyMembers(
+    loadFamilyMembers().map((m) =>
+      m.id === id ? { ...m, readinessScore: score } : m
+    )
   );
-  saveFamilyMembers(members);
+}
+
+export function patchMemberCloudId(localId: string, cloudId: string) {
+  saveFamilyMembers(
+    loadFamilyMembers().map((m) =>
+      m.id === localId ? { ...m, cloudId } : m
+    )
+  );
 }
 
 export function isFamilyUnlocked(): boolean {
   if (typeof window === "undefined") return false;
   if (localStorage.getItem("tiltshield_lifetime") === "1") return true;
-  if (localStorage.getItem("tiltshield_family") === "1") return true;
+  if (localStorage.getItem(FAMILY_KEY) === "1") return true;
   return false;
 }
 
 export function setFamilyUnlocked(v: boolean) {
   if (typeof window === "undefined") return;
-  if (v) localStorage.setItem("tiltshield_family", "1");
-  else localStorage.removeItem("tiltshield_family");
+  if (v) localStorage.setItem(FAMILY_KEY, "1");
+  else localStorage.removeItem(FAMILY_KEY);
 }
 
 export const RELATION_LABELS: Record<FamilyRelation, string> = {

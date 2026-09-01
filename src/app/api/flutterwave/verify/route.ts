@@ -5,11 +5,16 @@ export async function GET(req: NextRequest) {
   const transactionId = req.nextUrl.searchParams.get("transaction_id");
 
   if (!secret) {
-    return NextResponse.json({ error: "Flutterwave not configured" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Flutterwave not configured" },
+      { status: 503 }
+    );
   }
-
   if (!transactionId) {
-    return NextResponse.json({ error: "Missing transaction_id" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing transaction_id" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -20,8 +25,15 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
 
     if (data.status === "success" && data.data?.status === "successful") {
+      const metaProduct = String(data.data?.meta?.product || "");
+      const txRef = String(data.data?.tx_ref || "");
+      let product: "lifetime" | "family" = "lifetime";
+      if (metaProduct.includes("family") || txRef.includes("family")) {
+        product = "family";
+      }
       return NextResponse.json({
         paid: true,
+        product,
         amount: data.data.amount,
         currency: data.data.currency,
         email: data.data.customer?.email,
