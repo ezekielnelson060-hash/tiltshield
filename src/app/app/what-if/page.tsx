@@ -15,6 +15,7 @@ const SCENARIOS: {
   label: string;
   prompt: string;
   group: Group;
+  icon: string;
   free?: boolean;
 }[] = [
   {
@@ -22,6 +23,7 @@ const SCENARIOS: {
     label: "Income stops",
     prompt: "What if your income stopped today?",
     group: "Money",
+    icon: "💸",
     free: true,
   },
   {
@@ -29,52 +31,64 @@ const SCENARIOS: {
     label: "Job loss",
     prompt: "What if you lost your primary job?",
     group: "Money",
+    icon: "💼",
   },
   {
     id: "banking_down",
     label: "Banking unavailable",
     prompt: "What if banks and cards were down?",
     group: "Money",
+    icon: "🏦",
   },
   {
     id: "digital_payments_only",
     label: "Payment network issue",
     prompt: "What if digital payments stopped working?",
     group: "Money",
+    icon: "📱",
   },
   {
     id: "phone_lost",
     label: "Phone lost",
     prompt: "What if your phone was gone this afternoon?",
     group: "Digital",
+    icon: "📵",
   },
   {
     id: "internet_outage",
     label: "Internet outage",
     prompt: "What if the internet was down for 48 hours?",
     group: "Digital",
+    icon: "📡",
   },
   {
     id: "power_grid",
     label: "Power outage",
     prompt: "What if you lost power in your area?",
     group: "Essentials",
+    icon: "⚡",
   },
   {
     id: "medical_emergency",
     label: "Medical shock",
     prompt: "What if a sudden medical bill hit this month?",
     group: "Essentials",
+    icon: "🏥",
   },
   {
     id: "food_prices_double",
     label: "Fuel / food shock",
     prompt: "What if grocery prices doubled overnight?",
     group: "Essentials",
+    icon: "⛽",
   },
 ];
 
-const GROUPS: Group[] = ["Money", "Digital", "Essentials"];
+const GROUPS: { id: Group; label: string }[] = [
+  { id: "Money", label: "Financial" },
+  { id: "Digital", label: "Digital" },
+  { id: "Essentials", label: "Essentials" },
+];
 
 export default function WhatIfPage() {
   const [session, setSession] = useState<TiltSession | null>(null);
@@ -100,7 +114,7 @@ export default function WhatIfPage() {
     setTimeout(() => {
       setResult(runWhatIf(id, session.answers));
       setRunning(false);
-    }, 450);
+    }, 400);
   }
 
   if (!session) {
@@ -123,44 +137,53 @@ export default function WhatIfPage() {
         <p className="mt-1 text-sm text-zinc-500">Stress-test your life.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: "days runway", value: String(runway) },
-          { label: "income source", value: String(session.answers.income_sources || 1) },
-          {
-            label: "backup payments",
-            value: session.answers.alt_payment_method ? "1" : "0",
-          },
-        ].map((b) => (
-          <div
-            key={b.label}
-            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-center"
-          >
-            <p className="text-xl font-bold tabular-nums text-zinc-50">{b.value}</p>
-            <p className="mt-0.5 text-[10px] text-zinc-500">{b.label}</p>
-          </div>
-        ))}
+      <div>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Your baseline
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "days runway", value: String(runway) },
+            {
+              label: "income source",
+              value: String(session.answers.income_sources || 1),
+            },
+            {
+              label: "backup payments",
+              value: session.answers.alt_payment_method ? "1" : "0",
+            },
+          ].map((b) => (
+            <div
+              key={b.label}
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3.5 text-center"
+            >
+              <p className="text-2xl font-bold tabular-nums text-zinc-50">{b.value}</p>
+              <p className="mt-1 text-[10px] text-zinc-500">{b.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {GROUPS.map((group) => (
-        <section key={group} className="space-y-2">
+        <section key={group.id} className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            {group === "Money" ? "Financial" : group}
+            {group.label}
           </p>
           <div className="space-y-2">
-            {SCENARIOS.filter((s) => s.group === group).map((s) => (
+            {SCENARIOS.filter((s) => s.group === group.id).map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => run(s.id, s.free)}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-left transition",
+                  "flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition",
                   active === s.id
                     ? "border-emerald-500/40 bg-emerald-500/10"
                     : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
                 )}
               >
-                <div>
+                <span className="text-xl leading-none">{s.icon}</span>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-zinc-100">{s.label}</p>
                   <p className="mt-0.5 text-xs text-zinc-500">{s.prompt}</p>
                 </div>
@@ -183,19 +206,19 @@ export default function WhatIfPage() {
             className={cn(
               "rounded-2xl border p-6",
               result.severity === "critical" || result.severity === "high"
-                ? "border-red-500/25 bg-red-500/10"
+                ? "border-red-500/30 bg-red-500/10"
                 : result.severity === "medium"
-                  ? "border-amber-500/25 bg-amber-500/10"
-                  : "border-emerald-500/25 bg-emerald-500/10"
+                  ? "border-amber-500/30 bg-amber-500/10"
+                  : "border-emerald-500/30 bg-emerald-500/10"
             )}
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
               {result.title}
             </p>
-            <p className="mt-4 text-4xl font-bold tabular-nums text-zinc-50">
+            <p className="mt-4 text-4xl font-bold tabular-nums tracking-tight text-zinc-50">
               {result.summary.match(/\d+/)?.[0] || "—"}
               <span className="ml-2 text-base font-normal text-zinc-400">
-                {result.summary.includes("days") ? "days" : ""}
+                {result.summary.toLowerCase().includes("day") ? "days" : ""}
               </span>
             </p>
             <p className="mt-3 text-sm leading-relaxed text-zinc-300">{result.summary}</p>
@@ -209,14 +232,9 @@ export default function WhatIfPage() {
               What you should do
             </p>
             <p className="mt-2 text-sm text-zinc-200">{result.recommendation}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button asChild size="sm">
-                <Link href="/app/prepare">See how to improve</Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href="/app/risk">Open risk</Link>
-              </Button>
-            </div>
+            <Button asChild size="sm" className="mt-4">
+              <Link href="/app/prepare">See how to improve</Link>
+            </Button>
           </div>
         </div>
       )}
