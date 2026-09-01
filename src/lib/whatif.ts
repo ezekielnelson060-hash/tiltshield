@@ -1,4 +1,5 @@
 import type { AssessmentAnswers, WhatIfResult, WhatIfScenario } from "@/types";
+import { formatMoney } from "@/lib/locale";
 
 export function runWhatIf(
   scenario: WhatIfScenario,
@@ -14,13 +15,19 @@ export function runWhatIf(
   switch (scenario) {
     case "income_stops": {
       const severity =
-        runwayDays < 14 ? "critical" : runwayDays < 45 ? "high" : runwayDays < 90 ? "medium" : "low";
+        runwayDays < 14
+          ? "critical"
+          : runwayDays < 45
+            ? "high"
+            : runwayDays < 90
+              ? "medium"
+              : "low";
       const incomeNote =
         answers.income_sources <= 1
-          ? " You depend on a single income source, so this scenario hits harder."
+          ? " You depend on a single income source, so this hits harder."
           : answers.income_sources === 2
-            ? " Two income sources may cushion a partial loss, but a full stop still drains your buffer."
-            : " Multiple income sources help, but a simultaneous stop still tests your cash runway.";
+            ? " Two income sources may cushion a partial loss, but a full stop still drains the buffer."
+            : " Multiple sources help, but a simultaneous stop still tests cash runway.";
       return {
         scenario,
         title: "What if your income stopped today?",
@@ -30,12 +37,12 @@ export function runWhatIf(
             : `You can operate for about ${runwayDays} days on savings alone.`,
         detail:
           expenses > 0
-            ? `At $${expenses.toLocaleString()}/month essential spend and ~$${Math.round(savings).toLocaleString()} accessible savings.${incomeNote}`
+            ? `At ${formatMoney(expenses)}/month essential spend and ~${formatMoney(Math.round(savings))} accessible savings.${incomeNote}`
             : `Add monthly expenses for a precise runway.${incomeNote}`,
         severity,
         recommendation:
           runwayDays < 90
-            ? `Target 90 days (~$${Math.round(expenses * 3).toLocaleString()}). Automate a weekly buffer transfer.`
+            ? `Target 90 days (~${formatMoney(Math.round(expenses * 3))}). Automate a weekly buffer transfer.`
             : "Maintain at least 90 days of expenses and review quarterly.",
       };
     }
@@ -45,31 +52,39 @@ export function runWhatIf(
       return {
         scenario,
         title: "What if you lost your primary job?",
-        summary: `Job loss is longer than a short disruption. Your liquid runway is about ${runwayDays} days.`,
+        summary: `Job loss lasts longer than a short disruption. Your liquid runway is about ${runwayDays} days.`,
         detail:
           answers.income_sources <= 1
             ? "With one income source, job loss is a full stop until you replace it."
-            : `You report ${answers.income_sources} income sources \u2014 secondary income may soften the hit, but primary job loss still changes the math.`,
+            : "Other sources may reduce the hit, but primary-job loss still cuts most households sharply.",
         severity,
         recommendation:
-          "Map a 30-day job-search budget, cut non-essentials, and list skills you can monetize within two weeks.",
+          "Build runway toward 90 days and map one backup income path you could start within 30 days.",
       };
     }
     case "banking_down": {
-      const hasAlt = answers.alt_payment_method || offlineVal >= 1;
+      const hasAlt = !!answers.alt_payment_method;
+      const severity = !hasAlt
+        ? digiPay >= 4
+          ? "critical"
+          : "high"
+        : offlineVal > 0
+          ? "medium"
+          : "high";
       return {
         scenario,
-        title: "What if banking is down for 72 hours?",
+        title: "What if banks and cards failed for 72 hours?",
         summary: hasAlt
-          ? "You have some path to pay outside your primary bank app."
-          : "You have no clear alternative if cards and bank apps fail.",
-        detail: hasAlt
-          ? "Cash, secondary card, or offline value helps short outages. Confirm it still works this month."
-          : "For 72 hours, transport and food get hard without a tested backup.",
-        severity: hasAlt ? "low" : "critical",
+          ? "You have a backup payment path — test that it still works under stress."
+          : "You have no alternative payment method on record.",
+        detail:
+          offlineVal > 0
+            ? "Offline value (cash or self-custody) reduces total dependence on bank apps."
+            : "Without cash or a tested second rail, essentials become hard within hours.",
+        severity,
         recommendation: hasAlt
           ? "Refresh a modest cash reserve and test your backup quarterly."
-          : "Withdraw cash you can store safely and activate one non-primary payment option today.",
+          : "Set a small cash float and activate one non-primary payment option this week.",
       };
     }
     case "digital_payments_only": {
@@ -78,140 +93,120 @@ export function runWhatIf(
           ? "critical"
           : digiPay >= 4
             ? "high"
-            : digiPay >= 3
-              ? "medium"
-              : "low";
+            : "medium";
       return {
         scenario,
         title: "What if everyday payments required a digital account?",
         summary:
           digiPay >= 4
-            ? "Your day-to-day life already leans hard on digital payment rails."
-            : "You still mix in non-digital options some of the time.",
+            ? "Your day-to-day life is highly dependent on digital payment rails."
+            : "You already use non-digital options sometimes — that reduces exposure.",
         detail:
-          offlineVal >= 2
-            ? "Self-custody or hardware-held value gives you an option outside pure bank apps \u2014 only useful if you can still spend or convert when needed."
-            : offlineVal === 1
-              ? "Cash helps for local commerce. Larger digital-only corridors still need a plan."
-              : "If cards, apps, or account access tighten, you currently have little held outside those systems.",
+          "Payment networks, app outages, or account freezes can block grocery and transport when dependency is high.",
         severity,
         recommendation:
-          offlineVal === 0
-            ? "Build a cash float for local needs and learn one self-custody option (e.g. hardware wallet) with small amounts first \u2014 practice recovery before you need it."
-            : "Document recovery seeds offline, test restore on a spare device, and keep a cash float for 7\u201314 days of local spend.",
+          "Keep a tested secondary method and a small cash float for essentials. Practice one cash-based purchase this month.",
       };
     }
     case "phone_lost": {
-      const recovery = [
-        answers.phone_backup_plan ? "account recovery" : null,
-        answers.offline_contacts ? "offline contacts" : null,
-        answers.has_offline_docs ? "offline documents" : null,
-      ].filter(Boolean) as string[];
-      const missing = [
-        !answers.phone_backup_plan ? "2FA / account recovery" : null,
-        !answers.offline_contacts ? "offline contact list" : null,
-        !answers.has_offline_docs ? "offline document copies" : null,
-      ].filter(Boolean) as string[];
-      const ok = recovery.length === 3;
+      const severity =
+        !answers.phone_backup_plan && !answers.offline_contacts
+          ? "critical"
+          : !answers.phone_backup_plan
+            ? "high"
+            : "medium";
       return {
         scenario,
-        title: "What if your phone was lost today?",
-        summary: ok
-          ? "You have recovery paths for accounts, contacts, and documents."
-          : recovery.length
-            ? `Partial \u2014 you have ${recovery.join(", ")}. Missing: ${missing.join(", ")}.`
-            : "Critical accounts and contacts still depend on this one device.",
-        detail:
-          "Phone loss is common. Banking apps, 2FA, and contacts often live on one handset.",
-        severity: ok ? "low" : recovery.length ? "high" : "critical",
-        recommendation: missing.length
-          ? `Next: fix ${missing[0]}. Export recovery codes and keep offline copies of IDs.`
-          : "Re-test recovery from a second device every six months.",
+        title: "What if your phone was gone this afternoon?",
+        summary: answers.phone_backup_plan
+          ? "You report a recovery path for critical accounts."
+          : "Critical accounts may be hard to open without this device.",
+        detail: answers.offline_contacts
+          ? "Offline contacts help you reach people without the phone’s address book."
+          : "Without offline contacts, even calling for help depends on memory or other devices.",
+        severity,
+        recommendation:
+          "Print recovery codes for top accounts and keep one offline contact sheet.",
       };
     }
     case "internet_outage": {
-      const offlineOk =
-        answers.has_offline_docs &&
-        answers.offline_contacts &&
-        (answers.alt_payment_method || offlineVal >= 1);
+      const severity =
+        (answers.cloud_dependency || 3) >= 4 ? "high" : "medium";
       return {
         scenario,
         title: "What if the internet was down for 48 hours?",
-        summary: offlineOk
-          ? "You can operate basic life offline for a short stretch."
-          : "Many of your critical paths still assume connectivity.",
-        detail: `Cloud dependency you reported: ${answers.cloud_dependency}/5. Offline docs: ${answers.has_offline_docs ? "yes" : "no"}. Offline contacts: ${answers.offline_contacts ? "yes" : "no"}.`,
-        severity: offlineOk ? "low" : answers.cloud_dependency >= 4 ? "critical" : "high",
+        summary:
+          (answers.cloud_dependency || 3) >= 4
+            ? "High cloud dependence means many workflows pause offline."
+            : "Lower cloud dependence limits how much freezes offline.",
+        detail: answers.has_offline_docs
+          ? "Offline documents reduce identity and recovery friction during an outage."
+          : "Important records only in the cloud are harder to use offline.",
+        severity,
         recommendation:
-          "Download offline maps, keep paper contacts, and ensure payment/food plans work without live apps.",
+          "Download offline copies of IDs, insurance, and recovery codes. Test one offline workflow.",
       };
     }
     case "power_grid": {
-      const weeks = answers.emergency_supply_weeks || 0;
       return {
         scenario,
         title: "What if power was out for 72 hours?",
-        summary:
-          weeks >= 1
-            ? `You have about ${weeks} week(s) of emergency stores to lean on.`
-            : "You have little dedicated store for a multi-day power outage.",
-        detail:
-          "Light, water, refrigerated food, and device charging fail together. Cash and offline plans matter when POS terminals are down.",
-        severity: weeks >= 2 ? "medium" : weeks >= 0.5 ? "high" : "critical",
+        summary: "Lighting, charging, refrigeration, and some payments become constrained.",
+        detail: answers.has_med_kit
+          ? "A basic kit helps with minor injuries when services are slow."
+          : "Without a kit, small issues force unnecessary trips during an outage.",
+        severity: "high",
         recommendation:
-          "Assemble a 72-hour kit: water, light, power bank, shelf-stable food, cash, and any critical medicine.",
+          "Charge a power bank, set flashlights, and plan 72 hours of food that does not need continuous power.",
       };
     }
     case "medical_emergency": {
+      const severity =
+        runwayDays < 30 ? "critical" : runwayDays < 60 ? "high" : "medium";
       return {
         scenario,
         title: "What if a sudden medical bill hit this month?",
-        summary: `Your liquid buffer is about ${runwayDays} days of essential spend (~$${Math.round(savings).toLocaleString()}).`,
+        summary: `Your liquid buffer is about ${runwayDays} days of essential spend (~${formatMoney(Math.round(savings))}).`,
         detail:
-          "Medical shocks often arrive with transport, time off work, and upfront costs \u2014 not only insurance paperwork.",
-        severity: runwayDays < 30 ? "high" : runwayDays < 90 ? "medium" : "low",
+          "Unexpected medical costs compete directly with rent and food unless a separate buffer exists.",
+        severity,
         recommendation:
-          "Keep a labeled medical buffer, list of meds/allergies offline, and know the nearest urgent care route without relying only on your phone.",
+          "Separate a medical contingency from everyday spending and know your local clinic path offline.",
       };
     }
     case "food_prices_double": {
-      const monthlyFood = Math.round(expenses * 0.25);
-      const extra = monthlyFood;
-      const monthsCovered = extra > 0 ? Math.floor(savings / extra) : 99;
-      const pantryDays = Math.max(0, answers.food_buffer_days || 0);
-      const supplyWeeks = Math.max(0, answers.emergency_supply_weeks || 0);
+      const foodShare = expenses * 0.25;
+      const extra = Math.round(foodShare);
+      const severity =
+        (answers.food_buffer_days || 0) < 7
+          ? "high"
+          : (answers.food_buffer_days || 0) < 14
+            ? "medium"
+            : "low";
       return {
         scenario,
-        title: "What if food prices doubled?",
+        title: "What if grocery prices doubled overnight?",
         summary:
           expenses > 0
-            ? `Food cost pressure rises by about $${extra.toLocaleString()}/month (\u224825% of essentials).`
-            : "Add monthly expenses to size food exposure in dollars.",
-        detail: `Pantry ~${pantryDays} days \u00b7 emergency stores ~${supplyWeeks} weeks \u00b7 buffer covers ~${monthsCovered} month(s) of that extra food cost. ${
-          answers.food_source_diversity
-            ? "You already diversify food sources, which helps when one channel spikes."
-            : "A single supermarket chain means price shocks hit you in one place."
-        }`,
-        severity:
-          monthsCovered >= 6 && pantryDays >= 14
-            ? "low"
-            : monthsCovered >= 3 || pantryDays >= 7
-              ? "medium"
-              : "high",
+            ? `Food cost pressure rises by about ${formatMoney(extra)}/month (≈25% of essentials).`
+            : "Add expenses to quantify food price shock.",
+        detail:
+          (answers.food_buffer_days || 0) >= 14
+            ? "A longer pantry buffer slows the need to buy at peak prices."
+            : "A thin pantry forces you into the market immediately at the new price.",
+        severity,
         recommendation:
-          pantryDays < 14
-            ? `Build 14+ days of food you already eat, then expand stores. Diversify suppliers where you can.`
-            : "Rotate stock and treat food reserves as part of your emergency fund.",
+          "Stock staples you already eat. Aim for 14–30 pantry days before chasing bulk you will not use.",
       };
     }
     default:
       return {
         scenario,
         title: "Scenario",
-        summary: "Unavailable",
+        summary: "Complete your assessment for a personalized result.",
         detail: "",
         severity: "medium",
-        recommendation: "Re-run your assessment.",
+        recommendation: "Retake the assessment with full income and expense data.",
       };
   }
 }
