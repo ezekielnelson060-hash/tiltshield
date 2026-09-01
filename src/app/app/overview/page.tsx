@@ -71,15 +71,52 @@ export default function TodayPage() {
   const [daysSince, setDaysSince] = useState<number | null>(null);
   const [premium, setPrem] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [place, setPlace] = useState<string | null>(null);
+  const [weather, setWeather] = useState<string | null>(null);
 
   useEffect(() => {
     setSession(loadSession());
     setDaysSince(daysSinceLastAssessment());
     setPrem(isPremium());
     try {
-      setName(getActiveMember().name);
+      const stored = localStorage.getItem("tiltshield_display_name");
+      setName((stored || getActiveMember().name || "there").split(" ")[0]);
     } catch {
       /* */
+    }
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          try {
+            const w = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m`
+            );
+            const j = await w.json();
+            const temp = j?.current?.temperature_2m;
+            if (typeof temp === "number") setWeather(`${Math.round(temp)}°`);
+          } catch {
+            /* */
+          }
+          try {
+            const g = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+              { headers: { "Accept-Language": "en" } }
+            );
+            const gj = await g.json();
+            const city =
+              gj?.address?.city ||
+              gj?.address?.town ||
+              gj?.address?.village ||
+              gj?.address?.state;
+            if (city) setPlace(String(city));
+          } catch {
+            /* */
+          }
+        },
+        () => {},
+        { timeout: 8000 }
+      );
     }
   }, []);
 
@@ -145,7 +182,17 @@ export default function TodayPage() {
             Here's your resilience overview for today.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+          {place && (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1">
+              {place}
+            </span>
+          )}
+          {weather && (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1">
+              {weather}
+            </span>
+          )}
           {daysSince !== null && (
             <span className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1">
               Assessed {daysSince === 0 ? "today" : `${daysSince}d ago`}
@@ -290,7 +337,7 @@ export default function TodayPage() {
                 className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-[#0a0f18] px-3 py-2"
               >
                 <span>{label}</span>
-                <span className="text-xs text-zinc-500">~{(0.4 + i * 0.3).toFixed(1)} mi</span>
+                <span className="text-xs text-zinc-500">Near you</span>
               </div>
             ))}
           </div>
