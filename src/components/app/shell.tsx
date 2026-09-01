@@ -22,7 +22,7 @@ const MOBILE_NAV = [
   { href: "/app/prepare", label: "Prepare", icon: "list" },
   { href: "/app/intel", label: "Intel", icon: "shield" },
   { href: "/app/what-if", label: "What If", icon: "pulse" },
-  { href: "/app/family", label: "More", icon: "more" },
+  { href: "/app/more", label: "More", icon: "more" },
 ];
 
 const RESILIENCE_META: {
@@ -106,7 +106,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       setSession(s);
       try {
-        setMemberName(getActiveMember().name);
+        const stored = localStorage.getItem("tiltshield_display_name");
+        setMemberName(stored || getActiveMember().name);
       } catch {
         /* */
       }
@@ -217,16 +218,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <Link
             href="/app/settings"
-            className="flex items-center gap-3 rounded-xl px-1 py-1.5 hover:bg-white/[0.03]"
+            className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2.5 hover:bg-white/[0.05]"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/30 to-teal-600/20 text-xs font-bold text-emerald-300 ring-1 ring-emerald-500/20">
               {memberName.slice(0, 1).toUpperCase()}
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-zinc-200">{memberName}</p>
-              <p className="text-[10px] text-zinc-500">Settings</p>
+              <p className="text-[10px] text-emerald-500/90">Settings & plan →</p>
             </div>
           </Link>
+          <div className="flex gap-3 px-1">
+            <Link href="/app/settings" className="text-[11px] text-zinc-500 hover:text-zinc-300">
+              Settings
+            </Link>
+            <Link href="/app/settings" className="text-[11px] text-zinc-600 hover:text-zinc-400">
+              Help & Support
+            </Link>
+          </div>
         </div>
       </aside>
 
@@ -237,11 +246,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)]">
             {MOBILE_NAV.map((item) => {
               const active =
-                item.href === "/app/family"
-                  ? pathname === item.href ||
+                item.href === "/app/more"
+                  ? pathname === "/app/more" ||
                     pathname?.startsWith("/app/nearby") ||
                     pathname?.startsWith("/app/settings") ||
-                    pathname?.startsWith("/app/family")
+                    pathname?.startsWith("/app/family") ||
+                    pathname?.startsWith("/app/history") ||
+                    pathname?.startsWith("/app/vault") ||
+                    pathname?.startsWith("/app/calculators")
                   : pathname === item.href ||
                     pathname?.startsWith(item.href + "/");
               return (
