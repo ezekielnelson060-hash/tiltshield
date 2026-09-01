@@ -4,6 +4,7 @@ import Link from "next/link";
 import { isPremium } from "@/lib/session";
 import { useEffect, useState } from "react";
 import { getActiveMember } from "@/lib/family";
+import { AppTopBar, PageHeader } from "@/components/app/page-header";
 
 const LINKS = [
   { href: "/app/nearby", label: "Nearby", desc: "Map + agent — resources near you" },
@@ -33,13 +34,11 @@ export default function MorePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">More</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {name}
-          {premium ? " · Premium" : " · Free plan"}
-        </p>
-      </div>
+      <AppTopBar title="More" backHref="/app/overview" />
+      <p className="-mt-3 text-sm text-zinc-500">
+        {name}
+        {premium ? " · Premium" : " · Free plan"}
+      </p>
 
       <div className="overflow-hidden rounded-2xl border border-white/[0.08] divide-y divide-white/[0.06]">
         {LINKS.map((l) => (
