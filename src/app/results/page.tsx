@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setPremium } from "@/lib/session";
 import { setFamilyUnlocked } from "@/lib/family";
-import { setSubscriptionOnProfile } from "@/lib/persist";
+import { setSubscriptionOnProfile } from "@/lib/subscription";
 import Link from "next/link";
 
 function ResultsInner() {

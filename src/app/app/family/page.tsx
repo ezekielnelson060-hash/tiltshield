@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   loadFamilyMembers,
   addFamilyMember,
@@ -9,85 +10,125 @@ import {
   setActiveMemberId,
   getActiveMemberId,
   isFamilyUnlocked,
-  setFamilyUnlocked,
   RELATION_LABELS,
   type FamilyMember,
   type FamilyRelation,
 } from "@/lib/family";
 import { loadSession } from "@/lib/session";
-import { syncFamilyToCloud } from "@/lib/persist";
+import { syncFamilyToCloud, loadFamilyFromCloud } from "@/lib/persist";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export default function FamilyPage() {
+  const router = useRouter();
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [active, setActive] = useState("self");
   const [unlocked, setUnlocked] = useState(false);
   const [name, setName] = useState("");
   const [relation, setRelation] = useState<FamilyRelation>("spouse");
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function refresh() {
+  async function refresh() {
+    await loadFamilyFromCloud();
     setMembers(loadFamilyMembers());
     setActive(getActiveMemberId());
     setUnlocked(isFamilyUnlocked());
   }
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, []);
 
   function switchTo(id: string) {
     setActiveMemberId(id);
     setActive(id);
+    router.push("/app/overview");
+    router.refresh();
   }
 
-  function onAdd() {
+  async function onAdd() {
+    setError(null);
     if (!unlocked) return;
     if (!name.trim()) return;
     if (members.length >= 6) {
-      alert("Family plan supports up to 6 profiles.");
+      setError("Family plan supports up to 6 profiles.");
       return;
     }
     addFamilyMember(name, relation);
-    void syncFamilyToCloud(loadFamilyMembers());
     setName("");
-    refresh();
+    await syncFamilyToCloud();
+    await refresh();
   }
 
-  function unlockFamily() {
-    setFamilyUnlocked(true);
-    setUnlocked(true);
+  async function payFamily() {
+    setPaying(true);
+    setError(null);
+    try {
+      let email = "";
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        email = user?.email || "";
+      } catch {
+        /* */
+      }
+      const res = await fetch("/api/flutterwave/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: "family", email }),
+      });
+      const json = await res.json();
+      if (json.link) {
+        window.location.href = json.link;
+        return;
+      }
+      setError(
+        json.error ||
+          "Payment could not start. Set FLUTTERWAVE_SECRET_KEY on Vercel."
+      );
+    } finally {
+      setPaying(false);
+    }
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Family</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+          Family
+        </h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Separate readiness profiles for you, a partner, and kids — each with their own assessment
-          and plan.
+          Separate readiness profiles for your household. Each person gets their
+          own assessment, score, and plan.
         </p>
       </div>
 
       {!unlocked && (
         <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
-          <p className="text-sm font-medium text-zinc-100">Family tier</p>
+          <p className="text-sm font-medium text-zinc-100">Family plan</p>
           <p className="mt-2 text-sm text-zinc-400">
-            Track readiness for spouse and kids. Founding lifetime members get early access free on
-            this device.
+            Unlock multi-profile tracking. Lifetime founding members include
+            family access after a verified lifetime payment.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm" onClick={unlockFamily}>
-              Unlock family (founding / demo)
+            <Button size="sm" onClick={payFamily} disabled={paying}>
+              {paying ? "Opening payment…" : "Pay — unlock family"}
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link href="/app/settings">Billing settings</Link>
+              <Link href="/app/settings">Lifetime / settings</Link>
             </Button>
           </div>
+          {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
         </section>
       )}
 
       <section className="space-y-2">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Profiles</p>
+        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+          Profiles
+        </p>
         <ul className="space-y-2">
           {members.map((m) => {
             const session = loadSession(m.id);
@@ -112,11 +153,16 @@ export default function FamilyPage() {
                   <p className="text-xs text-zinc-500">
                     {score != null ? `Score ${score}` : "No assessment yet"}
                     {isActive && " · active"}
+                    {m.cloudId && " · synced"}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   {!isActive && (
-                    <Button size="sm" variant="outline" onClick={() => switchTo(m.id)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => switchTo(m.id)}
+                    >
                       Switch
                     </Button>
                   )}
@@ -129,7 +175,7 @@ export default function FamilyPage() {
                       className="text-xs text-zinc-600 hover:text-red-400"
                       onClick={() => {
                         removeFamilyMember(m.id);
-                        refresh();
+                        void refresh();
                       }}
                     >
                       Remove
@@ -163,13 +209,9 @@ export default function FamilyPage() {
           <Button size="sm" onClick={onAdd}>
             Add family member
           </Button>
+          {error && <p className="text-sm text-red-400">{error}</p>}
         </section>
       )}
-
-      <p className="text-xs text-zinc-600">
-        Switching profile loads that person&apos;s assessment. Cloud sync runs when you are logged in
-        and have run the family SQL migration.
-      </p>
     </div>
   );
 }
