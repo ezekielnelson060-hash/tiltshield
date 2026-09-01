@@ -4,29 +4,31 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { loadSession, categoryStatus, CATEGORY_LABELS, type TiltSession } from "@/lib/session";
+import {
+  loadSession,
+  categoryStatus,
+  CATEGORY_LABELS,
+  type TiltSession,
+} from "@/lib/session";
 import { getActiveMember } from "@/lib/family";
+import { resilienceLabel } from "@/lib/locale";
 import type { CategoryScores } from "@/types";
 
 const NAV = [
-  { href: "/app/overview", label: "Overview" },
-  { href: "/app/risk", label: "My Risk" },
-  { href: "/app/what-if", label: "What If?" },
-  { href: "/app/calculators", label: "Calculators" },
+  { href: "/app/overview", label: "Today" },
   { href: "/app/prepare", label: "Prepare" },
+  { href: "/app/intel", label: "Intel" },
+  { href: "/app/what-if", label: "What If?" },
+  { href: "/app/nearby", label: "Nearby" },
   { href: "/app/family", label: "Family" },
-  { href: "/app/actions", label: "Actions" },
-  { href: "/app/vault", label: "Vault" },
-  { href: "/app/guides", label: "Guides" },
-  { href: "/app/history", label: "History" },
 ];
 
 const MOBILE_NAV = [
-  { href: "/app/overview", label: "Home" },
+  { href: "/app/overview", label: "Today" },
   { href: "/app/prepare", label: "Prepare" },
-  { href: "/app/family", label: "Family" },
+  { href: "/app/intel", label: "Intel" },
   { href: "/app/what-if", label: "What If" },
-  { href: "/app/history", label: "History" },
+  { href: "/app/nearby", label: "Nearby" },
 ];
 
 const RESILIENCE_KEYS: (keyof CategoryScores)[] = [
@@ -58,20 +60,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [session, setSession] = useState<TiltSession | null>(null);
-  const [memberName, setMemberName] = useState("Me");
+  const [memberName, setMemberName] = useState("You");
 
   useEffect(() => {
-    const s = loadSession();
-    if (!s) {
-      router.replace("/assessment");
-      return;
+    function load() {
+      const s = loadSession();
+      if (!s) {
+        router.replace("/assessment");
+        return;
+      }
+      setSession(s);
+      try {
+        setMemberName(getActiveMember().name);
+      } catch {
+        /* */
+      }
     }
-    setSession(s);
-    try {
-      setMemberName(getActiveMember().name);
-    } catch {
-      /* */
-    }
+    load();
+    const onMember = () => load();
+    window.addEventListener("tiltshield:member-change", onMember);
+    return () =>
+      window.removeEventListener("tiltshield:member-change", onMember);
   }, [router, pathname]);
 
   if (!session) {
@@ -83,15 +92,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const scores = session.scores;
+  const label = resilienceLabel(scores.overall);
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-900 bg-zinc-950 lg:flex">
         <div className="border-b border-zinc-900 px-4 py-4">
-          <Link href="/app/overview" className="text-sm font-semibold tracking-tight">
+          <Link
+            href="/app/overview"
+            className="text-sm font-semibold tracking-tight text-zinc-50"
+          >
             Tiltshield
           </Link>
-          <p className="mt-1 text-[10px] text-zinc-600">{memberName}</p>
+          <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-600">
+            Personal Resilience Intelligence
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">{memberName}</p>
         </div>
         <nav className="flex-1 space-y-0.5 p-2">
           {NAV.map((item) => (
@@ -101,7 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className={cn(
                 "block rounded-lg px-3 py-2 text-sm transition",
                 pathname === item.href || pathname?.startsWith(item.href + "/")
-                  ? "bg-zinc-900 text-zinc-50"
+                  ? "bg-emerald-500/10 text-emerald-400"
                   : "text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-200"
               )}
             >
@@ -111,7 +127,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="border-t border-zinc-900 p-3">
           <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-zinc-600">
-            Resilience
+            My resilience
           </p>
           <div className="space-y-1.5">
             {RESILIENCE_KEYS.map((key) => (
@@ -128,7 +144,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </div>
-          <Link href="/app/settings" className="mt-4 block text-xs text-zinc-600 hover:text-zinc-400">
+          <div className="mt-4 rounded-xl border border-zinc-800 px-3 py-2">
+            <p className="text-[10px] text-zinc-600">Resilience score</p>
+            <p className="text-lg font-semibold text-zinc-50">
+              {scores.overall}
+              <span className="text-sm text-zinc-600"> / 100</span>
+            </p>
+            <p className="text-[10px] text-emerald-500/80">{label}</p>
+          </div>
+          <Link
+            href="/app/settings"
+            className="mt-3 block text-xs text-zinc-600 hover:text-zinc-400"
+          >
             Settings
           </Link>
         </div>
@@ -140,13 +167,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Tiltshield · {memberName}
           </p>
           <p className="hidden text-xs text-zinc-500 lg:block">
-            {memberName} · Score {scores.overall}/100
+            {memberName} · {scores.overall}/100 · {label}
           </p>
           <div className="flex items-center gap-3 text-xs">
             <Link href="/app/family" className="text-zinc-500 hover:text-zinc-300">
-              Switch profile
+              Household
             </Link>
-            <Link href="/assessment" className="text-emerald-500 hover:text-emerald-400">
+            <Link
+              href="/assessment"
+              className="text-emerald-500 hover:text-emerald-400"
+            >
               Re-assess
             </Link>
           </div>
