@@ -4,9 +4,10 @@
 
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` (webhook profile updates)
 - [ ] `FLUTTERWAVE_SECRET_KEY` (live)
-- [ ] `FLUTTERWAVE_PUBLIC_KEY` (live)
-- [ ] `FLUTTERWAVE_WEBHOOK_SECRET` (if verifying signatures)
+- [ ] `NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY` (live)
+- [ ] `FLUTTERWAVE_SECRET_HASH` (Flutterwave dashboard → Webhooks verif-hash)
 - [ ] `NEXT_PUBLIC_APP_URL` = production URL
 - [ ] Production branch = `main`, auto-deploy on
 
@@ -23,7 +24,8 @@
 - [ ] Live mode keys (not test)
 - [ ] Products: lifetime $29, family tier
 - [ ] Webhook URL: `https://YOUR_DOMAIN/api/flutterwave/webhook`
-- [ ] Test purchase → unlock premium on return
+- [ ] Secret hash matches `FLUTTERWAVE_SECRET_HASH`
+- [ ] Test purchase → unlock premium on return (`/results?payment=flutterwave&…`)
 - [ ] Failed payment does not unlock
 
 ## D. Core user path (manual QA)
@@ -61,5 +63,5 @@
 
 ## Go / no-go
 
-**Go** when A–E pass on a clean phone browser.
+**Go** when A–E pass on a clean phone browser.  
 **No-go** if payment unlock fails or assessment → score is broken.
