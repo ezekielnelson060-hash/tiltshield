@@ -18,6 +18,52 @@ import {
 import { personalizeIntel } from "@/lib/intel";
 import { getActiveMember } from "@/lib/family";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { CategoryScores } from "@/types";
+
+const CATEGORY_TILES: {
+  key: keyof CategoryScores;
+  label: string;
+  tint: string;
+}[] = [
+  { key: "money", label: "Money", tint: "from-red-500/20 to-red-500/5" },
+  { key: "digital", label: "Digital", tint: "from-amber-500/20 to-amber-500/5" },
+  { key: "food", label: "Essentials", tint: "from-emerald-500/20 to-emerald-500/5" },
+  { key: "home", label: "Home", tint: "from-lime-500/20 to-lime-500/5" },
+  { key: "communication", label: "Mobility", tint: "from-cyan-500/20 to-cyan-500/5" },
+  { key: "skills", label: "Health", tint: "from-teal-500/20 to-teal-500/5" },
+  { key: "documents", label: "Community", tint: "from-violet-500/20 to-violet-500/5" },
+  { key: "emergency", label: "Emergency", tint: "from-orange-500/20 to-orange-500/5" },
+];
+
+function ScoreRing({ score }: { score: number }) {
+  const r = 36;
+  const c = 2 * Math.PI * r;
+  const pct = Math.min(100, Math.max(0, score)) / 100;
+  const offset = c * (1 - pct);
+  return (
+    <svg width="96" height="96" className="-rotate-90">
+      <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+      <circle
+        cx="48"
+        cy="48"
+        r={r}
+        fill="none"
+        stroke="url(#ringGrad)"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={offset}
+      />
+      <defs>
+        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#34d399" />
+          <stop offset="100%" stopColor="#2dd4bf" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 export default function TodayPage() {
   const [session, setSession] = useState<TiltSession | null>(null);
@@ -85,174 +131,239 @@ export default function TodayPage() {
     topCategory: top?.category,
     hasAltPayment: answers.alt_payment_method,
     incomeSources: answers.income_sources,
-  }).slice(0, 2);
+  }).slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 lg:px-8">
-      <div>
-        <p className="text-sm text-zinc-500">
-          {greetingForHour()}, {name}
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-50">
-          Here's your resilience overview for today
-        </h1>
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 lg:px-8 lg:py-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">
+            {greetingForHour()}, {name}{" "}
+            <span className="inline-block">👋</span>
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Here's your resilience overview for today.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-zinc-500">
+          {daysSince !== null && (
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-1">
+              Assessed {daysSince === 0 ? "today" : `${daysSince}d ago`}
+            </span>
+          )}
+        </div>
       </div>
 
-      {daysSince != null && daysSince >= 28 && (
-        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-          Last assessment ~{daysSince} days ago.{" "}
-          <Link href="/assessment" className="text-emerald-400 hover:underline">
-            Retake →
-          </Link>
-        </div>
-      )}
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent p-5">
           <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-            Resilience score
+            Resilience Score
           </p>
-          <div className="mt-3 flex items-end gap-2">
-            <span className="text-5xl font-bold tracking-tight text-zinc-50">
-              {scores.overall}
-            </span>
-            <span className="mb-1 text-zinc-600">/ 100</span>
+          <div className="mt-3 flex items-center gap-4">
+            <div className="relative">
+              <ScoreRing score={scores.overall} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold tabular-nums text-zinc-50">
+                  {scores.overall}
+                </span>
+                <span className="text-[10px] text-zinc-600">/ 100</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-emerald-400">{label}</p>
+              <p className="mt-1 text-xs text-zinc-500">Based on your latest assessment</p>
+              <Link href="/app/history" className="mt-2 inline-block text-xs text-emerald-500 hover:underline">
+                View trend →
+              </Link>
+            </div>
           </div>
-          <p className="mt-2 text-sm text-emerald-400">{label}</p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Primary income · Essential expenses · {plan.runwayDays}-day runway
-          </p>
-          <Link
-            href="/app/risk"
-            className="mt-3 inline-block text-xs text-emerald-400 hover:underline"
-          >
-            All categories →
-          </Link>
-        </section>
+        </div>
 
-        <section className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
+        <div className="rounded-2xl border border-red-500/20 bg-gradient-to-b from-red-500/10 to-transparent p-5">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-red-400">
-              Your biggest exposure
+            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+              Your Biggest Exposure
             </p>
-            <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] text-red-300">
-              High
+            <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-400">
+              {top?.severity || "High"}
             </span>
           </div>
-          <h2 className="mt-3 text-lg font-semibold text-zinc-50">
+          <p className="mt-3 text-lg font-semibold text-zinc-50">
             {top?.title || "Complete assessment"}
-          </h2>
-          <p className="mt-2 text-2xl font-bold text-zinc-100">
+          </p>
+          <p className="mt-1 text-sm text-zinc-400">
+            {top?.current_state || "Your life may rely heavily on a single weak point."}
+          </p>
+          <p className="mt-4 text-3xl font-bold tabular-nums text-zinc-50">
             {plan.runwayDays}{" "}
             <span className="text-sm font-normal text-zinc-500">days</span>
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Estimated essential-expense runway if primary income stops
-          </p>
-          <p className="mt-3 text-sm text-zinc-400">
-            {top?.current_state || "See categories for details."}
-          </p>
-          <Button asChild size="sm" className="mt-4" variant="outline">
-            <Link href="/app/prepare">Fix this first →</Link>
-          </Button>
-        </section>
+          <p className="text-xs text-zinc-500">estimated runway if income stops</p>
+          <Link
+            href="/app/risk"
+            className="mt-4 inline-flex rounded-xl bg-red-500/20 px-4 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/30"
+          >
+            Fix this first →
+          </Link>
+        </div>
 
-        <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">
-            Today's priority
+        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/10 to-transparent p-5">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+            Today's Priority
           </p>
-          <h2 className="mt-3 text-lg font-semibold text-zinc-50">{move.title}</h2>
-          <p className="mt-2 text-xs text-zinc-500">
-            {move.time_estimate} · {move.difficulty}
+          <p className="mt-3 text-lg font-semibold text-zinc-50">
+            {move?.title || "Review your buffer plan"}
           </p>
-          <p className="mt-3 text-sm text-zinc-400">{move.why}</p>
-          <Button asChild size="sm" className="mt-4">
-            <Link href="/app/prepare">Start now →</Link>
-          </Button>
-        </section>
+          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-zinc-500">
+            <span className="rounded-full border border-white/[0.08] px-2 py-0.5">
+              {move?.time_estimate || "12 min"}
+            </span>
+            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-400">
+              High impact
+            </span>
+          </div>
+          <p className="mt-3 text-sm text-zinc-400">
+            {move?.description || "Build a small cash cushion for unexpected disruptions."}
+          </p>
+          <Link
+            href="/app/prepare"
+            className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400"
+          >
+            Start now →
+          </Link>
+        </div>
       </div>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-          Financial runway
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div>
-            <p className="text-[10px] text-zinc-600">Primary income</p>
-            <p className="text-sm font-medium text-zinc-200">
-              {plan.income > 0 ? `${formatMoney(plan.income)}/mo` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] text-zinc-600">Essential expenses</p>
-            <p className="text-sm font-medium text-zinc-200">
-              {plan.expenses > 0 ? `${formatMoney(plan.expenses)}/mo` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] text-zinc-600">Runway</p>
-            <p className="text-sm font-medium text-zinc-200">{plan.runwayDays} days</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-zinc-600">Weekly buffer tip</p>
-            <p className="text-sm font-medium text-emerald-400">
-              {plan.weeklyTransfer > 0 ? formatMoney(plan.weeklyTransfer) : "—"}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 lg:col-span-3">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-              Intel · may affect you
+              Intel · things worth knowing
             </p>
-            <Link href="/app/intel" className="text-xs text-emerald-400 hover:underline">
+            <Link href="/app/intel" className="text-xs text-emerald-500 hover:underline">
               View all →
             </Link>
           </div>
-          <ul className="mt-3 space-y-3">
-            {intel.map((i) => (
-              <li key={i.id}>
-                <p className="text-sm font-medium text-zinc-200">{i.title}</p>
-                <p className="text-xs text-zinc-500">
-                  Impact: {i.impact} · {i.category}
-                </p>
-              </li>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {intel.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-white/[0.06] bg-[#0a0f18] p-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                    {item.category}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium capitalize",
+                      item.impact === "high"
+                        ? "text-red-400"
+                        : item.impact === "medium"
+                          ? "text-amber-400"
+                          : "text-zinc-500"
+                    )}
+                  >
+                    {item.impact}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm font-medium leading-snug text-zinc-200">{item.title}</p>
+                <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{item.summary}</p>
+              </div>
             ))}
-          </ul>
-        </section>
+          </div>
+        </div>
 
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-              Nearby resources
+              Nearby Resources
             </p>
-            <Link href="/app/nearby" className="text-xs text-emerald-400 hover:underline">
-              Explore →
+            <Link href="/app/nearby" className="text-xs text-emerald-500 hover:underline">
+              See all
             </Link>
           </div>
-          <p className="mt-3 text-sm text-zinc-400">
-            Food, pharmacy, banking, fuel, and emergency services near your location — same
-            interface worldwide.
-          </p>
-          <Button asChild size="sm" variant="outline" className="mt-4">
-            <Link href="/app/nearby">Open map search →</Link>
-          </Button>
-        </section>
+          <div className="mt-3 space-y-2 text-sm text-zinc-300">
+            {["Pharmacy", "Grocery Store", "ATM", "Medical Clinic"].map((label, i) => (
+              <div
+                key={label}
+                className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-[#0a0f18] px-3 py-2"
+              >
+                <span>{label}</span>
+                <span className="text-xs text-zinc-500">~{(0.4 + i * 0.3).toFixed(1)} mi</span>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/app/nearby"
+            className="mt-4 flex items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 py-2.5 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20"
+          >
+            Open map →
+          </Link>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-3 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+          Your Resilience at a Glance
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          {CATEGORY_TILES.map((c) => (
+            <Link
+              key={c.key}
+              href={`/app/risk?cat=${c.key}`}
+              className={cn(
+                "rounded-xl border border-white/[0.06] bg-gradient-to-b p-3 text-center transition hover:border-white/10",
+                c.tint
+              )}
+            >
+              <p className="text-[10px] text-zinc-400">{c.label}</p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-zinc-50">{scores[c.key]}</p>
+              <p className="text-[10px] text-zinc-600">/ 100</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+              Cash runway
+            </p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-50">
+              {plan.runwayDays} days
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Target 90 days · gap {formatMoney(plan.gap)}
+              {plan.weeklyTransfer > 0
+                ? ` · suggest ${formatMoney(plan.weeklyTransfer)}/week`
+                : ""}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link href="/app/what-if">Run What If</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/app/prepare">Open Prepare</Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {!premium && (
-        <section className="rounded-2xl border border-zinc-800 p-6 text-center">
-          <p className="text-sm text-zinc-300">
-            Unlock full scenarios, history depth, and household tools.
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
+          <p className="text-sm font-medium text-zinc-100">
+            Unlock the full resilience system
           </p>
-          <p className="mt-1 text-xs text-zinc-500">Founding lifetime — one payment</p>
-          <Button className="mt-4" onClick={unlock} disabled={paying}>
-            {paying ? "Opening…" : "Become a founding member"}
+          <p className="mt-1 text-xs text-zinc-500">
+            All What If scenarios, family profiles, history, and vault — $29 lifetime.
+          </p>
+          <Button className="mt-4" size="sm" onClick={() => void unlock()} disabled={paying}>
+            {paying ? "Opening checkout…" : "Become a founding member"}
           </Button>
-        </section>
+        </div>
       )}
     </div>
   );
