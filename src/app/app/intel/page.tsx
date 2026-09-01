@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
-import { INTEL_LIBRARY, personalizeIntel, type IntelScope } from "@/lib/intel";
+import { personalizeIntel, type IntelScope } from "@/lib/intel";
 import { cn } from "@/lib/utils";
 
 const TABS: { id: IntelScope | "all"; label: string }[] = [
@@ -38,32 +38,32 @@ export default function IntelPage() {
       incomeSources,
     });
     if (tab === "all") return personalized;
-    if (tab === "watchlist")
+    if (tab === "watchlist") {
       return personalized.filter((i) => i.impact === "high");
-    return INTEL_LIBRARY.filter((i) => i.scope === tab);
+    }
+    return personalized.filter((i) => i.scope === tab);
   }, [tab, overall, topCat, altPay, incomeSources]);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-50">Intel</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Intel</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Developments that may affect your resilience — not a generic news feed.
-          World → exposure → action.
+          Information that may affect your resilience.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition",
+              "flex-1 rounded-lg py-2 text-xs font-medium transition",
               tab === t.id
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+                ? "bg-emerald-500/15 text-emerald-400"
+                : "text-zinc-500 hover:text-zinc-300"
             )}
           >
             {t.label}
@@ -71,45 +71,57 @@ export default function IntelPage() {
         ))}
       </div>
 
-      <ul className="space-y-3">
-        {items.map((i) => (
-          <li
-            key={i.id}
-            className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
+      <div className="space-y-3">
+        {items.map((item) => (
+          <article
+            key={item.id}
+            className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition hover:border-white/12"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-zinc-600">
-                  {i.category} · {i.hoursAgo}h ago
-                </p>
-                <h2 className="mt-1 text-sm font-medium text-zinc-100">{i.title}</h2>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                {item.category}
+              </span>
+              <span className="text-[10px] text-zinc-600">{item.hoursAgo}h ago</span>
               <span
                 className={cn(
-                  "shrink-0 rounded-full px-2 py-0.5 text-[10px] capitalize",
-                  i.impact === "high" && "bg-red-500/15 text-red-400",
-                  i.impact === "medium" && "bg-amber-500/15 text-amber-400",
-                  i.impact === "low" && "bg-zinc-800 text-zinc-400"
+                  "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
+                  item.impact === "high"
+                    ? "bg-red-500/15 text-red-300"
+                    : item.impact === "medium"
+                      ? "bg-amber-500/15 text-amber-300"
+                      : "bg-zinc-500/15 text-zinc-400"
                 )}
               >
-                {i.impact}
+                {item.impact}
               </span>
             </div>
-            <p className="mt-2 text-sm text-zinc-400">{i.summary}</p>
-            {i.actionHint && (
-              <p className="mt-3 text-xs text-emerald-400/90">Next: {i.actionHint}</p>
+            <h2 className="mt-3 text-sm font-semibold leading-snug text-zinc-50">
+              {item.title}
+            </h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{item.summary}</p>
+            {item.actionHint && (
+              <p className="mt-3 text-xs text-emerald-400/90">{item.actionHint}</p>
             )}
-            <div className="mt-3 flex gap-3 text-xs">
-              <Link href="/app/what-if" className="text-zinc-500 hover:text-zinc-300">
-                Stress-test →
+            <div className="mt-3 flex gap-2">
+              <Link
+                href="/app/what-if"
+                className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
+              >
+                Run What If →
               </Link>
-              <Link href="/app/prepare" className="text-zinc-500 hover:text-zinc-300">
-                Prepare →
+              <Link
+                href="/app/prepare"
+                className="text-xs font-medium text-zinc-500 hover:text-zinc-300"
+              >
+                Prepare
               </Link>
             </div>
-          </li>
+          </article>
         ))}
-      </ul>
+        {items.length === 0 && (
+          <p className="py-12 text-center text-sm text-zinc-500">No items in this view yet.</p>
+        )}
+      </div>
     </div>
   );
 }

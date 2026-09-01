@@ -16,8 +16,8 @@ import {
 } from "@/lib/family";
 import { loadSession } from "@/lib/session";
 import { syncFamilyToCloud, loadFamilyFromCloud } from "@/lib/persist";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function FamilyPage() {
   const router = useRouter();
@@ -28,12 +28,20 @@ export default function FamilyPage() {
   const [relation, setRelation] = useState<FamilyRelation>("spouse");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [householdScore, setHouseholdScore] = useState(0);
 
   async function refresh() {
     await loadFamilyFromCloud();
-    setMembers(loadFamilyMembers());
+    const list = loadFamilyMembers();
+    setMembers(list);
     setActive(getActiveMemberId());
     setUnlocked(isFamilyUnlocked());
+    const scores = list.map((m) => m.readinessScore ?? 0);
+    const avg =
+      scores.length > 0
+        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        : loadSession()?.scores.overall ?? 0;
+    setHouseholdScore(avg);
   }
 
   useEffect(() => {
@@ -61,157 +69,161 @@ export default function FamilyPage() {
     await refresh();
   }
 
-  async function payFamily() {
+  async function unlockFamily() {
     setPaying(true);
-    setError(null);
     try {
-      let email = "";
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        email = user?.email || "";
-      } catch {
-        /* */
-      }
       const res = await fetch("/api/flutterwave/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: "family", email }),
+        body: JSON.stringify({ product: "family" }),
       });
       const json = await res.json();
       if (json.link) {
         window.location.href = json.link;
         return;
       }
-      setError(
-        json.error ||
-          "Payment could not start. Set FLUTTERWAVE_SECRET_KEY on Vercel."
-      );
+      setError(json.error || "Payment not configured.");
     } finally {
       setPaying(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
-          Family
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Separate readiness profiles for your household. Each person gets their
-          own assessment, score, and plan.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Family</h1>
+        <p className="mt-1 text-sm text-zinc-500">Household resilience overview.</p>
       </div>
 
-      {!unlocked && (
-        <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
-          <p className="text-sm font-medium text-zinc-100">Family plan</p>
-          <p className="mt-2 text-sm text-zinc-400">
-            Unlock multi-profile tracking. Lifetime founding members include
-            family access after a verified lifetime payment.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm" onClick={payFamily} disabled={paying}>
-              {paying ? "Opening payment…" : "Pay — unlock family"}
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/app/settings">Lifetime / settings</Link>
-            </Button>
-          </div>
-          {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
-        </section>
-      )}
-
-      <section className="space-y-2">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-          Profiles
+      <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Household score
         </p>
-        <ul className="space-y-2">
+        <div className="mt-3 flex items-end gap-3">
+          <span className="text-4xl font-bold tabular-nums text-zinc-50">{householdScore}</span>
+          <span className="mb-1 text-sm text-zinc-500">/ 100</span>
+          <span className="mb-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+            Stable
+          </span>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
+            style={{ width: `${Math.min(100, householdScore)}%` }}
+          />
+        </div>
+      </div>
+
+      <section>
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Members
+        </p>
+        <div className="space-y-2">
           {members.map((m) => {
-            const session = loadSession(m.id);
-            const score = m.readinessScore ?? session?.scores.overall ?? null;
-            const isActive = active === m.id;
+            const isActive = m.id === active;
             return (
-              <li
+              <div
                 key={m.id}
-                className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border px-4 py-3 transition",
                   isActive
-                    ? "border-emerald-500/40 bg-emerald-500/5"
-                    : "border-zinc-800 bg-zinc-900/40"
-                }`}
+                    ? "border-emerald-500/30 bg-emerald-500/10"
+                    : "border-white/[0.08] bg-white/[0.03]"
+                )}
               >
-                <div>
-                  <p className="text-sm font-medium text-zinc-100">
-                    {m.name}{" "}
-                    <span className="text-xs font-normal text-zinc-500">
-                      · {RELATION_LABELS[m.relationship]}
-                    </span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/25 to-teal-600/15 text-sm font-bold text-emerald-300">
+                  {m.name.slice(0, 1).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-zinc-100">
+                    {m.name}
+                    {m.id === "self" ? " · You" : ""}
                   </p>
-                  <p className="text-xs text-zinc-500">
-                    {score != null ? `Score ${score}` : "No assessment yet"}
-                    {isActive && " · active"}
-                    {m.cloudId && " · synced"}
+                  <p className="text-[11px] text-zinc-500">
+                    {RELATION_LABELS[m.relationship] || m.relationship}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  {!isActive && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => switchTo(m.id)}
-                    >
-                      Switch
-                    </Button>
-                  )}
-                  <Button asChild size="sm">
-                    <Link href="/assessment">Assess</Link>
-                  </Button>
-                  {m.id !== "self" && unlocked && (
-                    <button
-                      type="button"
-                      className="text-xs text-zinc-600 hover:text-red-400"
-                      onClick={() => {
-                        removeFamilyMember(m.id);
-                        void refresh();
-                      }}
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </li>
+                <span className="text-sm font-semibold tabular-nums text-zinc-300">
+                  {m.readinessScore ?? loadSession()?.scores.overall ?? "—"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => switchTo(m.id)}
+                  className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
+                >
+                  Open
+                </button>
+                {m.id !== "self" && unlocked && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      removeFamilyMember(m.id);
+                      await syncFamilyToCloud();
+                      await refresh();
+                    }}
+                    className="text-xs text-zinc-600 hover:text-red-400"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             );
           })}
-        </ul>
+        </div>
       </section>
 
-      {unlocked && (
-        <section className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-medium text-zinc-200">Add profile</h2>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
-          />
-          <select
-            value={relation}
-            onChange={(e) => setRelation(e.target.value as FamilyRelation)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
+      {unlocked ? (
+        <section className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Add member
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              className="flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600"
+            />
+            <select
+              value={relation}
+              onChange={(e) => setRelation(e.target.value as FamilyRelation)}
+              className="rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-300"
+            >
+              <option value="spouse">Partner</option>
+              <option value="child">Child</option>
+              <option value="other">Other</option>
+            </select>
+            <Button type="button" size="sm" onClick={() => void onAdd()}>
+              Add
+            </Button>
+          </div>
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
+          <p className="text-sm font-medium text-zinc-100">Unlock household profiles</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Track readiness for partner and kids — family tier.
+          </p>
+          <Button
+            className="mt-4"
+            size="sm"
+            disabled={paying}
+            onClick={() => void unlockFamily()}
           >
-            <option value="spouse">Spouse / partner</option>
-            <option value="child">Child</option>
-            <option value="other">Other</option>
-          </select>
-          <Button size="sm" onClick={onAdd}>
-            Add family member
+            {paying ? "Opening checkout…" : "Unlock family plan"}
           </Button>
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
         </section>
       )}
+
+      <Link
+        href="/app/prepare"
+        className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300 transition hover:border-white/15"
+      >
+        <span>Household plan</span>
+        <span className="text-emerald-400">View →</span>
+      </Link>
     </div>
   );
 }
