@@ -32,14 +32,14 @@ const SCENARIOS: {
   },
   {
     id: "banking_down",
-    label: "Bank / cards unavailable",
-    prompt: "What if cards and bank apps failed for 72 hours?",
+    label: "Banking unavailable",
+    prompt: "What if banks and cards were down?",
     group: "Money",
   },
   {
     id: "digital_payments_only",
-    label: "Payment network stress",
-    prompt: "What if everyday payments required a digital account?",
+    label: "Payment network issue",
+    prompt: "What if digital payments stopped working?",
     group: "Money",
   },
   {
@@ -56,8 +56,8 @@ const SCENARIOS: {
   },
   {
     id: "power_grid",
-    label: "Power out 72h",
-    prompt: "What if power was out for 72 hours?",
+    label: "Power outage",
+    prompt: "What if you lost power in your area?",
     group: "Essentials",
   },
   {
@@ -68,7 +68,7 @@ const SCENARIOS: {
   },
   {
     id: "food_prices_double",
-    label: "Food prices double",
+    label: "Fuel / food shock",
     prompt: "What if grocery prices doubled overnight?",
     group: "Essentials",
   },
@@ -91,9 +91,7 @@ export default function WhatIfPage() {
   function run(id: WhatIfScenario, free?: boolean) {
     if (!session) return;
     if (!free && !premium) {
-      alert(
-        "Full scenarios unlock with the founding plan. Pay from Overview or Settings."
-      );
+      alert("Full scenarios unlock with the founding plan.");
       return;
     }
     setActive(id);
@@ -102,7 +100,7 @@ export default function WhatIfPage() {
     setTimeout(() => {
       setResult(runWhatIf(id, session.answers));
       setRunning(false);
-    }, 500);
+    }, 450);
   }
 
   if (!session) {
@@ -110,45 +108,65 @@ export default function WhatIfPage() {
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-zinc-400">Complete your assessment first.</p>
         <Button asChild className="mt-4">
-          <Link href="/assessment">Get my resilience score</Link>
+          <Link href="/assessment">Get my readiness score</Link>
         </Button>
       </div>
     );
   }
 
+  const runway = Math.round((session.answers.emergency_fund_months || 0) * 30);
+
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-50">What If?</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Stress-test your life against system disruptions — using your real
-          numbers. Not a prediction. An exposure check.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">What If?</h1>
+        <p className="mt-1 text-sm text-zinc-500">Stress-test your life.</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: "days runway", value: String(runway) },
+          { label: "income source", value: String(session.answers.income_sources || 1) },
+          {
+            label: "backup payments",
+            value: session.answers.alt_payment_method ? "1" : "0",
+          },
+        ].map((b) => (
+          <div
+            key={b.label}
+            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-center"
+          >
+            <p className="text-xl font-bold tabular-nums text-zinc-50">{b.value}</p>
+            <p className="mt-0.5 text-[10px] text-zinc-500">{b.label}</p>
+          </div>
+        ))}
       </div>
 
       {GROUPS.map((group) => (
         <section key={group} className="space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-            {group}
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            {group === "Money" ? "Financial" : group}
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-2">
             {SCENARIOS.filter((s) => s.group === group).map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => run(s.id, s.free)}
                 className={cn(
-                  "rounded-xl border px-4 py-3 text-left transition",
+                  "flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-left transition",
                   active === s.id
-                    ? "border-emerald-500/40 bg-emerald-500/5"
-                    : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-600"
+                    ? "border-emerald-500/40 bg-emerald-500/10"
+                    : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
                 )}
               >
-                <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                  {s.label}
-                  {!s.free && !premium ? " · Full plan" : ""}
-                </p>
-                <p className="mt-1 text-sm text-zinc-200">{s.prompt}</p>
+                <div>
+                  <p className="text-sm font-medium text-zinc-100">{s.label}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{s.prompt}</p>
+                </div>
+                <span className="text-xs text-zinc-600">
+                  {!s.free && !premium ? "Full" : "→"}
+                </span>
               </button>
             ))}
           </div>
@@ -163,39 +181,40 @@ export default function WhatIfPage() {
         <div className="space-y-4">
           <div
             className={cn(
-              "rounded-2xl border p-5",
+              "rounded-2xl border p-6",
               result.severity === "critical" || result.severity === "high"
-                ? "border-red-500/25 bg-red-500/5"
+                ? "border-red-500/25 bg-red-500/10"
                 : result.severity === "medium"
-                  ? "border-amber-500/25 bg-amber-500/5"
-                  : "border-emerald-500/25 bg-emerald-500/5"
+                  ? "border-amber-500/25 bg-amber-500/10"
+                  : "border-emerald-500/25 bg-emerald-500/10"
             )}
           >
-            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
               {result.title}
             </p>
-            <p className="mt-3 text-xl font-semibold text-zinc-50">
-              {result.summary}
+            <p className="mt-4 text-4xl font-bold tabular-nums text-zinc-50">
+              {result.summary.match(/\d+/)?.[0] || "—"}
+              <span className="ml-2 text-base font-normal text-zinc-400">
+                {result.summary.includes("days") ? "days" : ""}
+              </span>
             </p>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              {result.detail}
-            </p>
-            <p className="mt-4 text-[10px] uppercase tracking-wider text-zinc-600">
-              Exposure · {result.severity}
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">{result.summary}</p>
+            <p className="mt-2 text-sm text-zinc-500">{result.detail}</p>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+              Your exposure · {result.severity}
             </p>
           </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
               What you should do
             </p>
             <p className="mt-2 text-sm text-zinc-200">{result.recommendation}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button asChild size="sm">
-                <Link href="/app/prepare">Open Prepare</Link>
+                <Link href="/app/prepare">See how to improve</Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link href="/app/risk">See my risk</Link>
+                <Link href="/app/risk">Open risk</Link>
               </Button>
             </div>
           </div>
