@@ -1,50 +1,79 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  loadVaultMeta,
+  encryptAndStore,
+  decryptAndDownload,
+  deleteVaultItem,
+  type VaultMeta,
+} from "@/lib/vault";
 import { Button } from "@/components/ui/button";
 
-type VaultItem = {
-  id: string;
-  name: string;
-  note: string;
-  addedAt: string;
-};
-
-const KEY = "tiltshield_vault_meta";
-
 export default function VaultPage() {
-  const [items, setItems] = useState<VaultItem[]>([]);
-  const [name, setName] = useState("");
+  const [items, setItems] = useState<VaultMeta[]>([]);
+  const [pass, setPass] = useState("");
   const [note, setNote] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setItems(JSON.parse(localStorage.getItem(KEY) || "[]"));
-    } catch {
-      /* */
-    }
+    setItems(loadVaultMeta());
   }, []);
 
-  function save(next: VaultItem[]) {
-    setItems(next);
-    localStorage.setItem(KEY, JSON.stringify(next));
+  async function onAdd() {
+    setError(null);
+    setMsg(null);
+    if (!file) {
+      setError("Choose a file (PDF, image, or document).");
+      return;
+    }
+    if (pass.length < 8) {
+      setError("Passphrase must be at least 8 characters.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setError("Max 8 MB per file.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await encryptAndStore(file, pass, note);
+      setItems(loadVaultMeta());
+      setFile(null);
+      setNote("");
+      setMsg("Encrypted and stored on this device only.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Encrypt failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function add() {
-    if (!name.trim()) return;
-    const item: VaultItem = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      note: note.trim(),
-      addedAt: new Date().toISOString(),
-    };
-    save([item, ...items]);
-    setName("");
-    setNote("");
+  async function onOpen(id: string) {
+    setError(null);
+    setMsg(null);
+    if (pass.length < 8) {
+      setError("Enter the same passphrase used when you stored the file.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await decryptAndDownload(id, pass);
+      setMsg("Decrypted — download started.");
+    } catch {
+      setError("Wrong passphrase or corrupted data.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function remove(id: string) {
-    save(items.filter((i) => i.id !== id));
+  async function onRemove(id: string) {
+    if (!confirm("Delete this encrypted file from this device?")) return;
+    await deleteVaultItem(id);
+    setItems(loadVaultMeta());
   }
 
   return (
@@ -52,50 +81,76 @@ export default function VaultPage() {
       <div>
         <h1 className="text-2xl font-semibold text-zinc-50">Document vault</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Labels and notes stay on this device. Store actual files offline (encrypted
-          drive or paper). Tiltshield does not upload your documents.
+          Files are encrypted with your passphrase (AES-GCM) and stored only on this
+          device. Servers never receive the file or passphrase.
         </p>
       </div>
 
       <div className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Label (e.g. Passport scan \u2014 offline USB)"
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
-        />
+        <label className="block text-xs text-zinc-500">
+          Vault passphrase
+          <input
+            type="password"
+            value={pass}
+            onChange={(e) => setPass(e.target.value)}
+            placeholder="Min 8 characters — remember this"
+            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
+            autoComplete="off"
+          />
+        </label>
+        <label className="block text-xs text-zinc-500">
+          File
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="mt-1 w-full text-sm text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-1.5 file:text-zinc-200"
+          />
+        </label>
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Where it lives (drawer, hardware wallet seed paper, USB\u2026)"
+          placeholder="Note (optional)"
           className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
         />
-        <Button type="button" size="sm" onClick={add}>
-          Add entry
+        <Button type="button" size="sm" onClick={onAdd} disabled={busy}>
+          {busy ? "Working…" : "Encrypt & store"}
         </Button>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        {msg && <p className="text-sm text-emerald-400">{msg}</p>}
       </div>
 
       <ul className="space-y-2">
         {items.map((i) => (
           <li
             key={i.id}
-            className="flex items-start justify-between gap-3 rounded-xl border border-zinc-800 px-4 py-3"
+            className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-zinc-800 px-4 py-3"
           >
             <div>
               <p className="text-sm font-medium text-zinc-100">{i.name}</p>
-              {i.note && <p className="mt-0.5 text-xs text-zinc-500">{i.note}</p>}
+              <p className="text-xs text-zinc-500">
+                {(i.size / 1024).toFixed(1)} KB · {new Date(i.addedAt).toLocaleString()}
+                {i.note ? ` · ${i.note}` : ""}
+              </p>
             </div>
-            <button
-              type="button"
-              onClick={() => remove(i.id)}
-              className="text-xs text-zinc-600 hover:text-red-400"
-            >
-              Remove
-            </button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => onOpen(i.id)} disabled={busy}>
+                Unlock
+              </Button>
+              <button
+                type="button"
+                className="text-xs text-zinc-600 hover:text-red-400"
+                onClick={() => onRemove(i.id)}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
         {items.length === 0 && (
-          <p className="text-sm text-zinc-500">No entries yet. Start with IDs and recovery codes.</p>
+          <p className="text-sm text-zinc-500">
+            No encrypted documents yet. Add IDs, insurance PDFs, or recovery sheets.
+          </p>
         )}
       </ul>
     </div>
