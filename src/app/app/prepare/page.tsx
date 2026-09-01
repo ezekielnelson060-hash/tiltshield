@@ -3,17 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
+import { googleMapsSearchUrl } from "@/lib/nearby";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/page-header";
 import { cn } from "@/lib/utils";
 
 type KitItem = { id: string; label: string; group: string };
-type Vendor = { id: string; name: string; category: string; phone: string; note: string };
+type Vendor = {
+  id: string;
+  name: string;
+  category: string;
+  phone: string;
+  note: string;
+};
 type Recipe = {
   id: string;
   title: string;
   needs: string[];
   steps: string;
-  daysStretch: number;
   minPantryDays: number;
 };
 
@@ -26,9 +33,7 @@ const KIT_DEFAULTS: KitItem[] = [
   { id: "cash", label: "Small cash float for essentials", group: "Home kit" },
   { id: "med_basic", label: "First-aid: bandages, antiseptic, pain relief", group: "Medical" },
   { id: "med_personal", label: "Personal prescription meds (extra days)", group: "Medical" },
-  { id: "med_thermo", label: "Thermometer", group: "Medical" },
   { id: "docs", label: "Offline copies of IDs & key papers", group: "Documents" },
-  { id: "seeds", label: "Self-custody recovery notes offline (if applicable)", group: "Documents" },
 ];
 
 const RECIPES: Recipe[] = [
@@ -36,8 +41,7 @@ const RECIPES: Recipe[] = [
     id: "rice_beans",
     title: "Rice + beans skillet",
     needs: ["Rice", "Dry beans or lentils", "Oil", "Salt"],
-    steps: "Cook beans · cook rice · combine with oil and spice",
-    daysStretch: 5,
+    steps: "Cook beans · cook rice · combine",
     minPantryDays: 14,
   },
   {
@@ -45,7 +49,6 @@ const RECIPES: Recipe[] = [
     title: "Oat breakfast base",
     needs: ["Rolled oats", "Water or powdered milk", "Honey or sugar"],
     steps: "Hot water + oats · stir · sweeten",
-    daysStretch: 7,
     minPantryDays: 7,
   },
   {
@@ -53,7 +56,6 @@ const RECIPES: Recipe[] = [
     title: "Pasta emergency bowl",
     needs: ["Dry pasta", "Tomato jar/can", "Salt"],
     steps: "Boil pasta · warm sauce · combine",
-    daysStretch: 4,
     minPantryDays: 10,
   },
 ];
@@ -68,7 +70,8 @@ export default function PreparePage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [practiced, setPracticed] = useState<Record<string, boolean>>({});
   const [pantryDays, setPantryDays] = useState(0);
-  const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
+  const [saveName, setSaveName] = useState("");
   const [category, setCategory] = useState("Food");
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
@@ -118,19 +121,26 @@ export default function PreparePage() {
     localStorage.setItem(VENDOR_KEY, JSON.stringify(list));
   }
 
+  function searchMap(q: string) {
+    const term = q.trim();
+    if (!term) return;
+    window.open(googleMapsSearchUrl(term), "_blank", "noreferrer");
+  }
+
   function addVendor() {
-    if (!name.trim()) return;
+    const n = (saveName || query).trim();
+    if (!n) return;
     saveVendors([
       {
         id: crypto.randomUUID(),
-        name: name.trim(),
+        name: n,
         category,
         phone: phone.trim(),
         note: note.trim(),
       },
       ...vendors,
     ]);
-    setName("");
+    setSaveName("");
     setPhone("");
     setNote("");
   }
@@ -152,16 +162,17 @@ export default function PreparePage() {
       title: "Create offline contacts list",
       impact: "Low impact",
       time: "4 min",
-      href: "/app/prepare",
+      href: "#",
     },
   ];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Prepare</h1>
-        <p className="mt-1 text-sm text-zinc-500">Your personalized action plan.</p>
-      </div>
+      <PageHeader
+        title="Prepare"
+        subtitle="Your personalized action plan."
+        backHref="/app/overview"
+      />
 
       <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
         {(
@@ -189,46 +200,52 @@ export default function PreparePage() {
 
       {tab === "plan" && (
         <div className="space-y-3">
-          {planActions.map((a, i) => (
-            <Link
-              key={a.title}
-              href={a.href}
-              className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 transition hover:border-emerald-500/25"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
-                {i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-zinc-50">{a.title}</p>
-                <p className="mt-1 text-[11px] text-zinc-500">
-                  {a.impact} · {a.time}
-                </p>
-              </div>
-              <span className="mt-1 h-4 w-4 rounded border border-zinc-600" />
-            </Link>
-          ))}
+          {planActions.map((a, i) =>
+            a.href === "#" ? (
+              <button
+                key={a.title}
+                type="button"
+                onClick={() => setTab("templates")}
+                className="flex w-full items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-left transition hover:border-emerald-500/25"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-zinc-50">{a.title}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    {a.impact} · {a.time}
+                  </p>
+                </div>
+                <span className="mt-1 h-4 w-4 rounded border border-zinc-600" />
+              </button>
+            ) : (
+              <Link
+                key={a.title}
+                href={a.href}
+                className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 transition hover:border-emerald-500/25"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-zinc-50">{a.title}</p>
+                  <p className="mt-1 text-[11px] text-zinc-500">
+                    {a.impact} · {a.time}
+                  </p>
+                </div>
+                <span className="mt-1 h-4 w-4 rounded border border-zinc-600" />
+              </Link>
+            )
+          )}
           <p className="pt-1 text-center text-xs text-zinc-500">
             Kit progress {done}/{KIT_DEFAULTS.length}
-            {pantryDays > 0 && <> · {pantryDays} pantry days</>}
           </p>
-          <button
-            type="button"
-            onClick={() => setTab("topics")}
-            className="block w-full text-center text-xs font-medium text-emerald-400"
-          >
-            Open Topics (kits) →
-          </button>
         </div>
       )}
 
       {tab === "topics" && (
         <div className="space-y-5">
-          {pantryDays < 14 && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-              About <strong>{pantryDays}</strong> pantry days on file. Aim for 14+ of food you
-              already eat.
-            </div>
-          )}
           {groups.map((g) => (
             <section key={g} className="space-y-2">
               <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -269,39 +286,54 @@ export default function PreparePage() {
 
       {tab === "templates" && (
         <div className="space-y-6">
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-zinc-50">Recipes</h2>
-            {prioritized.map((r) => (
-              <div
-                key={r.id}
-                className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium text-zinc-100">{r.title}</p>
-                    <p className="mt-1 text-xs text-zinc-500">{r.needs.join(" · ")}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleRecipe(r.id)}
-                    className={cn(
-                      "text-[10px] font-medium",
-                      practiced[r.id] ? "text-emerald-400" : "text-zinc-500"
-                    )}
-                  >
-                    {practiced[r.id] ? "Practiced" : "Mark"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </section>
-
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold text-zinc-50">Local vendors</h2>
-            <div className="space-y-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-zinc-50">Find vendors near you</h2>
+            <p className="text-xs text-zinc-500">
+              Search the map for venues — then save the ones you trust offline.
+            </p>
+            <div className="relative">
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") searchMap(query);
+                }}
+                placeholder="Search pharmacies, markets, fuel…"
+                className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 pl-4 pr-24 text-sm text-zinc-50 placeholder:text-zinc-600"
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                onClick={() => searchMap(query)}
+              >
+                Search
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {["Pharmacy", "Grocery", "Organic market", "Fuel", "ATM", "Clinic"].map(
+                (q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => {
+                      setQuery(q);
+                      searchMap(q);
+                    }}
+                    className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-400 ring-1 ring-white/[0.06] hover:text-emerald-400"
+                  >
+                    {q}
+                  </button>
+                )
+              )}
+            </div>
+            <div className="space-y-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Save contact offline
+              </p>
+              <input
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
                 placeholder="Name / shop"
                 className="w-full rounded-lg border border-white/[0.08] bg-[#060a12] px-3 py-2 text-sm text-zinc-50"
               />
@@ -322,8 +354,14 @@ export default function PreparePage() {
                 placeholder="Phone"
                 className="w-full rounded-lg border border-white/[0.08] bg-[#060a12] px-3 py-2 text-sm text-zinc-50"
               />
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Note — hours, area"
+                className="w-full rounded-lg border border-white/[0.08] bg-[#060a12] px-3 py-2 text-sm text-zinc-50"
+              />
               <Button type="button" size="sm" onClick={addVendor}>
-                Add vendor
+                Save vendor
               </Button>
             </div>
             {vendors.map((v) => (
@@ -331,9 +369,12 @@ export default function PreparePage() {
                 key={v.id}
                 className="flex justify-between rounded-xl border border-white/[0.08] px-4 py-3 text-sm"
               >
-                <span className="text-zinc-200">
-                  {v.name} <span className="text-zinc-500">· {v.category}</span>
-                </span>
+                <div>
+                  <p className="text-zinc-200">
+                    {v.name} <span className="text-zinc-500">· {v.category}</span>
+                  </p>
+                  {v.phone && <p className="text-xs text-emerald-400">{v.phone}</p>}
+                </div>
                 <button
                   type="button"
                   className="text-xs text-zinc-500"
@@ -341,6 +382,33 @@ export default function PreparePage() {
                 >
                   Remove
                 </button>
+              </div>
+            ))}
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-zinc-50">Recipes</h2>
+            {prioritized.map((r) => (
+              <div
+                key={r.id}
+                className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
+              >
+                <div className="flex justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">{r.title}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{r.needs.join(" · ")}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleRecipe(r.id)}
+                    className={cn(
+                      "text-[10px] font-medium",
+                      practiced[r.id] ? "text-emerald-400" : "text-zinc-500"
+                    )}
+                  >
+                    {practiced[r.id] ? "Practiced" : "Mark"}
+                  </button>
+                </div>
               </div>
             ))}
           </section>
