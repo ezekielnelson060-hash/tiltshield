@@ -1,17 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
-import {
-  searchNearbyPlaces,
-  osmEmbedUrl,
-  type NearbyPlace,
-} from "@/lib/nearby";
+import { searchNearbyPlaces, type NearbyPlace } from "@/lib/nearby";
 import { formatDistance } from "@/lib/locale";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 import { cn } from "@/lib/utils";
+
+const NearbyMap = dynamic(
+  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-44 items-center justify-center rounded-2xl border border-white/[0.08] text-xs text-zinc-500">
+        Loading map…
+      </div>
+    ),
+  }
+);
 
 type StockItem = { id: string; label: string; group: string; hint?: string };
 
@@ -32,7 +41,7 @@ const YEAR_STOCK: StockItem[] = [
 const STOCK_KEY = "tiltshield_year_stock";
 const VENDOR_KEY = "tiltshield_saved_places";
 
-type SavedPlace = NearbyPlace & { phone?: string; note?: string };
+type SavedPlace = NearbyPlace;
 
 export default function PreparePage() {
   const [tab, setTab] = useState<"plan" | "stock" | "network">("plan");
@@ -104,12 +113,6 @@ export default function PreparePage() {
     { title: "Map 3 offline-capable local vendors", impact: "Medium impact", time: "15 min", href: "#network" },
   ];
 
-  const mapUrl = selected
-    ? osmEmbedUrl(selected.lat, selected.lon)
-    : coords
-      ? osmEmbedUrl(coords.lat, coords.lng)
-      : null;
-
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
@@ -144,7 +147,7 @@ export default function PreparePage() {
         <div className="space-y-3">
           {pantryDays > 0 && pantryDays < 30 && (
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-              About <strong>{pantryDays}</strong> food days on file. Stretch toward 90 days of meals you already eat.
+              About <strong>{pantryDays}</strong> food days on file. Stretch toward 90 days, then a full year via rotation.
             </div>
           )}
           {planActions.map((a, i) =>
@@ -198,7 +201,7 @@ export default function PreparePage() {
 
       {tab === "network" && (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-500">Find places near you — results stay in the app. Save ones you trust offline.</p>
+          <p className="text-sm text-zinc-500">Find places near you — multi-pin map + results stay in the app. Save ones you trust offline.</p>
           <div className="relative">
             <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void runSearch(query); }} placeholder="Pharmacy, market, clinic…" className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 pl-4 pr-24 text-sm text-zinc-50 placeholder:text-zinc-600" />
             <Button type="button" size="sm" className="absolute right-2 top-1/2 -translate-y-1/2" disabled={loading} onClick={() => void runSearch(query || "pharmacy")}>{loading ? "…" : "Search"}</Button>
@@ -208,11 +211,7 @@ export default function PreparePage() {
               <button key={q} type="button" onClick={() => { setQuery(q); void runSearch(q); }} className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs capitalize text-zinc-400 ring-1 ring-white/[0.06] hover:text-emerald-400">{q}</button>
             ))}
           </div>
-          {mapUrl && (
-            <div className="overflow-hidden rounded-2xl border border-white/[0.08]">
-              <iframe title="Vendor map" src={mapUrl} className="h-44 w-full border-0" loading="lazy" />
-            </div>
-          )}
+          <NearbyMap places={places} selected={selected} user={coords} onSelect={setSelected} className="relative h-44 w-full overflow-hidden rounded-2xl border border-white/[0.08] sm:h-56" />
           <div className="space-y-2">
             {places.map((p) => (
               <button key={p.id} type="button" onClick={() => setSelected(p)} className={cn("flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left", selected?.id === p.id ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/[0.08] bg-white/[0.03]")}>
