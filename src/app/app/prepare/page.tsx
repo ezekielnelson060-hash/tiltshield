@@ -15,7 +15,7 @@ import {
 } from "@/lib/nearby";
 
 const NearbyMap = dynamic(
-  () => import("@/components/map/NearbyMap").then((m) => m.NearbyMap),
+  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
   { ssr: false }
 );
 
@@ -56,6 +56,7 @@ export default function PreparePage() {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
+  const [selected, setSelected] = useState<NearbyPlace | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -95,6 +96,7 @@ export default function PreparePage() {
       let r = await searchNearbyPlaces(q, coords);
       if (!r.length) r = await searchNearbyPlaces(q, coords, { national: true });
       setPlaces(r);
+      setSelected(r[0] ?? null);
     } finally {
       setLoading(false);
     }
@@ -258,13 +260,13 @@ export default function PreparePage() {
               </button>
             ))}
           </div>
-          {coords && (
-            <NearbyMap
-              center={coords}
-              places={places}
-              className="h-48 w-full overflow-hidden rounded-2xl border border-white/10"
-            />
-          )}
+          <NearbyMap
+            places={places}
+            selected={selected}
+            user={coords}
+            onSelect={setSelected}
+            className="h-48 w-full overflow-hidden rounded-2xl border border-white/10"
+          />
           <Link
             href="/app/nearby"
             className="block text-center text-sm font-medium text-emerald-400"

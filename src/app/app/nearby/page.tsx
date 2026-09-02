@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import {
   NEARBY_CATEGORIES,
-  FINDER_GROUPS,
   searchNearbyPlaces,
   mapsSearchUrl,
   type NearbyCategory,
@@ -17,12 +16,15 @@ import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
 
 const NearbyMap = dynamic(
-  () => import("@/components/map/NearbyMap").then((m) => m.NearbyMap),
-  { ssr: false, loading: () => (
-    <div className="flex h-56 items-center justify-center rounded-2xl border border-white/10 bg-[#080d16] text-xs text-zinc-500">
-      Loading map…
-    </div>
-  ) }
+  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-56 items-center justify-center rounded-2xl border border-white/10 bg-[#080d16] text-xs text-zinc-500">
+        Loading map…
+      </div>
+    ),
+  }
 );
 
 export default function NearbyPage() {
@@ -30,6 +32,7 @@ export default function NearbyPage() {
   const [active, setActive] = useState<NearbyCategory | null>("pharmacy");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
+  const [selected, setSelected] = useState<NearbyPlace | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +62,7 @@ export default function NearbyPage() {
           });
         }
         setPlaces(results);
+        setSelected(results[0] ?? null);
         if (!results.length) {
           setError(
             "No venues found. Try pharmacy, bank, or market — or open Google Maps below."
@@ -146,8 +150,10 @@ export default function NearbyPage() {
       </div>
 
       <NearbyMap
-        center={coords}
         places={places}
+        selected={selected}
+        user={coords}
+        onSelect={setSelected}
         className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
       />
 
@@ -159,7 +165,11 @@ export default function NearbyPage() {
         {places.map((pl) => (
           <GlassCard key={pl.id} className="!p-4">
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <button
+                type="button"
+                className="min-w-0 flex-1 text-left"
+                onClick={() => setSelected(pl)}
+              >
                 <p className="text-sm font-medium text-zinc-100">{pl.name}</p>
                 <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">
                   {pl.address}
@@ -169,7 +179,7 @@ export default function NearbyPage() {
                     {formatDistance(pl.distanceKm)}
                   </p>
                 )}
-              </div>
+              </button>
               <a
                 href={mapsSearchUrl(pl.name, pl.lat, pl.lon)}
                 target="_blank"
