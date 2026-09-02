@@ -97,9 +97,13 @@ function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
+/**
+ * @param opts.national — wider search (no hard city bound); still ranked by distance when coords exist
+ */
 export async function searchNearbyPlaces(
   query: string,
-  coords?: { lat: number; lng: number } | null
+  coords?: { lat: number; lng: number } | null,
+  opts?: { national?: boolean; limit?: number }
 ): Promise<NearbyPlace[]> {
   const q = query.trim();
   if (!q) return [];
@@ -108,15 +112,18 @@ export async function searchNearbyPlaces(
     q,
     format: "json",
     addressdetails: "1",
-    limit: "12",
+    limit: String(opts?.limit ?? (opts?.national ? 20 : 12)),
   });
-  if (coords) {
+  if (coords && !opts?.national) {
     const d = 0.22;
     params.set(
       "viewbox",
       `${coords.lng - d},${coords.lat + d},${coords.lng + d},${coords.lat - d}`
     );
     params.set("bounded", "1");
+  } else if (coords && opts?.national) {
+    params.set("lat", String(coords.lat));
+    params.set("lon", String(coords.lng));
   }
 
   const res = await fetch(
@@ -140,7 +147,7 @@ export async function searchNearbyPlaces(
 
   const origin = coords ? { lat: coords.lat, lon: coords.lng } : null;
 
-  return data.map((row) => {
+  const mapped = data.map((row) => {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
     const parts = row.display_name.split(",");
@@ -159,6 +166,13 @@ export async function searchNearbyPlaces(
       distanceKm,
     };
   });
+
+  if (origin) {
+    mapped.sort(
+      (a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999)
+    );
+  }
+  return mapped;
 }
 
 export function osmEmbedUrl(
