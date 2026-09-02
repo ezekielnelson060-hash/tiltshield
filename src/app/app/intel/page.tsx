@@ -12,6 +12,15 @@ import { cn } from "@/lib/utils";
 import { IconBolt } from "@/components/app/icons";
 import { PageHeader } from "@/components/app/page-header";
 
+type AlertRow = {
+  id: string;
+  title: string;
+  summary: string;
+  severity: string;
+  source: string;
+  category: string;
+};
+
 const TABS: { id: IntelScope | "all"; label: string }[] = [
   { id: "all", label: "For you" },
   { id: "local", label: "Local" },
@@ -31,6 +40,7 @@ export default function IntelPage() {
   const [live, setLive] = useState<IntelItem[]>([]);
   const [liveAt, setLiveAt] = useState<string | null>(null);
   const [liveErr, setLiveErr] = useState(false);
+  const [alerts, setAlerts] = useState<AlertRow[]>([]);
 
   useEffect(() => {
     const s = loadSession();
@@ -43,6 +53,30 @@ export default function IntelPage() {
       });
     }
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        let q = "";
+        await new Promise<void>((resolve) => {
+          if (!navigator.geolocation) return resolve();
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              q = `?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`;
+              resolve();
+            },
+            () => resolve(),
+            { timeout: 5000 }
+          );
+        });
+        const res = await fetch(`/api/alerts${q}`);
+        const j = await res.json();
+        if (Array.isArray(j.alerts)) setAlerts(j.alerts);
+      } catch {
+        /* */
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -120,10 +154,43 @@ export default function IntelPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Intel"
-        subtitle="Live world signals plus curated resilience intel — for you, local, and global."
+        subtitle="Live world signals plus local watches — for you, local, and global."
         backHref="/app/overview"
         showBack
       />
+
+      {alerts.length > 0 && (
+        <section className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Local & system watches
+          </p>
+          {alerts.slice(0, 4).map((a) => (
+            <div
+              key={a.id}
+              className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                  {a.source} · {a.category}
+                </span>
+                <span
+                  className={
+                    a.severity === "warning"
+                      ? "text-[10px] font-semibold uppercase text-red-400"
+                      : a.severity === "watch"
+                        ? "text-[10px] font-semibold uppercase text-amber-400"
+                        : "text-[10px] font-semibold uppercase text-zinc-500"
+                  }
+                >
+                  {a.severity}
+                </span>
+              </div>
+              <p className="mt-1 text-sm font-medium text-zinc-100">{a.title}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">{a.summary}</p>
+            </div>
+          ))}
+        </section>
+      )}
 
       <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
         {TABS.map((t) => (
