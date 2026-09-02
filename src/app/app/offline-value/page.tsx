@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OFFLINE_VALUE_PATHS } from "@/lib/offline-value";
+import { NATIONAL_RESOURCES } from "@/lib/national-resources";
 import { searchNearbyPlaces, type NearbyPlace } from "@/lib/nearby";
 import { formatDistance } from "@/lib/locale";
 import { PageHeader } from "@/components/app/page-header";
@@ -30,7 +31,10 @@ export default function OfflineValuePage() {
     setActiveQuery(q);
     setLoading(true);
     try {
-      const places = await searchNearbyPlaces(q, coords);
+      const places = await searchNearbyPlaces(q, coords, {
+        national: true,
+        limit: 20,
+      });
       setResults(places);
     } finally {
       setLoading(false);
@@ -51,8 +55,8 @@ export default function OfflineValuePage() {
           Scenario: payment rails stressed for months
         </p>
         <p className="mt-1 text-xs text-zinc-500">
-          Focus on cash float, a second rail, documents offline, and only then any
-          store-of-value research. Educational — not advice to buy assets.
+          Cash float and a second rail first. Then documents offline. Store-of-value
+          research is optional and educational — not a buy signal.
         </p>
       </GlassCard>
 
@@ -78,7 +82,7 @@ export default function OfflineValuePage() {
                   disabled={loading}
                   onClick={() => void runNational(p.searchQuery!)}
                 >
-                  Find near / region
+                  Find in region / country
                 </Button>
               )}
               {p.href && (
@@ -93,13 +97,34 @@ export default function OfflineValuePage() {
         ))}
       </div>
 
+      <section className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Official national / online anchors
+        </p>
+        {NATIONAL_RESOURCES.map((r) => (
+          <a
+            key={r.id}
+            href={r.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 transition hover:border-emerald-500/25"
+          >
+            <div>
+              <p className="text-sm font-medium text-zinc-100">{r.title}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">{r.blurb}</p>
+            </div>
+            <span className="text-xs text-emerald-400">Open →</span>
+          </a>
+        ))}
+      </section>
+
       {(loading || results.length > 0 || activeQuery) && (
         <section className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
             {loading
               ? "Searching…"
               : activeQuery
-                ? `Results for “${activeQuery}”`
+                ? `Results for “${activeQuery}” (sorted by distance)`
                 : "Results"}
           </p>
           {results.map((r) => (
@@ -120,7 +145,7 @@ export default function OfflineValuePage() {
           ))}
           {!loading && results.length === 0 && activeQuery && (
             <p className="text-sm text-zinc-500">
-              No venues nearby — try Independent Finder for a wider map search.
+              No venues returned — try Independent Finder or OpenStreetMap.
             </p>
           )}
           <Button asChild size="sm" variant="outline">
