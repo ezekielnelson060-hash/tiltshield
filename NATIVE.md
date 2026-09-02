@@ -67,3 +67,23 @@ npm run cap:ios       # opens Xcode (macOS)
 - `npm run cap:add:android` / `npm run cap:add:ios`
 
 Native **signed** builds must run on your machine (or CI with macOS/Android runners).
+
+## App Store / Play — submission order
+
+1. **Privacy policy + Terms** URLs on your domain (required).
+2. **Screenshots** — phone frames of Today, What If, Finder, Offline value.
+3. **Android**
+   - `npx cap add android` → Android Studio
+   - Set `applicationId` = `app.tiltshield.mobile`
+   - Generate upload keystore; enable Play App Signing
+   - Build signed **AAB** → Play Console internal testing first
+4. **iOS** (Mac)
+   - `npx cap add ios` → Xcode
+   - Bundle ID `app.tiltshield.mobile`
+   - Archive → TestFlight → App Store review
+5. **Payments note** — Flutterwave runs in the WebView. Confirm current store rules for digital goods in your region.
+6. **Push (optional later)** — Capacitor Push Notifications after Apple/Firebase credentials.
+
+## PWA install (web, no store)
+
+Users can **Add to Home Screen** from the browser. Service worker targets `/app/*` offline shells.
