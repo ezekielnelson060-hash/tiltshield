@@ -18,7 +18,6 @@ export type NearbyCategory =
   | "transport"
   | "utilities";
 
-/** Independent Finder — preparation network (OSM-friendly queries). */
 export const NEARBY_CATEGORIES: {
   id: NearbyCategory;
   label: string;
@@ -29,20 +28,20 @@ export const NEARBY_CATEGORIES: {
   { id: "pharmacy", label: "Pharmacy", query: "pharmacy", group: "essentials" },
   { id: "medical", label: "Clinic", query: "clinic hospital", group: "essentials" },
   { id: "fuel", label: "Fuel", query: "fuel station", group: "essentials" },
-  { id: "farm", label: "Local farms", query: "farm market CSA", group: "offgrid" },
-  { id: "hardware", label: "Hardware", query: "hardware store", group: "offgrid" },
-  { id: "outdoor", label: "Outdoor supply", query: "outdoor camping store", group: "offgrid" },
-  { id: "solar", label: "Solar / energy", query: "solar renewable energy", group: "offgrid" },
-  { id: "water", label: "Water", query: "water supply well", group: "offgrid" },
-  { id: "cash", label: "Cash / ATM", query: "ATM cash", group: "cash" },
+  { id: "farm", label: "Local farms", query: "farmers market", group: "offgrid" },
+  { id: "hardware", label: "Hardware", query: "hardware", group: "offgrid" },
+  { id: "outdoor", label: "Outdoor supply", query: "camping", group: "offgrid" },
+  { id: "solar", label: "Solar / energy", query: "solar", group: "offgrid" },
+  { id: "water", label: "Water", query: "bottled water", group: "offgrid" },
+  { id: "cash", label: "Cash / ATM", query: "ATM", group: "cash" },
   { id: "banking", label: "Bank", query: "bank", group: "cash" },
-  { id: "community", label: "Community center", query: "community centre community center", group: "community" },
-  { id: "homeschool", label: "Homeschool / education", query: "school library", group: "community" },
-  { id: "events", label: "Event space", query: "event hall conference", group: "community" },
-  { id: "emergency", label: "Emergency", query: "police fire station", group: "essentials" },
+  { id: "community", label: "Community center", query: "community centre", group: "community" },
+  { id: "homeschool", label: "Library", query: "library", group: "community" },
+  { id: "events", label: "Event space", query: "community hall", group: "community" },
+  { id: "emergency", label: "Emergency", query: "hospital", group: "essentials" },
   { id: "shelter", label: "Shelter", query: "hotel", group: "essentials" },
   { id: "transport", label: "Transport", query: "bus station", group: "essentials" },
-  { id: "utilities", label: "Utilities", query: "water utility", group: "offgrid" },
+  { id: "utilities", label: "Utilities", query: "water", group: "offgrid" },
 ];
 
 export const FINDER_GROUPS: {
@@ -50,26 +49,10 @@ export const FINDER_GROUPS: {
   title: string;
   blurb: string;
 }[] = [
-  {
-    id: "essentials",
-    title: "Essentials map",
-    blurb: "Food, meds, fuel — know them before you need them.",
-  },
-  {
-    id: "offgrid",
-    title: "Off-grid directory",
-    blurb: "Farms, hardware, outdoor, solar, water — supply outside fragile apps.",
-  },
-  {
-    id: "cash",
-    title: "Local cash map",
-    blurb: "ATMs and banks — cash access when rails fail.",
-  },
-  {
-    id: "community",
-    title: "Community network",
-    blurb: "Centers, learning spaces, halls — people you can reach offline.",
-  },
+  { id: "essentials", title: "Essentials", blurb: "Food, meds, fuel." },
+  { id: "offgrid", title: "Off-grid", blurb: "Farms, tools, power, water." },
+  { id: "cash", title: "Cash map", blurb: "ATM and banks." },
+  { id: "community", title: "Community", blurb: "Places people meet." },
 ];
 
 export type NearbyPlace = {
@@ -97,31 +80,61 @@ function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
-/**
- * @param opts.national — wider search (no hard city bound); still ranked by distance when coords exist
- */
-export async function searchNearbyPlaces(
-  query: string,
-  coords?: { lat: number; lng: number } | null,
-  opts?: { national?: boolean; limit?: number }
-): Promise<NearbyPlace[]> {
-  const q = query.trim();
-  if (!q) return [];
+export const SEARCH_ALIASES: Record<string, string[]> = {
+  "free water": ["drinking water", "water fountain", "bottled water", "water"],
+  water: ["bottled water", "water", "supermarket"],
+  "outdoor supply": ["camping", "outdoor", "sport", "hardware"],
+  outdoor: ["camping", "outdoor", "sport"],
+  solar: ["solar", "electronics"],
+  pharmacy: ["pharmacy", "chemist"],
+  atm: ["ATM", "bank"],
+  cash: ["ATM", "bank"],
+  farm: ["farmers market", "market"],
+  "farm market": ["farmers market", "market"],
+  generator: ["hardware", "electronics"],
+  rice: ["supermarket", "grocery", "market"],
+  "bottled water": ["bottled water", "supermarket"],
+  fuel: ["fuel", "petrol", "gas station"],
+  clinic: ["clinic", "hospital"],
+  hardware: ["hardware", "tools"],
+};
 
+function expandQueries(query: string): string[] {
+  const key = query.trim().toLowerCase();
+  const aliased = SEARCH_ALIASES[key];
+  if (aliased) return [...new Set([query, ...aliased])];
+  for (const [k, vals] of Object.entries(SEARCH_ALIASES)) {
+    if (key.includes(k) || k.includes(key)) return [...new Set([query, ...vals])];
+  }
+  return [query];
+}
+
+async function nominatimOnce(
+  q: string,
+  coords: { lat: number; lng: number } | null | undefined,
+  mode: "local" | "wide" | "national",
+  limit: number
+): Promise<NearbyPlace[]> {
   const params = new URLSearchParams({
     q,
     format: "json",
     addressdetails: "1",
-    limit: String(opts?.limit ?? (opts?.national ? 20 : 12)),
+    limit: String(limit),
   });
-  if (coords && !opts?.national) {
-    const d = 0.22;
+  if (coords && mode === "local") {
+    const d = 0.4;
     params.set(
       "viewbox",
       `${coords.lng - d},${coords.lat + d},${coords.lng + d},${coords.lat - d}`
     );
-    params.set("bounded", "1");
-  } else if (coords && opts?.national) {
+    params.set("bounded", "0");
+  } else if (coords && mode === "wide") {
+    const d = 1.5;
+    params.set(
+      "viewbox",
+      `${coords.lng - d},${coords.lat + d},${coords.lng + d},${coords.lat - d}`
+    );
+  } else if (coords && mode === "national") {
     params.set("lat", String(coords.lat));
     params.set("lon", String(coords.lng));
   }
@@ -132,6 +145,7 @@ export async function searchNearbyPlaces(
       headers: {
         Accept: "application/json",
         "Accept-Language": "en",
+        "User-Agent": "TiltshieldResilienceApp/1.0 (https://tiltshield.vercel.app)",
       },
     }
   );
@@ -144,47 +158,62 @@ export async function searchNearbyPlaces(
     type?: string;
     class?: string;
   }>;
-
   const origin = coords ? { lat: coords.lat, lon: coords.lng } : null;
-
-  const mapped = data.map((row) => {
+  return data.map((row) => {
     const lat = parseFloat(row.lat);
     const lon = parseFloat(row.lon);
     const parts = row.display_name.split(",");
-    const name = parts[0]?.trim() || "Place";
-    const address = parts.slice(1, 4).join(",").trim();
-    const distanceKm = origin
-      ? Math.round(haversineKm(origin, { lat, lon }) * 10) / 10
-      : undefined;
     return {
       id: String(row.place_id),
-      name,
+      name: parts[0]?.trim() || "Place",
       lat,
       lon,
       type: row.type || row.class || "place",
-      address,
-      distanceKm,
+      address: parts.slice(1, 4).join(",").trim(),
+      distanceKm: origin
+        ? Math.round(haversineKm(origin, { lat, lon }) * 10) / 10
+        : undefined,
     };
   });
-
-  if (origin) {
-    mapped.sort(
-      (a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999)
-    );
-  }
-  return mapped;
 }
 
-export function osmEmbedUrl(
-  lat: number,
-  lon: number,
-  marker = true
-): string {
-  const d = 0.02;
-  const bbox = `${lon - d}%2C${lat - d}%2C${lon + d}%2C${lat + d}`;
-  let url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`;
-  if (marker) url += `&marker=${lat}%2C${lon}`;
-  return url;
+/** Multi-query + local → wide → national fallback so empty cities still get results. */
+export async function searchNearbyPlaces(
+  query: string,
+  coords?: { lat: number; lng: number } | null,
+  opts?: { national?: boolean; limit?: number }
+): Promise<NearbyPlace[]> {
+  const q0 = query.trim();
+  if (!q0) return [];
+  const limit = opts?.limit ?? 12;
+  const queries = expandQueries(q0);
+  const modes: Array<"local" | "wide" | "national"> = opts?.national
+    ? ["national", "wide"]
+    : ["local", "wide", "national"];
+
+  const seen = new Set<string>();
+  const out: NearbyPlace[] = [];
+
+  for (const mode of modes) {
+    for (const q of queries) {
+      try {
+        const batch = await nominatimOnce(q, coords, mode, limit);
+        for (const p of batch) {
+          if (seen.has(p.id)) continue;
+          seen.add(p.id);
+          out.push(p);
+        }
+        if (out.length >= 5) break;
+      } catch {
+        /* next */
+      }
+      await new Promise((r) => setTimeout(r, 180));
+    }
+    if (out.length >= 3) break;
+  }
+
+  if (coords) out.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
+  return out.slice(0, limit);
 }
 
 export function googleMapsSearchUrl(
