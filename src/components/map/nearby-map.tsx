@@ -51,10 +51,22 @@ export function NearbyMap({
         attributionControl: true,
       }).setView(center, selected || places.length ? 14 : 12);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap",
-        maxZoom: 19,
-      }).addTo(map);
+      const streets = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { attribution: "&copy; OpenStreetMap", maxZoom: 19 }
+      );
+      const satellite = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { attribution: "Esri", maxZoom: 19 }
+      );
+      streets.addTo(map);
+      L.control
+        .layers(
+          { Streets: streets, Satellite: satellite },
+          {},
+          { position: "topright", collapsed: false }
+        )
+        .addTo(map);
 
       const icon = L.divIcon({
         className: "",
