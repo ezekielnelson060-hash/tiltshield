@@ -31,6 +31,10 @@ import {
   IllusTarget,
   ScoreBackdrop,
 } from "@/components/illustrations";
+import {
+  buildExposurePipeline,
+  regionalResilienceHint,
+} from "@/lib/pipeline";
 import type { CategoryScores } from "@/types";
 
 const CATEGORY_TILES: {
@@ -187,6 +191,17 @@ export default function TodayPage() {
     hasAltPayment: answers.alt_payment_method,
     incomeSources: answers.income_sources,
   }).slice(0, 3);
+  const region = regionalResilienceHint(scores.overall);
+  const topPipe = buildExposurePipeline({
+    intel: personalizeIntel({
+      overall: scores.overall,
+      topCategory: top?.category,
+      hasAltPayment: answers.alt_payment_method,
+      incomeSources: answers.income_sources,
+    }),
+    scores,
+    answers,
+  })[0];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 lg:px-8 lg:py-8">
@@ -231,7 +246,7 @@ export default function TodayPage() {
                 <IconShield className="h-3.5 w-3.5" />
                 {label}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">Based on your latest assessment</p>
+              <p className="mt-1 text-xs text-zinc-500">{region.label}</p>
               <Sparkline />
               <Link
                 href="/app/history"
@@ -305,6 +320,26 @@ export default function TodayPage() {
           </Link>
         </GlassCard>
       </div>
+
+      {topPipe && (
+        <GlassCard className="border-emerald-500/15">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            World → exposure → action
+          </p>
+          <p className="mt-2 text-sm font-medium text-zinc-100">{topPipe.eventTitle}</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            <span className="text-amber-400/90">{topPipe.exposureLabel}</span>
+            {" · "}
+            {topPipe.exposureReason}
+          </p>
+          <Link
+            href={topPipe.actionHref}
+            className="mt-3 inline-flex rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25"
+          >
+            {topPipe.actionTitle} → ({topPipe.actionMinutes} min)
+          </Link>
+        </GlassCard>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-5">
         <GlassCard className="lg:col-span-3">
