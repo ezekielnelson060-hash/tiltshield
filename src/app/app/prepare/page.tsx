@@ -6,6 +6,8 @@ import Link from "next/link";
 import { loadSession } from "@/lib/session";
 import { searchNearbyPlaces, type NearbyPlace } from "@/lib/nearby";
 import { formatDistance } from "@/lib/locale";
+import { sortStockIds } from "@/lib/prepare-rank";
+import type { AssessmentAnswers } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 import { cn } from "@/lib/utils";
@@ -48,6 +50,7 @@ export default function PreparePage() {
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<SavedPlace[]>([]);
   const [pantryDays, setPantryDays] = useState(0);
+  const [answers, setAnswers] = useState<AssessmentAnswers | null>(null);
   const [query, setQuery] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
@@ -62,7 +65,10 @@ export default function PreparePage() {
       /* */
     }
     const s = loadSession();
-    if (s?.answers) setPantryDays(s.answers.food_buffer_days || 0);
+    if (s?.answers) {
+      setPantryDays(s.answers.food_buffer_days || 0);
+      setAnswers(s.answers);
+    }
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -72,7 +78,8 @@ export default function PreparePage() {
     }
   }, []);
 
-  const groups = Array.from(new Set(YEAR_STOCK.map((k) => k.group)));
+  const ranked = answers ? sortStockIds(YEAR_STOCK, answers) : YEAR_STOCK;
+  const groups = Array.from(new Set(ranked.map((k) => k.group)));
   const done = YEAR_STOCK.filter((k) => checks[k.id]).length;
 
   function toggle(id: string) {
@@ -120,7 +127,7 @@ export default function PreparePage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Prepare"
-        subtitle="Build toward a full year of household resilience — step by step."
+        subtitle="Build toward a full year of household resilience — ordered for your gaps."
         backHref="/app/overview"
         showBack
       />
@@ -184,12 +191,14 @@ export default function PreparePage() {
 
       {tab === "stock" && (
         <div className="space-y-5">
-          <p className="text-sm text-zinc-500">A full year is layers: water, food rotation, meds, money access, power, people.</p>
+          <p className="text-sm text-zinc-500">
+            Ordered for your assessment — highest household gaps first. A full year is layers: water, food rotation, meds, money access, power, people.
+          </p>
           {groups.map((g) => (
             <section key={g} className="space-y-2">
               <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{g}</h2>
               <ul className="space-y-1.5">
-                {YEAR_STOCK.filter((k) => k.group === g).map((k) => (
+                {ranked.filter((k) => k.group === g).map((k) => (
                   <li key={k.id}>
                     <button type="button" onClick={() => toggle(k.id)} className={cn("flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm", checks[k.id] ? "border-emerald-500/30 bg-emerald-500/10 text-zinc-100" : "border-white/[0.08] bg-white/[0.03] text-zinc-400")}>
                       <span className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[10px]", checks[k.id] ? "border-emerald-500 bg-emerald-500 text-zinc-950" : "border-zinc-600")}>{checks[k.id] ? "✓" : ""}</span>
