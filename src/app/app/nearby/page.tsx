@@ -9,7 +9,7 @@ import {
   type NearbyPlace,
 } from "@/lib/nearby";
 import { formatDistance } from "@/lib/locale";
-import { AppTopBar } from "@/components/app/page-header";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ const NearbyMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-56 items-center justify-center rounded-2xl border border-white/[0.08] text-xs text-zinc-500 sm:h-72">
+      <div className="tilt-map-chrome flex h-56 items-center justify-center text-xs text-zinc-500 sm:h-72">
         Loading map…
       </div>
     ),
@@ -70,36 +70,34 @@ export default function NearbyPage() {
 
   useEffect(() => {
     if (cat) void runSearch(cat.query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, coords?.lat, coords?.lng]);
+  }, [active, coords?.lat, coords?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 lg:px-8">
-      <AppTopBar title="Nearby" backHref="/app/overview" />
-      <p className="-mt-2 text-sm text-zinc-500">
-        Search inside Tiltshield — multi-pin map, results stay here.
-      </p>
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
+      <PageHeader
+        title="Nearby"
+        subtitle="Search and pin resources near you — in-app map, not an external link."
+        backHref="/app/overview"
+        showBack
+      />
 
-      <div className="relative">
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void runSearch(query || cat?.query || "pharmacy");
+        }}
+      >
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void runSearch(query);
-          }}
-          placeholder="Search pharmacies, markets, fuel…"
-          className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 pl-4 pr-24 text-sm text-zinc-50 placeholder:text-zinc-600"
+          placeholder="Search places, services, supplies…"
+          className="flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600"
         />
-        <Button
-          type="button"
-          size="sm"
-          className="absolute right-2 top-1/2 -translate-y-1/2"
-          disabled={loading}
-          onClick={() => void runSearch(query || cat?.query || "pharmacy")}
-        >
+        <Button type="submit" size="sm" disabled={loading}>
           {loading ? "…" : "Search"}
         </Button>
-      </div>
+      </form>
 
       <div className="flex flex-wrap gap-2">
         {NEARBY_CATEGORIES.map((c) => (
@@ -108,13 +106,13 @@ export default function NearbyPage() {
             type="button"
             onClick={() => {
               setActive(c.id);
-              setQuery(c.query);
+              setQuery("");
             }}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-medium transition",
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
               active === c.id
-                ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                : "bg-white/[0.04] text-zinc-500 hover:text-zinc-300"
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                : "border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:text-zinc-300"
             )}
           >
             {c.label}
@@ -156,10 +154,10 @@ export default function NearbyPage() {
                 "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition",
                 isSel
                   ? "border-emerald-500/40 bg-emerald-500/10"
-                  : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
+                  : "border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] hover:border-white/15"
               )}
             >
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-sm text-emerald-400">
                 📍
               </span>
               <div className="min-w-0 flex-1">
