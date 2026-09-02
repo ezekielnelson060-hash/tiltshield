@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   loadSession,
@@ -41,12 +41,20 @@ function statusTone(s: ReturnType<typeof categoryStatus>) {
 
 function RiskInner() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [session, setSession] = useState<TiltSession | null>(null);
   const focus = searchParams.get("cat");
 
   useEffect(() => {
     setSession(loadSession());
   }, []);
+
+  // Legacy deep links /app/risk?cat=money → Focus action pages
+  useEffect(() => {
+    if (focus && KEYS.includes(focus as keyof CategoryScores)) {
+      router.replace(`/app/focus/${focus}`);
+    }
+  }, [focus, router]);
 
   if (!session) {
     return (
@@ -61,74 +69,20 @@ function RiskInner() {
     );
   }
 
-  const { scores, vulnerabilities } = session;
-  const focused = focus
-    ? vulnerabilities.find((v) => v.category === focus)
-    : null;
-  const focusedScore = focus
-    ? (scores[focus as keyof CategoryScores] as number)
-    : null;
-
-  if (focus && focusedScore != null) {
-    const st = categoryStatus(focusedScore);
-    const Icon = CATEGORY_ICONS[focus as keyof typeof CATEGORY_ICONS];
+  if (focus) {
     return (
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-        <PageHeader
-          title={CATEGORY_LABELS[focus] || focus}
-          subtitle="Your exposure in this area — with the next move."
-          backHref="/app/risk"
-          showBack
-        />
-        <GlassCard tone={st === "critical" ? "danger" : "default"}>
-          <div className="flex items-center gap-3">
-            {Icon && (
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.06] ring-1 ring-white/10">
-                <Icon className="h-5 w-5 text-zinc-200" />
-              </span>
-            )}
-            <div>
-              <p className="text-3xl font-bold tabular-nums text-zinc-50">
-                {focusedScore}{" "}
-                <span className="text-sm font-normal text-zinc-500">/ 100</span>
-              </p>
-              <p className={cn("text-xs font-semibold uppercase", statusTone(st))}>
-                {statusLabel(st)}
-              </p>
-            </div>
-          </div>
-          {focused && (
-            <>
-              <p className="mt-4 text-sm text-zinc-300">{focused.current_state}</p>
-              <p className="mt-3 text-sm text-zinc-400">
-                <span className="text-zinc-200">Next move:</span>{" "}
-                {focused.next_action}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Button asChild size="sm">
-                  <Link href="/app/prepare">Open Prepare</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/app/what-if">Run What If</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/app/offline-value">Offline value paths</Link>
-                </Button>
-              </div>
-            </>
-          )}
-        </GlassCard>
-      </div>
+      <div className="p-8 text-center text-zinc-500">Opening action page…</div>
     );
   }
 
+  const { scores, vulnerabilities } = session;
   const top = vulnerabilities[0];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="My Risk"
-        subtitle="Eight areas. One priority — strengthen the weakest first."
+        subtitle="Eight areas. One priority — open any row for moves and places."
         backHref="/app/overview"
         showBack
       />
@@ -141,10 +95,10 @@ function RiskInner() {
           <p className="mt-2 text-lg font-semibold text-zinc-50">{top.title}</p>
           <p className="mt-1 text-sm text-zinc-400">{top.current_state}</p>
           <Link
-            href={`/app/risk?cat=${top.category}`}
+            href={`/app/focus/${top.category}`}
             className="mt-4 inline-flex rounded-xl bg-red-500/20 px-4 py-2 text-sm font-medium text-red-200"
           >
-            Fix this first →
+            Open action page →
           </Link>
         </GlassCard>
       )}
@@ -162,7 +116,7 @@ function RiskInner() {
           return (
             <Link
               key={key}
-              href={`/app/risk?cat=${key}`}
+              href={`/app/focus/${key}`}
               className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 border-b border-white/[0.05] px-4 py-3.5 transition last:border-0 hover:bg-white/[0.03]"
             >
               <span className="flex items-center gap-3 text-sm font-medium text-zinc-100">
@@ -182,45 +136,12 @@ function RiskInner() {
         })}
       </section>
 
-      <section className="space-y-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Ranked exposures
-        </p>
-        {vulnerabilities.slice(0, 6).map((v, i) => (
-          <Link
-            key={v.rank ?? i}
-            href={`/app/risk?cat=${v.category}`}
-            className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 transition hover:border-white/15"
-          >
-            <div>
-              <p className="text-sm font-medium text-zinc-100">
-                {v.rank ?? i + 1}. {v.title}
-              </p>
-              <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">
-                {v.current_state}
-              </p>
-            </div>
-            <span
-              className={cn(
-                "text-[10px] font-semibold uppercase",
-                v.severity === "critical" || v.severity === "high"
-                  ? "text-red-400"
-                  : "text-amber-400"
-              )}
-            >
-              {v.severity}
-            </span>
-          </Link>
-        ))}
-      </section>
-
       <GlassCard>
         <p className="text-sm font-medium text-zinc-100">
           What if cards and banks fail for a long stretch?
         </p>
         <p className="mt-1 text-xs text-zinc-500">
-          Cash float, second rails, hardware wallets, metals dealers — educational paths with
-          distance from you.
+          Cash float, second rails, hardware wallets, metals — educational paths.
         </p>
         <Button asChild size="sm" className="mt-3">
           <Link href="/app/offline-value">Open offline value paths</Link>
