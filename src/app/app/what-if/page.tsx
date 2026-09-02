@@ -19,7 +19,13 @@ import {
   IllusFood,
 } from "@/components/illustrations";
 
-type Group = "Money" | "Digital" | "Essentials";
+type Group =
+  | "Money"
+  | "Digital"
+  | "Essentials"
+  | "Mobility"
+  | "Information"
+  | "Personal";
 
 const SCENARIOS: {
   id: WhatIfScenario;
@@ -28,22 +34,42 @@ const SCENARIOS: {
   group: Group;
   free?: boolean;
   Icon: (p: { size?: number }) => JSX.Element;
+  nearbyQuery?: string;
 }[] = [
-  { id: "income_stops", label: "Income stops", prompt: "What if your income stopped today?", group: "Money", free: true, Icon: IllusWallet },
-  { id: "job_loss", label: "Job loss", prompt: "What if you lost your primary job?", group: "Money", Icon: IllusBriefcase },
-  { id: "banking_down", label: "Banking unavailable", prompt: "What if banks and cards were down?", group: "Money", Icon: IllusBank },
-  { id: "digital_payments_only", label: "Payment network issue", prompt: "What if digital payments stopped working?", group: "Money", Icon: IllusPhone },
-  { id: "phone_lost", label: "Phone lost", prompt: "What if your phone was gone this afternoon?", group: "Digital", Icon: IllusPhone },
-  { id: "internet_outage", label: "Internet outage", prompt: "What if the internet was down for 48 hours?", group: "Digital", Icon: IllusBolt },
-  { id: "power_grid", label: "Power outage", prompt: "What if you lost power in your area?", group: "Essentials", Icon: IllusBolt },
-  { id: "medical_emergency", label: "Medical shock", prompt: "What if a sudden medical bill hit this month?", group: "Essentials", Icon: IllusShield },
-  { id: "food_prices_double", label: "Fuel / food shock", prompt: "What if grocery prices doubled overnight?", group: "Essentials", Icon: IllusFood },
+  { id: "income_stops", label: "Income stops", prompt: "What if money in stopped today?", group: "Money", free: true, Icon: IllusWallet, nearbyQuery: "ATM" },
+  { id: "banking_down", label: "Bank closed", prompt: "What if bank apps and cards failed?", group: "Money", Icon: IllusBank, nearbyQuery: "ATM" },
+  { id: "digital_payments_only", label: "Payments break", prompt: "What if card and app pay stopped?", group: "Money", Icon: IllusPhone, nearbyQuery: "ATM" },
+  { id: "job_loss", label: "Job loss", prompt: "What if your main job ended?", group: "Money", Icon: IllusBriefcase },
+  { id: "major_expense", label: "Big bill", prompt: "What if a large bill hit this month?", group: "Money", Icon: IllusWallet },
+  { id: "currency_volatility", label: "Money buys less", prompt: "What if prices jumped?", group: "Money", Icon: IllusWallet },
+  { id: "phone_lost", label: "Phone gone", prompt: "What if your phone was lost today?", group: "Digital", Icon: IllusPhone },
+  { id: "internet_outage", label: "No internet", prompt: "What if the internet was down for days?", group: "Digital", Icon: IllusBolt },
+  { id: "email_compromised", label: "Email locked", prompt: "What if your main email was taken over?", group: "Digital", Icon: IllusPhone },
+  { id: "cloud_down", label: "Cloud down", prompt: "What if cloud files were unreachable?", group: "Digital", Icon: IllusBolt },
+  { id: "two_factor_down", label: "No 2FA codes", prompt: "What if login text codes stopped?", group: "Digital", Icon: IllusPhone },
+  { id: "food_prices_double", label: "Food costs jump", prompt: "What if food cost a lot more?", group: "Essentials", Icon: IllusFood, nearbyQuery: "supermarket" },
+  { id: "store_unavailable", label: "Store closed", prompt: "What if your usual store was closed?", group: "Essentials", Icon: IllusFood, nearbyQuery: "supermarket" },
+  { id: "fuel_scarce", label: "Hard to get fuel", prompt: "What if fuel was hard to buy?", group: "Essentials", Icon: IllusBolt, nearbyQuery: "fuel" },
+  { id: "power_grid", label: "Power out", prompt: "What if the lights went out?", group: "Essentials", Icon: IllusBolt, nearbyQuery: "hardware" },
+  { id: "water_disruption", label: "Water issues", prompt: "What if tap water was uncertain?", group: "Essentials", Icon: IllusFood, nearbyQuery: "bottled water" },
+  { id: "transit_down", label: "No public transit", prompt: "What if buses or trains stopped?", group: "Mobility", Icon: IllusBolt, nearbyQuery: "bus station" },
+  { id: "vehicle_unavailable", label: "No vehicle", prompt: "What if you could not use your vehicle?", group: "Mobility", Icon: IllusBolt },
+  { id: "travel_disruption", label: "Travel blocked", prompt: "What if a major trip became impossible?", group: "Mobility", Icon: IllusBriefcase },
+  { id: "comms_outage", label: "Calls fail", prompt: "What if phone service failed?", group: "Information", Icon: IllusPhone },
+  { id: "platforms_down", label: "Apps offline", prompt: "What if big social apps went dark?", group: "Information", Icon: IllusPhone },
+  { id: "info_unreliable", label: "Unclear news", prompt: "What if online news could not be trusted?", group: "Information", Icon: IllusBolt },
+  { id: "medical_emergency", label: "Medical cost", prompt: "What if a sudden medical bill hit?", group: "Personal", Icon: IllusShield, nearbyQuery: "pharmacy" },
+  { id: "relocation", label: "Must move", prompt: "What if you had to leave home quickly?", group: "Personal", Icon: IllusBriefcase },
+  { id: "family_emergency", label: "Family emergency", prompt: "What if a family emergency hit this week?", group: "Personal", Icon: IllusShield },
 ];
 
 const GROUPS: { id: Group; label: string }[] = [
-  { id: "Money", label: "Financial" },
+  { id: "Money", label: "Money" },
   { id: "Digital", label: "Digital" },
   { id: "Essentials", label: "Essentials" },
+  { id: "Mobility", label: "Mobility" },
+  { id: "Information", label: "Information" },
+  { id: "Personal", label: "Personal" },
 ];
 
 export default function WhatIfPage() {
@@ -61,7 +87,7 @@ export default function WhatIfPage() {
   function run(id: WhatIfScenario, free?: boolean) {
     if (!session) return;
     if (!free && !premium) {
-      alert("Full scenarios unlock with the founding plan.");
+      alert("More scenarios unlock with the plan.");
       return;
     }
     setActive(id);
@@ -76,41 +102,37 @@ export default function WhatIfPage() {
   if (!session) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-zinc-400">Complete your assessment first.</p>
+        <p className="text-zinc-400">Finish your assessment first.</p>
         <Button asChild className="mt-4">
-          <Link href="/assessment">Get my readiness score</Link>
+          <Link href="/assessment">Get my score</Link>
         </Button>
       </div>
     );
   }
 
   const runway = Math.round((session.answers.emergency_fund_months || 0) * 30);
+  const activeMeta = SCENARIOS.find((s) => s.id === active);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="What If?"
-        subtitle="Stress-test your life against real disruptions."
+        subtitle="Test systems — money, digital, food, mobility — not one country."
         backHref="/app/overview"
         showBack
       />
 
-      <div>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Your baseline
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: "days runway", value: String(runway) },
-            { label: "income source", value: String(session.answers.income_sources || 1) },
-            { label: "backup payments", value: session.answers.alt_payment_method ? "1" : "0" },
-          ].map((b) => (
-            <GlassCard key={b.label} className="!p-3.5 text-center">
-              <p className="text-2xl font-bold tabular-nums text-zinc-50">{b.value}</p>
-              <p className="mt-1 text-[10px] text-zinc-500">{b.label}</p>
-            </GlassCard>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: "days runway", value: String(runway) },
+          { label: "income sources", value: String(session.answers.income_sources || 1) },
+          { label: "backup pay", value: session.answers.alt_payment_method ? "yes" : "no" },
+        ].map((b) => (
+          <GlassCard key={b.label} className="!p-3.5 text-center">
+            <p className="text-2xl font-bold tabular-nums text-zinc-50">{b.value}</p>
+            <p className="mt-1 text-[10px] text-zinc-500">{b.label}</p>
+          </GlassCard>
+        ))}
       </div>
 
       {result && active && (
@@ -122,27 +144,37 @@ export default function WhatIfPage() {
           }
         >
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            Scenario result · {result.severity}
+            Result · {result.severity}
           </p>
           <p className="mt-2 text-lg font-semibold text-zinc-50">{result.title}</p>
-          <p className="mt-2 text-2xl font-bold leading-snug text-zinc-50">{result.summary}</p>
+          <p className="mt-2 text-xl font-bold leading-snug text-zinc-50">{result.summary}</p>
           <p className="mt-2 text-sm text-zinc-400">{result.detail}</p>
           <p className="mt-3 text-sm text-emerald-400/90">{result.recommendation}</p>
-          <Link
-            href="/app/prepare"
-            className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
-          >
-            See how to improve →
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href="/app/prepare"
+              className="inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+            >
+              What to do next →
+            </Link>
+            {activeMeta?.nearbyQuery && (
+              <Link
+                href="/app/nearby"
+                className="inline-flex rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-zinc-200"
+              >
+                Find places near you →
+              </Link>
+            )}
+          </div>
           <button
             type="button"
-            className="mt-3 block text-xs text-zinc-500 hover:text-zinc-300"
+            className="mt-3 block text-xs text-zinc-500"
             onClick={() => {
               setResult(null);
               setActive(null);
             }}
           >
-            Clear result
+            Clear
           </button>
         </GlassCard>
       )}
@@ -175,7 +207,7 @@ export default function WhatIfPage() {
                     <p className="text-sm font-medium text-zinc-100">
                       {s.label}
                       {locked && (
-                        <span className="ml-2 text-[10px] font-normal text-zinc-500">Premium</span>
+                        <span className="ml-2 text-[10px] text-zinc-500">Plan</span>
                       )}
                     </p>
                     <p className="mt-0.5 text-xs text-zinc-500">{s.prompt}</p>
