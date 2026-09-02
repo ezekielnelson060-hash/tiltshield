@@ -8,16 +8,16 @@ import type { WhatIfScenario, WhatIfResult } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
-import { GlassCard, IconBadge } from "@/components/app/glass-card";
+import { GlassCard } from "@/components/app/glass-card";
 import {
-  IconWallet,
-  IconBolt,
-  IconPhone,
-  IconBank,
-  IconBriefcase,
-  IconEmergency,
-  IconFood,
-} from "@/components/app/icons";
+  IllusWallet,
+  IllusBolt,
+  IllusPhone,
+  IllusBank,
+  IllusBriefcase,
+  IllusShield,
+  IllusFood,
+} from "@/components/illustrations";
 
 type Group = "Money" | "Digital" | "Essentials";
 
@@ -27,18 +27,17 @@ const SCENARIOS: {
   prompt: string;
   group: Group;
   free?: boolean;
-  Icon: (p: { className?: string }) => JSX.Element;
-  tone: "red" | "amber" | "emerald" | "sky" | "violet";
+  Icon: (p: { size?: number }) => JSX.Element;
 }[] = [
-  { id: "income_stops", label: "Income stops", prompt: "What if your income stopped today?", group: "Money", free: true, Icon: IconWallet, tone: "red" },
-  { id: "job_loss", label: "Job loss", prompt: "What if you lost your primary job?", group: "Money", Icon: IconBriefcase, tone: "amber" },
-  { id: "banking_down", label: "Banking unavailable", prompt: "What if banks and cards were down?", group: "Money", Icon: IconBank, tone: "sky" },
-  { id: "digital_payments_only", label: "Payment network issue", prompt: "What if digital payments stopped working?", group: "Money", Icon: IconPhone, tone: "violet" },
-  { id: "phone_lost", label: "Phone lost", prompt: "What if your phone was gone this afternoon?", group: "Digital", Icon: IconPhone, tone: "amber" },
-  { id: "internet_outage", label: "Internet outage", prompt: "What if the internet was down for 48 hours?", group: "Digital", Icon: IconBolt, tone: "sky" },
-  { id: "power_grid", label: "Power outage", prompt: "What if you lost power in your area?", group: "Essentials", Icon: IconBolt, tone: "amber" },
-  { id: "medical_emergency", label: "Medical shock", prompt: "What if a sudden medical bill hit this month?", group: "Essentials", Icon: IconEmergency, tone: "red" },
-  { id: "food_prices_double", label: "Fuel / food shock", prompt: "What if grocery prices doubled overnight?", group: "Essentials", Icon: IconFood, tone: "emerald" },
+  { id: "income_stops", label: "Income stops", prompt: "What if your income stopped today?", group: "Money", free: true, Icon: IllusWallet },
+  { id: "job_loss", label: "Job loss", prompt: "What if you lost your primary job?", group: "Money", Icon: IllusBriefcase },
+  { id: "banking_down", label: "Banking unavailable", prompt: "What if banks and cards were down?", group: "Money", Icon: IllusBank },
+  { id: "digital_payments_only", label: "Payment network issue", prompt: "What if digital payments stopped working?", group: "Money", Icon: IllusPhone },
+  { id: "phone_lost", label: "Phone lost", prompt: "What if your phone was gone this afternoon?", group: "Digital", Icon: IllusPhone },
+  { id: "internet_outage", label: "Internet outage", prompt: "What if the internet was down for 48 hours?", group: "Digital", Icon: IllusBolt },
+  { id: "power_grid", label: "Power outage", prompt: "What if you lost power in your area?", group: "Essentials", Icon: IllusBolt },
+  { id: "medical_emergency", label: "Medical shock", prompt: "What if a sudden medical bill hit this month?", group: "Essentials", Icon: IllusShield },
+  { id: "food_prices_double", label: "Fuel / food shock", prompt: "What if grocery prices doubled overnight?", group: "Essentials", Icon: IllusFood },
 ];
 
 const GROUPS: { id: Group; label: string }[] = [
@@ -171,9 +170,7 @@ export default function WhatIfPage() {
                     locked && "opacity-70"
                   )}
                 >
-                  <IconBadge tone={s.tone}>
-                    <s.Icon className="h-4 w-4" />
-                  </IconBadge>
+                  <s.Icon size={44} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-zinc-100">
                       {s.label}
