@@ -10,7 +10,7 @@ import {
 } from "@/lib/session";
 import { loadHistoryFromCloud } from "@/lib/persist";
 import { getActiveMemberId } from "@/lib/family";
-import { AppTopBar } from "@/components/app/page-header";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,11 +38,12 @@ export default function HistoryPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <AppTopBar title="History" backHref="/app/more" />
-      <p className="-mt-2 text-sm text-zinc-500">
-        Your resilience score over time. Retake after real changes — cash, food,
-        family, or work — to see the needle move.
-      </p>
+      <PageHeader
+        title="History"
+        subtitle="Your resilience score over time — progress toward a year of readiness."
+        backHref="/app/more"
+        showBack
+      />
 
       <div className="grid grid-cols-3 gap-2">
         {[
@@ -56,7 +57,7 @@ export default function HistoryPage() {
         ].map((c) => (
           <div
             key={c.label}
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-4 text-center"
+            className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-3 py-4 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
           >
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
               {c.label}
@@ -68,7 +69,7 @@ export default function HistoryPage() {
         ))}
       </div>
 
-      <section className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
           Score timeline
         </p>
@@ -78,29 +79,32 @@ export default function HistoryPage() {
           </p>
         ) : (
           <div className="mt-6 flex h-36 items-end gap-2">
-            {[...history].reverse().slice(-8).map((h) => {
-              const pct = Math.max(8, (h.overall / maxScore) * 100);
-              const d = new Date(h.at);
-              const label = d.toLocaleDateString(undefined, {
-                day: "numeric",
-                month: "short",
-              });
-              return (
-                <div
-                  key={h.at + h.overall}
-                  className="flex flex-1 flex-col items-center gap-2"
-                >
-                  <span className="text-[10px] tabular-nums text-zinc-400">
-                    {h.overall}
-                  </span>
+            {[...history]
+              .reverse()
+              .slice(-8)
+              .map((h) => {
+                const pct = Math.max(8, (h.overall / maxScore) * 100);
+                const d = new Date(h.at);
+                const label = d.toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                });
+                return (
                   <div
-                    className="w-full max-w-[36px] rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400"
-                    style={{ height: `${pct}%` }}
-                  />
-                  <span className="text-[9px] text-zinc-600">{label}</span>
-                </div>
-              );
-            })}
+                    key={h.at + h.overall}
+                    className="flex flex-1 flex-col items-center gap-2"
+                  >
+                    <span className="text-[10px] tabular-nums text-zinc-400">
+                      {h.overall}
+                    </span>
+                    <div
+                      className="w-full max-w-[36px] rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400"
+                      style={{ height: `${pct}%` }}
+                    />
+                    <span className="text-[9px] text-zinc-600">{label}</span>
+                  </div>
+                );
+              })}
           </div>
         )}
       </section>
