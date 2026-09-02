@@ -16,6 +16,7 @@ import {
 } from "@/lib/family";
 import { loadSession } from "@/lib/session";
 import { syncFamilyToCloud, loadFamilyFromCloud } from "@/lib/persist";
+import { detectHouseholdDependencies } from "@/lib/household";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
@@ -89,6 +90,15 @@ export default function FamilyPage() {
     }
   }
 
+  const session = loadSession();
+  const deps =
+    session && members.length
+      ? detectHouseholdDependencies({
+          members,
+          answers: session.answers,
+        }).slice(0, 5)
+      : [];
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
@@ -118,6 +128,42 @@ export default function FamilyPage() {
           />
         </div>
       </div>
+
+      {deps.length > 0 && (
+        <section className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Shared dependencies
+          </p>
+          {deps.map((d) => (
+            <div
+              key={d.id}
+              className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-3.5"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-medium text-zinc-100">{d.title}</p>
+                <span
+                  className={
+                    d.severity === "high"
+                      ? "text-[10px] font-semibold uppercase text-red-400"
+                      : d.severity === "medium"
+                        ? "text-[10px] font-semibold uppercase text-amber-400"
+                        : "text-[10px] font-semibold uppercase text-zinc-500"
+                  }
+                >
+                  {d.severity}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-zinc-500">{d.detail}</p>
+              <Link
+                href={d.fixHref}
+                className="mt-2 inline-block text-xs font-medium text-emerald-400"
+              >
+                {d.fixLabel} →
+              </Link>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section>
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
