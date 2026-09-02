@@ -9,6 +9,7 @@ import {
   type VaultMeta,
 } from "@/lib/vault";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/page-header";
 
 export default function VaultPage() {
   const [items, setItems] = useState<VaultMeta[]>([]);
@@ -31,11 +32,13 @@ export default function VaultPage() {
       return;
     }
     if (pass.length < 8) {
-      setError("Passphrase must be at least 8 characters.");
+      setError(
+        "Passphrase must be at least 8 characters. You need it to open files later."
+      );
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      setError("Max 8 MB per file.");
+      setError("Max 8 MB per file on this device vault.");
       return;
     }
     setBusy(true);
@@ -77,82 +80,98 @@ export default function VaultPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-50">Document vault</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Files are encrypted with your passphrase (AES-GCM) and stored only on this
-          device. Servers never receive the file or passphrase.
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+      <PageHeader
+        title="Document vault"
+        subtitle="Encrypted on this device only (AES-GCM). Servers never receive your files or passphrase — part of your year-long readiness."
+        backHref="/app/more"
+        showBack
+      />
 
-      <div className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <label className="block text-xs text-zinc-500">
-          Vault passphrase
+      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+        <label className="block">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Vault passphrase
+          </span>
           <input
             type="password"
             value={pass}
             onChange={(e) => setPass(e.target.value)}
             placeholder="Min 8 characters — remember this"
-            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
+            className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600"
             autoComplete="off"
           />
         </label>
-        <label className="block text-xs text-zinc-500">
-          File
+
+        <label className="block">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            File
+          </span>
           <input
             type="file"
             accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="mt-1 w-full text-sm text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-1.5 file:text-zinc-200"
+            className="mt-2 w-full text-sm text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-zinc-200"
           />
         </label>
+
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Note (optional)"
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50"
+          placeholder="Note (optional) — e.g. passport copy"
+          className="w-full rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600"
         />
-        <Button type="button" size="sm" onClick={onAdd} disabled={busy}>
+
+        <Button type="button" size="sm" onClick={() => void onAdd()} disabled={busy}>
           {busy ? "Working…" : "Encrypt & store"}
         </Button>
         {error && <p className="text-sm text-red-400">{error}</p>}
         {msg && <p className="text-sm text-emerald-400">{msg}</p>}
       </div>
 
-      <ul className="space-y-2">
+      <section className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Stored on this device
+        </p>
         {items.map((i) => (
-          <li
+          <div
             key={i.id}
-            className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-zinc-800 px-4 py-3"
+            className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5"
           >
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-zinc-100">{i.name}</p>
-              <p className="text-xs text-zinc-500">
-                {(i.size / 1024).toFixed(1)} KB · {new Date(i.addedAt).toLocaleString()}
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {(i.size / 1024).toFixed(1)} KB ·{" "}
+                {new Date(i.addedAt).toLocaleString()}
                 {i.note ? ` · ${i.note}` : ""}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => onOpen(i.id)} disabled={busy}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void onOpen(i.id)}
+                disabled={busy}
+              >
                 Unlock
               </Button>
               <button
                 type="button"
                 className="text-xs text-zinc-600 hover:text-red-400"
-                onClick={() => onRemove(i.id)}
+                onClick={() => void onRemove(i.id)}
               >
                 Delete
               </button>
             </div>
-          </li>
+          </div>
         ))}
         {items.length === 0 && (
-          <p className="text-sm text-zinc-500">
-            No encrypted documents yet. Add IDs, insurance PDFs, or recovery sheets.
+          <p className="rounded-2xl border border-dashed border-white/[0.08] px-4 py-8 text-center text-sm text-zinc-500">
+            No encrypted documents yet. Add IDs, insurance PDFs, or recovery
+            sheets for a full year of offline access.
           </p>
         )}
-      </ul>
+      </section>
     </div>
   );
 }

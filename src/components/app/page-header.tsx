@@ -31,12 +31,12 @@ export function PageHeader({
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-2">
       {showBack && (
         <button
           type="button"
           onClick={onBack}
-          className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition hover:text-emerald-400"
+          className="mb-3 inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-xs font-medium text-zinc-400 transition hover:text-emerald-400"
           aria-label="Go back"
         >
           <svg
@@ -58,11 +58,14 @@ export function PageHeader({
       <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
         {title}
       </h1>
-      {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+      {subtitle && (
+        <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
+      )}
     </div>
   );
 }
 
+/** Compact top bar for nested screens */
 export function AppTopBar({
   title,
   backHref = "/app/more",
@@ -74,7 +77,7 @@ export function AppTopBar({
     <div className="mb-5 flex items-center gap-3">
       <Link
         href={backHref}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition hover:border-emerald-500/30 hover:text-emerald-400"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition hover:border-emerald-500/30 hover:text-emerald-400"
         aria-label="Back"
       >
         <svg
