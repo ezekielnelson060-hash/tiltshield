@@ -5,6 +5,7 @@ import { loadSession, type TiltSession } from "@/lib/session";
 import { pickTodaysMove, ACTION_LIBRARY } from "@/lib/scoring";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/app/page-header";
 
 export default function ActionsPage() {
   const [session, setSession] = useState<TiltSession | null>(null);
@@ -22,7 +23,9 @@ export default function ActionsPage() {
 
   function toggleDone(id: string) {
     setDone((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      const next = prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id];
       localStorage.setItem("tiltshield_done_actions", JSON.stringify(next));
       return next;
     });
@@ -40,18 +43,22 @@ export default function ActionsPage() {
   const completed = ACTION_LIBRARY.filter((a) => done.includes(a.id));
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Actions</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {done.length === 0
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+      <PageHeader
+        title="Actions"
+        subtitle={
+          done.length === 0
             ? "1 active · start with highest impact"
-            : `${done.length} completed · keep going`}
-        </p>
-      </div>
+            : `${done.length} completed · keep going`
+        }
+        backHref="/app/prepare"
+        showBack
+      />
 
-      <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">Today</p>
+      <section className="rounded-2xl border border-emerald-500/25 bg-gradient-to-b from-emerald-500/12 to-[#0a1018] p-6 shadow-[0_0_40px_-12px_rgba(16,185,129,0.25)]">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500">
+          Today
+        </p>
         <h2 className="mt-2 text-lg font-semibold text-zinc-50">{move.title}</h2>
         <p className="mt-1 text-xs text-zinc-500">
           {move.time_estimate} · {move.difficulty}
@@ -66,68 +73,57 @@ export default function ActionsPage() {
           ))}
         </ul>
         <div className="mt-5">
-          <Button size="sm" onClick={() => toggleDone(move.id)} disabled={done.includes(move.id)}>
-            {done.includes(move.id) ? "Completed" : "Mark complete"}
+          <Button size="sm" onClick={() => toggleDone(move.id)}>
+            Mark done
           </Button>
         </div>
       </section>
 
-      <div className="flex flex-wrap gap-2">
-        {["all", "money", "digital", "food", "home", "documents", "communication"].map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs capitalize transition",
-              filter === f
-                ? "border-emerald-500 text-emerald-400"
-                : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-            )}
+      <section className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Up next
+        </p>
+        {upcoming.slice(0, 8).map((a) => (
+          <div
+            key={a.id}
+            className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
           >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      <section>
-        <p className="mb-3 text-[10px] font-medium uppercase tracking-wider text-zinc-500">Upcoming</p>
-        <div className="space-y-2">
-          {upcoming.map((a) => (
-            <div
-              key={a.id}
-              className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3"
-            >
-              <div>
-                <p className="text-sm font-medium text-zinc-200">{a.title}</p>
-                <p className="text-xs text-zinc-500">
-                  {a.time_estimate} · {a.category}
-                </p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => toggleDone(a.id)}>
-                Done
-              </Button>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-zinc-100">{a.title}</p>
+              <p className="text-xs text-zinc-500">
+                {a.time_estimate} · {a.category}
+              </p>
             </div>
-          ))}
-          {upcoming.length === 0 && (
-            <p className="text-sm text-zinc-500">No more actions in this filter.</p>
-          )}
-        </div>
+            <Button size="sm" variant="outline" onClick={() => toggleDone(a.id)}>
+              Done
+            </Button>
+          </div>
+        ))}
+        {upcoming.length === 0 && (
+          <p className="text-sm text-zinc-500">All caught up for now.</p>
+        )}
       </section>
 
       {completed.length > 0 && (
-        <section>
-          <p className="mb-3 text-[10px] font-medium uppercase tracking-wider text-zinc-500">Completed</p>
-          <div className="space-y-2">
-            {completed.map((a) => (
-              <div
-                key={a.id}
-                className="rounded-xl border border-zinc-900 px-4 py-3 text-sm text-zinc-500 line-through"
+        <section className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Completed
+          </p>
+          {completed.map((a) => (
+            <div
+              key={a.id}
+              className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 opacity-70"
+            >
+              <p className="text-sm text-zinc-400 line-through">{a.title}</p>
+              <button
+                type="button"
+                className="text-xs text-zinc-500 hover:text-zinc-300"
+                onClick={() => toggleDone(a.id)}
               >
-                {a.title}
-              </div>
-            ))}
-          </div>
+                Undo
+              </button>
+            </div>
+          ))}
         </section>
       )}
     </div>

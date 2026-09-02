@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getGuide, GUIDES } from "@/lib/guides";
-import { AppTopBar } from "@/components/app/page-header";
+import { GUIDES, getGuide } from "@/lib/guides";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/page-header";
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -24,25 +24,19 @@ export default function GuideDetailPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <AppTopBar title="Guide" backHref="/app/guides" />
-      <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-400">
-          {guide.horizon} horizon
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-50">
-          {guide.title}
-        </h1>
-        <p className="mt-2 text-sm text-zinc-500">{guide.blurb}</p>
-        <p className="mt-1 text-[11px] text-zinc-600">
-          {guide.minutes} min · do in order
-        </p>
-      </header>
+      <PageHeader
+        title={guide.title}
+        subtitle={`${guide.horizon} horizon · ${guide.minutes} min · do in order`}
+        backHref="/app/guides"
+        showBack
+      />
+      <p className="-mt-2 text-sm text-zinc-500">{guide.blurb}</p>
 
       <ol className="space-y-3">
         {guide.body.map((step, i) => (
           <li
             key={i}
-            className="flex gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4"
+            className="flex gap-3 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
           >
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
               {i + 1}
@@ -71,7 +65,7 @@ export default function GuideDetailPage() {
             <Link
               key={g.slug}
               href={`/app/guides/${g.slug}`}
-              className="block rounded-xl border border-white/[0.06] px-4 py-3 text-sm text-zinc-300 hover:border-emerald-500/25"
+              className="block rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300 transition hover:border-emerald-500/25"
             >
               {g.title}
             </Link>
