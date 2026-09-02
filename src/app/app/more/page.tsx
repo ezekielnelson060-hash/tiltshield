@@ -17,12 +17,13 @@ import {
 } from "@/components/app/icons";
 
 const LINKS = [
-  { href: "/app/nearby", label: "Nearby", desc: "Map + search — resources near you", Icon: IconPin },
-  { href: "/app/family", label: "Family", desc: "Household profiles & readiness", Icon: IconCommunity },
-  { href: "/app/history", label: "History", desc: "Score trend over time", Icon: IconTarget },
+  { href: "/app/nearby", label: "Nearby", desc: "What do you need? Map + places", Icon: IconPin },
+  { href: "/app/family", label: "Household", desc: "Family scores & emergency plan", Icon: IconCommunity },
+  { href: "/app/history", label: "Progress", desc: "Score now vs last check", Icon: IconTarget },
   { href: "/app/calculators", label: "Calculators", desc: "Runway, buffer, exposure", Icon: IconWallet },
   { href: "/app/vault", label: "Vault", desc: "Encrypted document storage", Icon: IconShield },
-  { href: "/app/guides", label: "Guides", desc: "1-year preparation steps", Icon: IconHouse },
+  { href: "/app/guides", label: "Guides", desc: "Simple year prep cards", Icon: IconHouse },
+  { href: "/app/offline-value", label: "Offline value", desc: "Cash, metals, hardware paths", Icon: IconWallet },
   { href: "/app/settings", label: "Settings", desc: "Profile, plan, privacy", Icon: IconDigital },
 ];
 
@@ -65,7 +66,7 @@ export default function MorePage() {
         <div>
           <p className="text-sm font-medium text-zinc-100">{name}</p>
           <p className="text-xs text-zinc-500">
-            Building toward a year of household resilience
+            Building toward a safer year at home
           </p>
           <Link href="/app/settings" className="mt-1 inline-block text-xs text-emerald-400">
             Edit profile →
