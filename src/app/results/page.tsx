@@ -32,12 +32,12 @@ function ResultsInner() {
             const p = json.product || product;
             if (p === "family") {
               setFamilyUnlocked(true);
-              setPremium(true);
+              setPremium(true); // household includes full tool access
               await setSubscriptionOnProfile("family");
-              setStatus("Family plan unlocked. Redirecting…");
+              setStatus("Household plan unlocked. Redirecting…");
             } else {
               setPremium(true);
-              setFamilyUnlocked(true);
+              // Individual lifetime does not unlock multi-member household profiles
               await setSubscriptionOnProfile("lifetime");
               setStatus("Lifetime plan unlocked. Redirecting…");
             }

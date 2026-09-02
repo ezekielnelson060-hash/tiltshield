@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * POST body: { email?, name?, product?: "lifetime" | "family" }
+ * lifetime = $29 one-time (individual full access)
+ * family = $49 one-time household (premium + multi-member profiles)
+ * Override with FLUTTERWAVE_AMOUNT / FLUTTERWAVE_FAMILY_AMOUNT
+ */
 export async function POST(req: NextRequest) {
   const secret = process.env.FLUTTERWAVE_SECRET_KEY;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -28,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const amount =
     product === "family"
-      ? Number(process.env.FLUTTERWAVE_FAMILY_AMOUNT || "12")
+      ? Number(process.env.FLUTTERWAVE_FAMILY_AMOUNT || "49")
       : Number(process.env.FLUTTERWAVE_AMOUNT || "29");
   const currency = process.env.FLUTTERWAVE_CURRENCY || "USD";
   const txRef = `tiltshield_${product}_${Date.now()}_${Math.random()
@@ -50,11 +56,13 @@ export async function POST(req: NextRequest) {
         customer: { email, name },
         customizations: {
           title:
-            product === "family" ? "Tiltshield Family" : "Tiltshield Lifetime",
+            product === "family"
+              ? "Tiltshield Family"
+              : "Tiltshield Lifetime",
           description:
             product === "family"
-              ? "Family profiles — household readiness"
-              : "Full plan unlock — founding lifetime",
+              ? "Household plan — premium + up to 6 profiles ($49)"
+              : "Individual lifetime — full tools ($29)",
           logo: `${appUrl}/icon-192.png`,
         },
         meta: { product: `tiltshield_${product}` },
