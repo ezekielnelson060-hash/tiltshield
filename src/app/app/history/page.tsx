@@ -36,8 +36,7 @@ export default function HistoryPage() {
 
   const latest = history[0]?.overall ?? overall;
   const prev = history[1]?.overall;
-  const delta =
-    prev != null ? latest - prev : null;
+  const delta = prev != null ? latest - prev : null;
 
   if (!premium && history.length === 0) {
     return (
@@ -50,7 +49,8 @@ export default function HistoryPage() {
         />
         <GlassCard>
           <p className="text-sm text-zinc-300">
-            Progress unlocks with Lifetime or Household. You still see today's score below.
+            Progress unlocks with Lifetime or Household. You still see today&apos;s
+            score below.
           </p>
           <p className="mt-4 text-3xl font-bold text-zinc-50">{overall} / 100</p>
           <Button asChild size="sm" className="mt-4">
@@ -114,13 +114,17 @@ export default function HistoryPage() {
         )}
         {history.map((h, i) => (
           <div
-            key={h.at || i}
+            key={h.date || String(i)}
             className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
           >
             <div>
-              <p className="text-sm font-medium text-zinc-100">{h.overall} / 100</p>
+              <p className="text-sm font-medium text-zinc-100">
+                {h.overall} / 100
+              </p>
               <p className="text-[11px] text-zinc-500">
-                {h.at ? new Date(h.at).toLocaleDateString() : "Earlier"}
+                {h.date
+                  ? new Date(h.date).toLocaleDateString()
+                  : "Earlier"}
               </p>
             </div>
           </div>
