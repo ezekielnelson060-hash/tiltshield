@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function GlassCard({
@@ -5,7 +6,7 @@ export function GlassCard({
   className,
   tone = "default",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   tone?: "default" | "danger" | "success" | "accent";
 }) {
@@ -20,13 +21,7 @@ export function GlassCard({
       "border-white/[0.08] bg-gradient-to-br from-[#0c1420] to-[#080d16]",
   };
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border p-5",
-        tones[tone],
-        className
-      )}
-    >
+    <div className={cn("relative overflow-hidden rounded-2xl border p-5", tones[tone], className)}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       {children}
     </div>
@@ -37,7 +32,7 @@ export function IconBadge({
   children,
   tone = "emerald",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   tone?: "emerald" | "red" | "amber" | "sky" | "violet";
 }) {
   const map = {
@@ -48,12 +43,7 @@ export function IconBadge({
     violet: "bg-violet-500/15 text-violet-400 ring-violet-500/20",
   };
   return (
-    <span
-      className={cn(
-        "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1",
-        map[tone]
-      )}
-    >
+    <span className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1", map[tone])}>
       {children}
     </span>
   );

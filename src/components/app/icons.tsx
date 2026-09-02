@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { cn } from "@/lib/utils";
 
 type IconProps = { className?: string };
@@ -115,10 +116,7 @@ export function IconEmergency({ className }: IconProps) {
   );
 }
 
-export const CATEGORY_ICONS: Record<
-  string,
-  (p: IconProps) => React.ReactElement
-> = {
+export const CATEGORY_ICONS: Record<string, (p: IconProps) => ReactElement> = {
   money: IconMoney,
   digital: IconDigital,
   food: IconFood,
