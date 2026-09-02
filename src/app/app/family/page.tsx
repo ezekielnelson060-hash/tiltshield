@@ -18,6 +18,7 @@ import { loadSession } from "@/lib/session";
 import { syncFamilyToCloud, loadFamilyFromCloud } from "@/lib/persist";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/app/page-header";
 
 export default function FamilyPage() {
   const router = useRouter();
@@ -90,17 +91,21 @@ export default function FamilyPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Family</h1>
-        <p className="mt-1 text-sm text-zinc-500">Household resilience overview.</p>
-      </div>
+      <PageHeader
+        title="Family"
+        subtitle="Household resilience for a full year — each member’s readiness in one place."
+        backHref="/app/more"
+        showBack
+      />
 
       <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
           Household score
         </p>
         <div className="mt-3 flex items-end gap-3">
-          <span className="text-4xl font-bold tabular-nums text-zinc-50">{householdScore}</span>
+          <span className="text-4xl font-bold tabular-nums text-zinc-50">
+            {householdScore}
+          </span>
           <span className="mb-1 text-sm text-zinc-500">/ 100</span>
           <span className="mb-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
             Stable
@@ -201,9 +206,11 @@ export default function FamilyPage() {
         </section>
       ) : (
         <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
-          <p className="text-sm font-medium text-zinc-100">Unlock household profiles</p>
+          <p className="text-sm font-medium text-zinc-100">
+            Unlock household profiles
+          </p>
           <p className="mt-1 text-xs text-zinc-500">
-            Track readiness for partner and kids — family tier.
+            Track readiness for partner and kids across a year of preparation.
           </p>
           <Button
             className="mt-4"
