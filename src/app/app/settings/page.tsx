@@ -7,6 +7,7 @@ import {
   getActiveMember,
   loadFamilyMembers,
   saveFamilyMembers,
+  isFamilyUnlocked,
 } from "@/lib/family";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ const PHOTO_KEY = "tiltshield_profile_photo";
 
 export default function SettingsPage() {
   const [premium, setPrem] = useState(false);
+  const [family, setFamily] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -24,6 +26,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setPrem(isPremium());
+    setFamily(isFamilyUnlocked());
     try {
       const stored = localStorage.getItem(NAME_KEY);
       if (stored) setDisplayName(stored);
@@ -70,13 +73,13 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   }
 
-  async function unlock() {
+  async function pay(product: "lifetime" | "family") {
     setPaying(true);
     try {
       const res = await fetch("/api/flutterwave/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: "lifetime" }),
+        body: JSON.stringify({ product }),
       });
       const json = await res.json();
       if (json.link) {
@@ -148,16 +151,36 @@ export default function SettingsPage() {
 
       <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Plan
+          Your plan
         </p>
         <p className="mt-2 text-sm text-zinc-200">
-          {premium ? "Founding / Premium — full What If, family, vault." : "Free plan — core assessment & limited scenarios."}
+          {family
+            ? "Household — premium tools + up to 6 profiles"
+            : premium
+              ? "Lifetime — full tools (vault, history, advanced What If). No household seats."
+              : "Free — assessment, Today, Prepare basics, limited What If"}
         </p>
-        {!premium && (
-          <Button className="mt-3" size="sm" disabled={paying} onClick={() => void unlock()}>
-            {paying ? "Opening…" : "Unlock $29 lifetime"}
-          </Button>
-        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {!premium && (
+            <Button
+              size="sm"
+              disabled={paying}
+              onClick={() => void pay("lifetime")}
+            >
+              {paying ? "Opening…" : "Lifetime · $29"}
+            </Button>
+          )}
+          {!family && (
+            <Button
+              size="sm"
+              variant={premium ? "default" : "outline"}
+              disabled={paying}
+              onClick={() => void pay("family")}
+            >
+              {paying ? "Opening…" : "Household · $49"}
+            </Button>
+          )}
+        </div>
       </section>
 
       <section className="space-y-2">
@@ -182,7 +205,8 @@ export default function SettingsPage() {
       </section>
 
       <p className="text-center text-[11px] text-zinc-600">
-        Assessment & vault data stay on this device unless you sync with your account.
+        Assessment & vault data stay on this device unless you sync with your
+        account.
       </p>
     </div>
   );
