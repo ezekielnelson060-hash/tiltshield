@@ -1,26 +1,26 @@
-# Tiltshield native (Capacitor) — production
+# Tiltshield native (Capacitor)
 
-## Env (Vercel)
+Web app is the source of truth (Vercel). Native shells load the production URL.
 
-| Variable | Purpose |
-|----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Auth + cloud |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client |
-| `FLUTTERWAVE_SECRET_KEY` | Real payments |
-| `NEXT_PUBLIC_APP_URL` | Redirects + Capacitor URL |
-| `FLUTTERWAVE_AMOUNT` | Default 29 |
-| `FLUTTERWAVE_FAMILY_AMOUNT` | Default 12 |
-| `FLUTTERWAVE_CURRENCY` | USD |
-
-## Setup on your machine
+## One-time
 
 ```bash
-export NEXT_PUBLIC_APP_URL=https://YOUR_PRODUCTION_URL
 npm install
-npx cap add android
-npx cap add ios   # macOS
-npx cap sync
-npm run cap:android
+npx cap add android   # requires Android Studio
+npx cap add ios       # macOS + Xcode only
 ```
 
-No demo unlocks — unlock only after Flutterwave verify on `/results`.
+## Sync & open
+
+```bash
+npm run cap:sync
+npm run cap:android   # or cap:ios
+```
+
+## Local device against next dev
+
+```bash
+CAP_SERVER_URL=http://YOUR_LAN_IP:3000 npx cap sync
+```
+
+App ID: `app.tiltshield.mobile`
