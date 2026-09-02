@@ -1,154 +1,121 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { loadSession } from "@/lib/session";
-import { searchNearbyPlaces, type NearbyPlace } from "@/lib/nearby";
-import { formatDistance } from "@/lib/locale";
+import dynamic from "next/dynamic";
+import { loadSession, type TiltSession } from "@/lib/session";
+import { rankPrepareActions } from "@/lib/prepare-rank";
 import { sortStockIds } from "@/lib/prepare-rank";
-import type { AssessmentAnswers } from "@/types";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  NEARBY_CATEGORIES,
+  searchNearbyPlaces,
+  type NearbyPlace,
+} from "@/lib/nearby";
 
 const NearbyMap = dynamic(
-  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="tilt-map-chrome flex h-44 items-center justify-center text-xs text-zinc-500">
-        Loading map…
-      </div>
-    ),
-  }
+  () => import("@/components/map/NearbyMap").then((m) => m.NearbyMap),
+  { ssr: false }
 );
 
-type StockItem = { id: string; label: string; group: string; hint?: string };
+type Tab = "plan" | "stock" | "finder";
+
+type StockItem = {
+  id: string;
+  label: string;
+  group: string;
+  hint?: string;
+};
 
 const YEAR_STOCK: StockItem[] = [
-  { id: "water_plan", label: "Water plan (store + purify + rotate)", group: "Year foundation", hint: "Continuous access, not one bulk buy" },
-  { id: "food_90", label: "90 days of food you already eat", group: "Year foundation", hint: "Then expand deeper" },
-  { id: "food_rotate", label: "Rotation system (date labels, FIFO)", group: "Year foundation" },
-  { id: "cash_float", label: "Cash float for 2–4 weeks essentials", group: "Money & access" },
-  { id: "alt_pay", label: "Second payment method tested this quarter", group: "Money & access" },
-  { id: "meds_30", label: "Critical meds buffer (as clinician allows)", group: "Health" },
-  { id: "first_aid", label: "First-aid kit checked", group: "Health" },
-  { id: "light_power", label: "Light + charged power banks", group: "Home systems" },
-  { id: "docs_offline", label: "IDs & key papers offline (Vault)", group: "Home systems" },
-  { id: "vendor_3", label: "3 local vendors reachable offline", group: "Local network" },
-  { id: "family_plan", label: "Household meetup / contact plan", group: "Local network" },
+  { id: "water_plan", label: "Water plan at home", group: "Year foundation", hint: "Store + purify" },
+  { id: "food_90", label: "90 days of normal food", group: "Year foundation", hint: "Then grow the buffer" },
+  { id: "food_rotate", label: "Date labels on food", group: "Year foundation" },
+  { id: "cash_float", label: "Cash for 2–4 weeks", group: "Money & access" },
+  { id: "alt_pay", label: "Second way to pay (tested)", group: "Money & access" },
+  { id: "meds_30", label: "Extra critical meds (if safe)", group: "Health" },
+  { id: "first_aid", label: "First-aid kit ready", group: "Health" },
+  { id: "light_power", label: "Lights and charged power banks", group: "Home" },
+  { id: "docs_offline", label: "IDs saved offline", group: "Docs & people" },
+  { id: "vendors_3", label: "3 nearby places you can use offline", group: "Docs & people" },
+  { id: "meetup", label: "Family meetup plan", group: "Docs & people" },
 ];
 
 const STOCK_KEY = "tiltshield_year_stock";
-const VENDOR_KEY = "tiltshield_saved_places";
-
-const FINDER_CHIPS = [
-  "pharmacy",
-  "supermarket",
-  "farm market",
-  "hardware store",
-  "solar",
-  "ATM",
-  "community center",
-  "outdoor store",
-];
-
-type SavedPlace = NearbyPlace;
 
 export default function PreparePage() {
-  const [tab, setTab] = useState<"plan" | "stock" | "network">("plan");
+  const [session, setSession] = useState<TiltSession | null>(null);
+  const [tab, setTab] = useState<Tab>("plan");
   const [checks, setChecks] = useState<Record<string, boolean>>({});
-  const [saved, setSaved] = useState<SavedPlace[]>([]);
-  const [pantryDays, setPantryDays] = useState(0);
-  const [answers, setAnswers] = useState<AssessmentAnswers | null>(null);
   const [query, setQuery] = useState("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
-  const [selected, setSelected] = useState<NearbyPlace | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setSession(loadSession());
     try {
-      setChecks(JSON.parse(localStorage.getItem(STOCK_KEY) || "{}"));
-      setSaved(JSON.parse(localStorage.getItem(VENDOR_KEY) || "[]"));
+      const raw = localStorage.getItem(STOCK_KEY);
+      if (raw) setChecks(JSON.parse(raw));
     } catch {
       /* */
     }
-    const s = loadSession();
-    if (s?.answers) {
-      setPantryDays(s.answers.food_buffer_days || 0);
-      setAnswers(s.answers);
-    }
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (pos) =>
+          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         () => {},
         { timeout: 8000 }
       );
     }
   }, []);
 
-  const ranked = answers ? sortStockIds(YEAR_STOCK, answers) : YEAR_STOCK;
-  const groups = Array.from(new Set(ranked.map((k) => k.group)));
-  const done = YEAR_STOCK.filter((k) => checks[k.id]).length;
-
   function toggle(id: string) {
     setChecks((prev) => {
       const next = { ...prev, [id]: !prev[id] };
-      localStorage.setItem(STOCK_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(STOCK_KEY, JSON.stringify(next));
+      } catch {
+        /* */
+      }
       return next;
     });
   }
 
-  function persistSaved(list: SavedPlace[]) {
-    setSaved(list);
-    localStorage.setItem(VENDOR_KEY, JSON.stringify(list));
-  }
-
-  async function runSearch(term: string) {
-    const q = term.trim();
-    if (!q) return;
+  async function search(q: string) {
     setLoading(true);
     try {
-      const results = await searchNearbyPlaces(q, coords);
-      setPlaces(results);
-      setSelected(results[0] || null);
+      let r = await searchNearbyPlaces(q, coords);
+      if (!r.length) r = await searchNearbyPlaces(q, coords, { national: true });
+      setPlaces(r);
     } finally {
       setLoading(false);
     }
   }
 
-  function saveSelected() {
-    if (!selected) return;
-    if (saved.some((s) => s.id === selected.id)) return;
-    persistSaved([{ ...selected }, ...saved].slice(0, 20));
-  }
-
-  const planActions = [
-    { title: "Build a 7–30 day cash + food bridge", impact: "High impact", time: "20 min", href: "/app/calculators" },
-    { title: "Encrypt IDs & recovery docs in Vault", impact: "High impact", time: "10 min", href: "/app/vault" },
-    { title: "Map 3 offline-capable local vendors", impact: "Medium impact", time: "15 min", href: "#network" },
-  ];
-
-  const card =
-    "rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]";
+  const answers = session?.answers;
+  const ranked = answers ? rankPrepareActions(answers) : [];
+  const pantryDays = answers?.food_buffer_days ?? 0;
+  const groups = Array.from(new Set(YEAR_STOCK.map((k) => k.group)));
+  const done = YEAR_STOCK.filter((k) => checks[k.id]).length;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Prepare"
-        subtitle="Build toward a full year of household resilience — ordered for your gaps."
+        subtitle="Simple checklist. One box at a time toward a safer year."
         backHref="/app/overview"
         showBack
       />
 
-      <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
+      <div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
         {(
           [
             ["plan", "Plan"],
             ["stock", "1-year stock"],
-            ["network", "Finder"],
+            ["finder", "Finder"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -156,8 +123,10 @@ export default function PreparePage() {
             type="button"
             onClick={() => setTab(id)}
             className={cn(
-              "flex-1 rounded-lg py-2.5 text-xs font-semibold transition",
-              tab === id ? "bg-emerald-500/20 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"
+              "flex-1 rounded-full py-2 text-xs font-semibold transition",
+              tab === id
+                ? "bg-emerald-500 text-zinc-950"
+                : "text-zinc-400 hover:text-zinc-200"
             )}
           >
             {label}
@@ -167,167 +136,134 @@ export default function PreparePage() {
 
       {tab === "plan" && (
         <div className="space-y-3">
-          {pantryDays > 0 && pantryDays < 30 && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-              About <strong>{pantryDays}</strong> food days on file. Stretch toward 90 days, then a full year via rotation.
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
+            You have about <strong>{pantryDays}</strong> food days noted. Aim for 90 days next.
+          </div>
+          {ranked.slice(0, 5).map((a, i) => (
+            <div
+              key={a.id}
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-zinc-100">{a.title}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    {a.impact} · {a.minutes} min
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-          {planActions.map((a, i) =>
-            a.href === "#network" ? (
-              <button
-                key={a.title}
-                type="button"
-                onClick={() => setTab("network")}
-                className={cn("flex w-full items-start gap-3 px-4 py-4 text-left hover:border-emerald-500/25", card)}
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">{i + 1}</span>
-                <div>
-                  <p className="text-sm font-medium text-zinc-50">{a.title}</p>
-                  <p className="mt-1 text-[11px] text-zinc-500">{a.impact} · {a.time}</p>
-                </div>
-              </button>
-            ) : (
-              <Link key={a.title} href={a.href} className={cn("flex items-start gap-3 px-4 py-4 hover:border-emerald-500/25", card)}>
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">{i + 1}</span>
-                <div>
-                  <p className="text-sm font-medium text-zinc-50">{a.title}</p>
-                  <p className="mt-1 text-[11px] text-zinc-500">{a.impact} · {a.time}</p>
-                </div>
-              </Link>
-            )
-          )}
-          <p className="text-center text-xs text-zinc-500">Year checklist {done}/{YEAR_STOCK.length}</p>
+          ))}
+          <p className="text-center text-xs text-zinc-600">
+            Year checklist {done}/{YEAR_STOCK.length}
+          </p>
         </div>
       )}
 
       {tab === "stock" && (
-        <div className="space-y-5">
-          <p className="text-sm text-zinc-500">
-            Ordered for your assessment — highest household gaps first. A full year is layers: water, food rotation, meds, money access, power, people.
+        <div className="space-y-4">
+          <p className="text-xs text-zinc-500">
+            Why a year? Short kits run out. Tick what you have. Then add the next layer.
           </p>
           {groups.map((g) => (
-            <section key={g} className="space-y-2">
-              <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{g}</h2>
-              <ul className="space-y-1.5">
-                {ranked.filter((k) => k.group === g).map((k) => (
-                  <li key={k.id}>
-                    <button type="button" onClick={() => toggle(k.id)} className={cn("flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm", checks[k.id] ? "border-emerald-500/30 bg-emerald-500/10 text-zinc-100" : "border-white/[0.08] bg-white/[0.03] text-zinc-400")}>
-                      <span className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[10px]", checks[k.id] ? "border-emerald-500 bg-emerald-500 text-zinc-950" : "border-zinc-600")}>{checks[k.id] ? "✓" : ""}</span>
-                      <span>{k.label}{k.hint && <span className="mt-0.5 block text-[11px] text-zinc-500">{k.hint}</span>}</span>
+            <div key={g}>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                {g}
+              </p>
+              <div className="space-y-2">
+                {(answers
+                  ? sortStockIds(YEAR_STOCK, answers)
+                  : YEAR_STOCK
+                )
+                  .filter((k) => k.group === g)
+                  .map((k) => (
+                    <button
+                      key={k.id}
+                      type="button"
+                      onClick={() => toggle(k.id)}
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition",
+                        checks[k.id]
+                          ? "border-emerald-500/30 bg-emerald-500/10"
+                          : "border-white/[0.08] bg-white/[0.03]"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[10px]",
+                          checks[k.id]
+                            ? "border-emerald-500 bg-emerald-500 text-zinc-950"
+                            : "border-zinc-600"
+                        )}
+                      >
+                        {checks[k.id] ? "✓" : ""}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-medium text-zinc-100">
+                          {k.label}
+                        </span>
+                        {k.hint && (
+                          <span className="mt-0.5 block text-xs text-zinc-500">
+                            {k.hint}
+                          </span>
+                        )}
+                      </span>
                     </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+                  ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {tab === "network" && (
+      {tab === "finder" && (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-500">
-            Independent Finder — farms, hardware, solar, cash, community. Support local; save places you can reach offline.
+          <p className="text-xs text-zinc-500">
+            Find real places near you. Save the ones you trust.
           </p>
-          <div className="relative">
+          <div className="flex gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void runSearch(query);
-              }}
               placeholder="Farm, solar, ATM, co-op…"
-              className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 pl-4 pr-24 text-sm text-zinc-50 placeholder:text-zinc-600"
+              className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-2.5 text-sm text-zinc-100"
             />
             <Button
-              type="button"
               size="sm"
-              className="absolute right-2 top-1/2 -translate-y-1/2"
               disabled={loading}
-              onClick={() => void runSearch(query || "pharmacy")}
+              onClick={() => void search(query || "pharmacy")}
             >
-              {loading ? "…" : "Search"}
+              Search
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {FINDER_CHIPS.map((q) => (
+            {NEARBY_CATEGORIES.slice(0, 8).map((c) => (
               <button
-                key={q}
+                key={c.id}
                 type="button"
                 onClick={() => {
-                  setQuery(q);
-                  void runSearch(q);
+                  setQuery(c.label);
+                  void search(c.query);
                 }}
-                className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs capitalize text-zinc-400 ring-1 ring-white/[0.06] hover:text-emerald-400"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-300"
               >
-                {q}
+                {c.label}
               </button>
             ))}
           </div>
-          <NearbyMap
-            places={places}
-            selected={selected}
-            user={coords}
-            onSelect={setSelected}
-            className="tilt-map-chrome relative h-44 w-full sm:h-56"
-          />
-          <div className="space-y-2">
-            {places.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setSelected(p)}
-                className={cn(
-                  "flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left",
-                  selected?.id === p.id
-                    ? "border-emerald-500/40 bg-emerald-500/10"
-                    : "border-white/[0.08] bg-white/[0.03]"
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-zinc-100">{p.name}</p>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{p.address}</p>
-                  {p.distanceKm != null && (
-                    <p className="mt-1 text-[10px] text-zinc-600">
-                      {formatDistance(p.distanceKm)}
-                    </p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-          {selected && (
-            <Button type="button" size="sm" onClick={saveSelected}>
-              Save “{selected.name}” offline
-            </Button>
-          )}
-          {saved.length > 0 && (
-            <section className="space-y-2 pt-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                Saved offline
-              </p>
-              {saved.map((v) => (
-                <div
-                  key={v.id}
-                  className="flex items-center justify-between rounded-xl border border-white/[0.08] px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm text-zinc-100">{v.name}</p>
-                    <p className="line-clamp-1 text-xs text-zinc-500">{v.address}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="text-xs text-zinc-500"
-                    onClick={() => persistSaved(saved.filter((x) => x.id !== v.id))}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </section>
+          {coords && (
+            <NearbyMap
+              center={coords}
+              places={places}
+              className="h-48 w-full overflow-hidden rounded-2xl border border-white/10"
+            />
           )}
           <Link
             href="/app/nearby"
-            className="block text-center text-xs font-medium text-emerald-400"
+            className="block text-center text-sm font-medium text-emerald-400"
           >
             Open full Independent Finder →
           </Link>
