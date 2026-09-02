@@ -13,54 +13,50 @@ import { loadHistoryFromCloud } from "@/lib/persist";
 import { getActiveMemberId } from "@/lib/family";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { GlassCard } from "@/components/app/glass-card";
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [daysSince, setDaysSince] = useState<number | null>(null);
   const [overall, setOverall] = useState(0);
-  const [premium, setPremium] = useState(false);
+  const [premium, setPrem] = useState(false);
 
   useEffect(() => {
-    setPremium(isPremium());
     const mid = getActiveMemberId();
     const s = loadSession(mid);
     setOverall(s?.scores.overall ?? 0);
     setHistory(loadHistory(mid));
     setDaysSince(daysSinceLastAssessment(mid));
+    setPrem(isPremium());
     void (async () => {
-      await loadHistoryFromCloud();
-      setHistory(loadHistory(mid));
+      const cloud = await loadHistoryFromCloud();
+      if (cloud.length) setHistory(loadHistory(mid));
     })();
   }, []);
 
   const latest = history[0]?.overall ?? overall;
   const prev = history[1]?.overall;
-  const change = prev != null ? latest - prev : null;
-  const maxScore = Math.max(100, ...history.map((h) => h.overall), 1);
+  const delta =
+    prev != null ? latest - prev : null;
 
-  if (!premium) {
+  if (!premium && history.length === 0) {
     return (
       <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
         <PageHeader
-          title="History"
-          subtitle="Score trends over time — Lifetime or Household only."
+          title="Progress"
+          subtitle="See how your score moves — not just a chart."
           backHref="/app/more"
           showBack
         />
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
-          <p className="text-sm font-medium text-zinc-100">Premium feature</p>
-          <p className="mt-2 text-sm text-zinc-400">
-            Cloud history and score trends unlock with Lifetime ($29) or Household
-            ($49).
+        <GlassCard>
+          <p className="text-sm text-zinc-300">
+            Progress unlocks with Lifetime or Household. You still see today's score below.
           </p>
-          <Link
-            href="/app/overview"
-            className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
-          >
-            Unlock from Today →
-          </Link>
-        </div>
+          <p className="mt-4 text-3xl font-bold text-zinc-50">{overall} / 100</p>
+          <Button asChild size="sm" className="mt-4">
+            <Link href="/app/overview">Back to Today</Link>
+          </Button>
+        </GlassCard>
       </div>
     );
   }
@@ -68,120 +64,68 @@ export default function HistoryPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
-        title="History"
-        subtitle="Your resilience score over time — progress toward a year of readiness."
+        title="Progress"
+        subtitle="What changed — and what to do next."
         backHref="/app/more"
         showBack
       />
 
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: "Latest", value: String(latest) },
-          {
-            label: "Change",
-            value:
-              change == null ? "—" : change > 0 ? `+${change}` : String(change),
-          },
-          { label: "Checks", value: String(history.length || 1) },
-        ].map((c) => (
-          <div
-            key={c.label}
-            className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-3 py-4 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-              {c.label}
-            </p>
-            <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-50">
-              {c.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+      <GlassCard tone="accent">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Score timeline
+          Now
         </p>
-        {history.length === 0 ? (
-          <p className="mt-6 text-center text-sm text-zinc-500">
-            Complete an assessment to start your timeline.
+        <p className="mt-2 text-4xl font-bold tabular-nums text-zinc-50">
+          {latest}{" "}
+          <span className="text-sm font-normal text-zinc-500">/ 100</span>
+        </p>
+        {delta != null && (
+          <p
+            className={
+              delta >= 0
+                ? "mt-1 text-sm font-medium text-emerald-400"
+                : "mt-1 text-sm font-medium text-red-400"
+            }
+          >
+            {delta >= 0 ? "+" : ""}
+            {delta} vs last check
           </p>
-        ) : (
-          <div className="mt-6 flex h-36 items-end gap-2">
-            {[...history]
-              .reverse()
-              .slice(-8)
-              .map((h) => {
-                const pct = Math.max(8, (h.overall / maxScore) * 100);
-                const d = new Date(h.at);
-                const label = d.toLocaleDateString(undefined, {
-                  day: "numeric",
-                  month: "short",
-                });
-                return (
-                  <div
-                    key={h.at + h.overall}
-                    className="flex flex-1 flex-col items-center gap-2"
-                  >
-                    <span className="text-[10px] tabular-nums text-zinc-400">
-                      {h.overall}
-                    </span>
-                    <div
-                      className="w-full max-w-[36px] rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400"
-                      style={{ height: `${pct}%` }}
-                    />
-                    <span className="text-[9px] text-zinc-600">{label}</span>
-                  </div>
-                );
-              })}
-          </div>
         )}
-      </section>
+        <p className="mt-2 text-xs text-zinc-500">
+          {daysSince == null
+            ? "Take an assessment to start the trail."
+            : daysSince === 0
+              ? "Checked today."
+              : `Last check ${daysSince} days ago.`}
+        </p>
+        <Link
+          href="/app/actions"
+          className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+        >
+          What should I do now? →
+        </Link>
+      </GlassCard>
 
       <section className="space-y-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Assessment log
+          Trail
         </p>
-        {history.map((h) => (
+        {history.length === 0 && (
+          <p className="text-sm text-zinc-500">No past checks yet.</p>
+        )}
+        {history.map((h, i) => (
           <div
-            key={h.at + String(h.overall)}
+            key={h.at || i}
             className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
           >
             <div>
-              <p className="text-sm font-medium text-zinc-100">Score {h.overall}</p>
-              <p className="text-xs text-zinc-500">
-                {new Date(h.at).toLocaleString()}
+              <p className="text-sm font-medium text-zinc-100">{h.overall} / 100</p>
+              <p className="text-[11px] text-zinc-500">
+                {h.at ? new Date(h.at).toLocaleDateString() : "Earlier"}
               </p>
             </div>
-            <span
-              className={cn(
-                "text-xs font-medium",
-                h.overall >= 60 ? "text-emerald-400" : "text-amber-400"
-              )}
-            >
-              {h.overall >= 60 ? "Stronger" : "Build up"}
-            </span>
           </div>
         ))}
-        {history.length === 0 && (
-          <p className="text-sm text-zinc-500">No log entries yet.</p>
-        )}
       </section>
-
-      <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link href="/assessment">Retake assessment</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/app/overview">Back to Today</Link>
-        </Button>
-      </div>
-
-      {daysSince != null && (
-        <p className="text-center text-xs text-zinc-600">
-          Last assessed {daysSince === 0 ? "today" : `${daysSince} day(s) ago`}
-        </p>
-      )}
     </div>
   );
 }
