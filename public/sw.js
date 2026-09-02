@@ -1,18 +1,6 @@
-const CACHE = "tiltshield-app-v2";
+const CACHE = "tiltshield-app-v4";
 const PRECACHE = [
   "/",
-  "/assessment",
-  "/app/overview",
-  "/app/risk",
-  "/app/what-if",
-  "/app/calculators",
-  "/app/prepare",
-  "/app/actions",
-  "/app/history",
-  "/app/family",
-  "/app/settings",
-  "/app/vault",
-  "/app/guides",
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
@@ -24,7 +12,11 @@ self.addEventListener("install", (event) => {
       .open(CACHE)
       .then((cache) =>
         Promise.all(
-          PRECACHE.map((url) => cache.add(url).catch(() => {}))
+          PRECACHE.map((url) =>
+            cache.add(url).catch(() => {
+              /* skip failed */
+            })
+          )
         )
       )
       .then(() => self.skipWaiting())
@@ -36,7 +28,9 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+        Promise.all(
+          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+        )
       )
       .then(() => self.clients.claim())
   );
@@ -45,20 +39,29 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
+
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Always network for Next build assets — never serve stale JS after deploy
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // HTML / app routes: network first
   const isApp =
     url.pathname.startsWith("/app") ||
     url.pathname === "/assessment" ||
-    url.pathname === "/" ||
-    url.pathname.startsWith("/_next/static");
+    url.pathname === "/";
 
   if (isApp) {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          if (res.ok) {
+          if (res.ok && res.type === "basic") {
             const copy = res.clone();
             caches.open(CACHE).then((cache) => cache.put(request, copy));
           }
@@ -66,7 +69,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() =>
           caches.match(request).then(
-            (cached) => cached || caches.match("/app/overview") || caches.match("/")
+            (cached) => cached || caches.match("/")
           )
         )
     );
@@ -78,7 +81,7 @@ self.addEventListener("fetch", (event) => {
       (cached) =>
         cached ||
         fetch(request).then((res) => {
-          if (res.ok) {
+          if (res.ok && res.type === "basic") {
             const copy = res.clone();
             caches.open(CACHE).then((cache) => cache.put(request, copy));
           }
