@@ -36,6 +36,7 @@ import {
   regionalResilienceHint,
 } from "@/lib/pipeline";
 import { MiniMapInset } from "@/components/map/mini-inset";
+import { AssessmentReminder } from "@/components/app/assessment-reminder";
 import type { CategoryScores } from "@/types";
 
 const CATEGORY_TILES: {
@@ -253,7 +254,7 @@ export default function TodayPage() {
                 href="/app/history"
                 className="mt-1 inline-block text-xs text-emerald-500 hover:underline"
               >
-                View trend →
+                View progress →
               </Link>
             </div>
           </div>
@@ -286,7 +287,7 @@ export default function TodayPage() {
           </p>
           <p className="text-xs text-zinc-500">estimated runway if primary income stops</p>
           <Link
-            href="/app/risk"
+            href="/app/focus/money"
             className="mt-4 inline-flex rounded-xl bg-red-500/25 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/35"
           >
             Fix this first →
@@ -322,10 +323,12 @@ export default function TodayPage() {
         </GlassCard>
       </div>
 
+      <AssessmentReminder />
+
       {topPipe && (
         <GlassCard className="border-emerald-500/15">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            World → exposure → action
+            What changed · for you
           </p>
           <p className="mt-2 text-sm font-medium text-zinc-100">{topPipe.eventTitle}</p>
           <p className="mt-1 text-xs text-zinc-500">
@@ -333,12 +336,20 @@ export default function TodayPage() {
             {" · "}
             {topPipe.exposureReason}
           </p>
-          <Link
-            href={topPipe.actionHref}
-            className="mt-3 inline-flex rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25"
-          >
-            {topPipe.actionTitle} → ({topPipe.actionMinutes} min)
-          </Link>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={topPipe.actionHref}
+              className="inline-flex rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25"
+            >
+              {topPipe.actionTitle} → ({topPipe.actionMinutes} min)
+            </Link>
+            <Link
+              href="/app/nearby"
+              className="inline-flex rounded-xl border border-white/15 px-3 py-2 text-xs font-medium text-zinc-200"
+            >
+              Places near you →
+            </Link>
+          </div>
         </GlassCard>
       )}
 
@@ -432,7 +443,7 @@ export default function TodayPage() {
             return (
               <Link
                 key={c.key}
-                href={`/app/risk?cat=${c.key}`}
+                href={`/app/focus/${c.key}`}
                 className={cn(
                   "group rounded-2xl border border-white/[0.08] bg-gradient-to-b p-3 text-center transition hover:border-white/15 hover:shadow-[0_0_24px_-8px_rgba(16,185,129,0.25)]",
                   c.tint
