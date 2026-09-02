@@ -1,26 +1,69 @@
 # Tiltshield native (Capacitor)
 
-Web app is the source of truth (Vercel). Native shells load the production URL.
+Web app on Vercel is the source of truth. Android / iOS shells load that URL so auth, Flutterwave, and APIs work.
 
-## One-time
+## Prerequisites
+
+- Node 18+
+- **Android:** Android Studio + SDK
+- **iOS:** macOS + Xcode (Apple Developer account for TestFlight / App Store)
+
+## One-time setup
 
 ```bash
 npm install
-npx cap add android   # requires Android Studio
-npx cap add ios       # macOS + Xcode only
+npx cap add android   # creates android/
+npx cap add ios       # macOS only — creates ios/
 ```
 
-## Sync & open
+## Point at production (default)
+
+`capacitor.config.ts` uses:
+
+```
+https://tiltshield.vercel.app
+```
+
+Change to your real Vercel domain if different:
+
+```bash
+CAP_SERVER_URL=https://YOUR-APP.vercel.app npx cap sync
+```
+
+## Sync & open IDE
 
 ```bash
 npm run cap:sync
-npm run cap:android   # or cap:ios
+npm run cap:android   # opens Android Studio
+npm run cap:ios       # opens Xcode (macOS)
 ```
 
-## Local device against next dev
+## Local device against `next dev`
 
-```bash
-CAP_SERVER_URL=http://YOUR_LAN_IP:3000 npx cap sync
-```
+1. Run Next on your LAN IP:
+   ```bash
+   npm run dev -- -H 0.0.0.0
+   ```
+2. Sync:
+   ```bash
+   CAP_SERVER_URL=http://192.168.x.x:3000 npx cap sync
+   ```
+3. Rebuild in Android Studio / Xcode.
 
-App ID: `app.tiltshield.mobile`
+## Store checklist
+
+| Step | Notes |
+|------|--------|
+| App ID | `app.tiltshield.mobile` |
+| Icons / splash | `resources/` + IDE assets |
+| Privacy policy URL | Required for Play / App Store |
+| Payments | Flutterwave in WebView — confirm store rules for digital goods |
+| Signing | Play upload key / Apple certs |
+
+## Scripts
+
+- `npm run cap:sync`
+- `npm run cap:android` / `npm run cap:ios`
+- `npm run cap:add:android` / `npm run cap:add:ios`
+
+Native **signed** builds must run on your machine (or CI with macOS/Android runners).
