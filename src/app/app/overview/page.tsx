@@ -195,7 +195,7 @@ export default function TodayPage() {
             <span className="inline-block">👋</span>
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Here's your resilience overview for today.
+            Building toward a year of household resilience — here's today's picture.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
