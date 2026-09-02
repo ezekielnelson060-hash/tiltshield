@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
-import { personalizeIntel, type IntelScope } from "@/lib/intel";
+import {
+  personalizeIntel,
+  type IntelScope,
+  type IntelItem,
+} from "@/lib/intel";
 import { cn } from "@/lib/utils";
 import { IconBolt } from "@/components/app/icons";
 import { PageHeader } from "@/components/app/page-header";
@@ -24,6 +28,9 @@ export default function IntelPage() {
     hasAltPayment: false,
     incomeSources: 1,
   });
+  const [live, setLive] = useState<IntelItem[]>([]);
+  const [liveAt, setLiveAt] = useState<string | null>(null);
+  const [liveErr, setLiveErr] = useState(false);
 
   useEffect(() => {
     const s = loadSession();
@@ -38,23 +45,82 @@ export default function IntelPage() {
     setReady(true);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/intel/live");
+        const json = await res.json();
+        if (cancelled || !json?.items) return;
+        const mapped: IntelItem[] = json.items.map(
+          (h: {
+            id: string;
+            title: string;
+            summary: string;
+            category: string;
+            impact: "low" | "medium" | "high";
+            relevanceKeys?: string[];
+            publishedAt?: string | null;
+          }) => ({
+            id: h.id,
+            scope: "global" as const,
+            title: h.title,
+            summary: h.summary,
+            impact: h.impact,
+            category: h.category,
+            hoursAgo: h.publishedAt
+              ? Math.max(
+                  0,
+                  Math.round(
+                    (Date.now() - new Date(h.publishedAt).getTime()) / 3600000
+                  )
+                )
+              : 1,
+            relevanceKeys: h.relevanceKeys,
+            actionHint: "Open What If or Prepare for this exposure.",
+          })
+        );
+        setLive(mapped);
+        setLiveAt(json.fetchedAt || null);
+      } catch {
+        if (!cancelled) setLiveErr(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const items = useMemo(() => {
     if (!ready) return [];
-    const all = personalizeIntel({
+    const curated = personalizeIntel({
       overall: ctx.overall,
       topCategory: ctx.topCategory,
       hasAltPayment: ctx.hasAltPayment,
       incomeSources: ctx.incomeSources,
     });
-    if (tab === "all") return all;
-    return all.filter((i) => i.scope === tab);
-  }, [ready, ctx, tab]);
+    const merged = [...live, ...curated];
+    const seen = new Set<string>();
+    const unique = merged.filter((i) => {
+      const k = i.title.toLowerCase().slice(0, 48);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    if (tab === "all") return unique;
+    if (tab === "watchlist") return unique.filter((i) => i.impact === "high");
+    if (tab === "global")
+      return unique.filter(
+        (i) => i.scope === "global" || i.id.startsWith("live-")
+      );
+    return unique.filter((i) => i.scope === tab);
+  }, [ready, ctx, tab, live]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Intel"
-        subtitle="Developments that may affect your resilience — for you, local, and global."
+        subtitle="Live world signals plus curated resilience intel — for you, local, and global."
         backHref="/app/overview"
         showBack
       />
@@ -77,6 +143,14 @@ export default function IntelPage() {
         ))}
       </div>
 
+      <p className="text-[11px] text-zinc-500">
+        {liveAt
+          ? `Live world feed · updated ${new Date(liveAt).toLocaleTimeString()}`
+          : liveErr
+            ? "Live feed offline — showing curated intel"
+            : "Loading live world signals…"}
+      </p>
+
       <div className="space-y-3">
         {items.map((item) => (
           <article
@@ -87,6 +161,9 @@ export default function IntelPage() {
               <span className="flex items-center gap-1 rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                 <IconBolt className="h-3 w-3 text-amber-400/80" />
                 {item.category}
+                {item.id.startsWith("live-") && (
+                  <span className="ml-1 text-emerald-500">LIVE</span>
+                )}
               </span>
               <span className="text-[10px] text-zinc-600">{item.hoursAgo}h ago</span>
               <span
@@ -102,23 +179,35 @@ export default function IntelPage() {
                 {item.impact}
               </span>
             </div>
-            <h2 className="mt-3 text-sm font-semibold leading-snug text-zinc-50">{item.title}</h2>
-            <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{item.summary}</p>
+            <h2 className="mt-3 text-sm font-semibold leading-snug text-zinc-50">
+              {item.title}
+            </h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+              {item.summary}
+            </p>
             {item.actionHint && (
               <p className="mt-3 text-xs text-emerald-400/90">{item.actionHint}</p>
             )}
             <div className="mt-3 flex gap-2">
-              <Link href="/app/what-if" className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
+              <Link
+                href="/app/what-if"
+                className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
+              >
                 Run What If →
               </Link>
-              <Link href="/app/prepare" className="text-xs font-medium text-zinc-500 hover:text-zinc-300">
+              <Link
+                href="/app/prepare"
+                className="text-xs font-medium text-zinc-500 hover:text-zinc-300"
+              >
                 Prepare
               </Link>
             </div>
           </article>
         ))}
         {items.length === 0 && (
-          <p className="py-12 text-center text-sm text-zinc-500">No items in this view yet.</p>
+          <p className="py-12 text-center text-sm text-zinc-500">
+            No items in this view yet.
+          </p>
         )}
       </div>
     </div>
