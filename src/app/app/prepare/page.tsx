@@ -15,7 +15,7 @@ const NearbyMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-44 items-center justify-center rounded-2xl border border-white/[0.08] text-xs text-zinc-500">
+      <div className="tilt-map-chrome flex h-44 items-center justify-center text-xs text-zinc-500">
         Loading map…
       </div>
     ),
@@ -113,12 +113,16 @@ export default function PreparePage() {
     { title: "Map 3 offline-capable local vendors", impact: "Medium impact", time: "15 min", href: "#network" },
   ];
 
+  const card =
+    "rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]";
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Prepare"
         subtitle="Build toward a full year of household resilience — step by step."
         backHref="/app/overview"
+        showBack
       />
 
       <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
@@ -156,7 +160,7 @@ export default function PreparePage() {
                 key={a.title}
                 type="button"
                 onClick={() => setTab("network")}
-                className="flex w-full items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-left hover:border-emerald-500/25"
+                className={cn("flex w-full items-start gap-3 px-4 py-4 text-left hover:border-emerald-500/25", card)}
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">{i + 1}</span>
                 <div>
@@ -165,7 +169,7 @@ export default function PreparePage() {
                 </div>
               </button>
             ) : (
-              <Link key={a.title} href={a.href} className="flex items-start gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 hover:border-emerald-500/25">
+              <Link key={a.title} href={a.href} className={cn("flex items-start gap-3 px-4 py-4 hover:border-emerald-500/25", card)}>
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">{i + 1}</span>
                 <div>
                   <p className="text-sm font-medium text-zinc-50">{a.title}</p>
@@ -211,7 +215,7 @@ export default function PreparePage() {
               <button key={q} type="button" onClick={() => { setQuery(q); void runSearch(q); }} className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs capitalize text-zinc-400 ring-1 ring-white/[0.06] hover:text-emerald-400">{q}</button>
             ))}
           </div>
-          <NearbyMap places={places} selected={selected} user={coords} onSelect={setSelected} className="relative h-44 w-full overflow-hidden rounded-2xl border border-white/[0.08] sm:h-56" />
+          <NearbyMap places={places} selected={selected} user={coords} onSelect={setSelected} className="tilt-map-chrome relative h-44 w-full sm:h-56" />
           <div className="space-y-2">
             {places.map((p) => (
               <button key={p.id} type="button" onClick={() => setSelected(p)} className={cn("flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left", selected?.id === p.id ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/[0.08] bg-white/[0.03]")}>
