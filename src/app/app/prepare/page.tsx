@@ -43,6 +43,17 @@ const YEAR_STOCK: StockItem[] = [
 const STOCK_KEY = "tiltshield_year_stock";
 const VENDOR_KEY = "tiltshield_saved_places";
 
+const FINDER_CHIPS = [
+  "pharmacy",
+  "supermarket",
+  "farm market",
+  "hardware store",
+  "solar",
+  "ATM",
+  "community center",
+  "outdoor store",
+];
+
 type SavedPlace = NearbyPlace;
 
 export default function PreparePage() {
@@ -137,7 +148,7 @@ export default function PreparePage() {
           [
             ["plan", "Plan"],
             ["stock", "1-year stock"],
-            ["network", "Network"],
+            ["network", "Finder"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -214,43 +225,112 @@ export default function PreparePage() {
 
       {tab === "network" && (
         <div className="space-y-4">
-          <p className="text-sm text-zinc-500">Find places near you — multi-pin map + results stay in the app. Save ones you trust offline.</p>
+          <p className="text-sm text-zinc-500">
+            Independent Finder — farms, hardware, solar, cash, community. Support local; save places you can reach offline.
+          </p>
           <div className="relative">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void runSearch(query); }} placeholder="Pharmacy, market, clinic…" className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 pl-4 pr-24 text-sm text-zinc-50 placeholder:text-zinc-600" />
-            <Button type="button" size="sm" className="absolute right-2 top-1/2 -translate-y-1/2" disabled={loading} onClick={() => void runSearch(query || "pharmacy")}>{loading ? "…" : "Search"}</Button>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void runSearch(query);
+              }}
+              placeholder="Farm, solar, ATM, co-op…"
+              className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 pl-4 pr-24 text-sm text-zinc-50 placeholder:text-zinc-600"
+            />
+            <Button
+              type="button"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+              disabled={loading}
+              onClick={() => void runSearch(query || "pharmacy")}
+            >
+              {loading ? "…" : "Search"}
+            </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {["pharmacy", "supermarket", "clinic", "fuel", "atm"].map((q) => (
-              <button key={q} type="button" onClick={() => { setQuery(q); void runSearch(q); }} className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs capitalize text-zinc-400 ring-1 ring-white/[0.06] hover:text-emerald-400">{q}</button>
+            {FINDER_CHIPS.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => {
+                  setQuery(q);
+                  void runSearch(q);
+                }}
+                className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs capitalize text-zinc-400 ring-1 ring-white/[0.06] hover:text-emerald-400"
+              >
+                {q}
+              </button>
             ))}
           </div>
-          <NearbyMap places={places} selected={selected} user={coords} onSelect={setSelected} className="tilt-map-chrome relative h-44 w-full sm:h-56" />
+          <NearbyMap
+            places={places}
+            selected={selected}
+            user={coords}
+            onSelect={setSelected}
+            className="tilt-map-chrome relative h-44 w-full sm:h-56"
+          />
           <div className="space-y-2">
             {places.map((p) => (
-              <button key={p.id} type="button" onClick={() => setSelected(p)} className={cn("flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left", selected?.id === p.id ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/[0.08] bg-white/[0.03]")}>
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelected(p)}
+                className={cn(
+                  "flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left",
+                  selected?.id === p.id
+                    ? "border-emerald-500/40 bg-emerald-500/10"
+                    : "border-white/[0.08] bg-white/[0.03]"
+                )}
+              >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-zinc-100">{p.name}</p>
                   <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{p.address}</p>
-                  {p.distanceKm != null && <p className="mt-1 text-[10px] text-zinc-600">{formatDistance(p.distanceKm)}</p>}
+                  {p.distanceKm != null && (
+                    <p className="mt-1 text-[10px] text-zinc-600">
+                      {formatDistance(p.distanceKm)}
+                    </p>
+                  )}
                 </div>
               </button>
             ))}
           </div>
-          {selected && <Button type="button" size="sm" onClick={saveSelected}>Save “{selected.name}” offline</Button>}
+          {selected && (
+            <Button type="button" size="sm" onClick={saveSelected}>
+              Save “{selected.name}” offline
+            </Button>
+          )}
           {saved.length > 0 && (
             <section className="space-y-2 pt-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Saved offline</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Saved offline
+              </p>
               {saved.map((v) => (
-                <div key={v.id} className="flex items-center justify-between rounded-xl border border-white/[0.08] px-4 py-3">
+                <div
+                  key={v.id}
+                  className="flex items-center justify-between rounded-xl border border-white/[0.08] px-4 py-3"
+                >
                   <div>
                     <p className="text-sm text-zinc-100">{v.name}</p>
                     <p className="line-clamp-1 text-xs text-zinc-500">{v.address}</p>
                   </div>
-                  <button type="button" className="text-xs text-zinc-500" onClick={() => persistSaved(saved.filter((x) => x.id !== v.id))}>Remove</button>
+                  <button
+                    type="button"
+                    className="text-xs text-zinc-500"
+                    onClick={() => persistSaved(saved.filter((x) => x.id !== v.id))}
+                  >
+                    Remove
+                  </button>
                 </div>
               ))}
             </section>
           )}
+          <Link
+            href="/app/nearby"
+            className="block text-center text-xs font-medium text-emerald-400"
+          >
+            Open full Independent Finder →
+          </Link>
         </div>
       )}
     </div>
