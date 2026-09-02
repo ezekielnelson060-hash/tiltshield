@@ -7,7 +7,7 @@
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-100 antialiased;
+  @apply bg-[#060a12] text-zinc-100 antialiased;
 }
 
 .bg-grid {
@@ -18,4 +18,15 @@ body {
     ),
     linear-gradient(to bottom, rgb(39 39 42 / 0.4) 1px, transparent 1px);
   background-size: 48px 48px;
+}
+
+.tilt-map-chrome {
+  @apply overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a1018] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset];
+}
+.tilt-map-chrome .leaflet-container {
+  background: #0a1018;
+  font: inherit;
+}
+.tilt-chip {
+  @apply rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] text-zinc-400;
 }
