@@ -85,7 +85,23 @@ export type WhatIfScenario =
   | "job_loss"
   | "medical_emergency"
   | "power_grid"
-  | "digital_payments_only";
+  | "digital_payments_only"
+  | "major_expense"
+  | "currency_volatility"
+  | "email_compromised"
+  | "cloud_down"
+  | "two_factor_down"
+  | "store_unavailable"
+  | "fuel_scarce"
+  | "water_disruption"
+  | "transit_down"
+  | "vehicle_unavailable"
+  | "travel_disruption"
+  | "comms_outage"
+  | "platforms_down"
+  | "info_unreliable"
+  | "relocation"
+  | "family_emergency";
 
 export interface WhatIfResult {
   scenario: WhatIfScenario;
