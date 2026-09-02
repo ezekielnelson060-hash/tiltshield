@@ -1,4 +1,4 @@
-export type FamilyRelation = "self" | "spouse" | "child" | "other";
+export type FamilyRelation = "self" | "partner" | "child" | "parent" | "roommate" | "other";
 
 export interface FamilyMember {
   id: string;
@@ -46,9 +46,7 @@ export function getActiveMemberId(): string {
 export function setActiveMemberId(id: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem(ACTIVE_KEY, id);
-  window.dispatchEvent(
-    new CustomEvent("tiltshield:member-change", { detail: { id } })
-  );
+  window.dispatchEvent(new CustomEvent("tiltshield:member-change", { detail: { id } }));
 }
 
 export function getActiveMember(): FamilyMember {
@@ -74,24 +72,23 @@ export function addFamilyMember(
 
 export function removeFamilyMember(id: string) {
   if (id === "self") return;
-  saveFamilyMembers(loadFamilyMembers().filter((m) => m.id !== id));
+  const members = loadFamilyMembers().filter((m) => m.id !== id);
+  saveFamilyMembers(members);
   if (getActiveMemberId() === id) setActiveMemberId("self");
 }
 
 export function updateMemberScore(id: string, score: number) {
-  saveFamilyMembers(
-    loadFamilyMembers().map((m) =>
-      m.id === id ? { ...m, readinessScore: score } : m
-    )
+  const members = loadFamilyMembers().map((m) =>
+    m.id === id ? { ...m, readinessScore: score } : m
   );
+  saveFamilyMembers(members);
 }
 
 export function patchMemberCloudId(localId: string, cloudId: string) {
-  saveFamilyMembers(
-    loadFamilyMembers().map((m) =>
-      m.id === localId ? { ...m, cloudId } : m
-    )
+  const members = loadFamilyMembers().map((m) =>
+    m.id === localId ? { ...m, cloudId } : m
   );
+  saveFamilyMembers(members);
 }
 
 export function isFamilyUnlocked(): boolean {
@@ -109,7 +106,9 @@ export function setFamilyUnlocked(v: boolean) {
 
 export const RELATION_LABELS: Record<FamilyRelation, string> = {
   self: "You",
-  spouse: "Spouse / partner",
-  child: "Child",
+  partner: "Partner",
+  child: "Children",
+  parent: "Parents",
+  roommate: "Roommates",
   other: "Other",
 };
