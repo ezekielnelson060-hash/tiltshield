@@ -6,6 +6,7 @@ import {
   loadSession,
   loadHistory,
   daysSinceLastAssessment,
+  isPremium,
   type HistoryEntry,
 } from "@/lib/session";
 import { loadHistoryFromCloud } from "@/lib/persist";
@@ -18,8 +19,10 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [daysSince, setDaysSince] = useState<number | null>(null);
   const [overall, setOverall] = useState(0);
+  const [premium, setPremium] = useState(false);
 
   useEffect(() => {
+    setPremium(isPremium());
     const mid = getActiveMemberId();
     const s = loadSession(mid);
     setOverall(s?.scores.overall ?? 0);
@@ -35,6 +38,32 @@ export default function HistoryPage() {
   const prev = history[1]?.overall;
   const change = prev != null ? latest - prev : null;
   const maxScore = Math.max(100, ...history.map((h) => h.overall), 1);
+
+  if (!premium) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+        <PageHeader
+          title="History"
+          subtitle="Score trends over time — Lifetime or Household only."
+          backHref="/app/more"
+          showBack
+        />
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
+          <p className="text-sm font-medium text-zinc-100">Premium feature</p>
+          <p className="mt-2 text-sm text-zinc-400">
+            Cloud history and score trends unlock with Lifetime ($29) or Household
+            ($49).
+          </p>
+          <Link
+            href="/app/overview"
+            className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+          >
+            Unlock from Today →
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
