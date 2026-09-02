@@ -2,111 +2,125 @@ export type Guide = {
   slug: string;
   title: string;
   blurb: string;
-  minutes: number;
   horizon: string;
+  minutes: number;
+  reframe: string;
   body: string[];
+  placeLinks?: { label: string; href: string }[];
 };
 
-/** Guides = steps toward ~1 year household resilience (layered, not panic). */
 export const GUIDES: Guide[] = [
   {
-    slug: "year-food-water",
-    title: "Food & water for a year (layered)",
-    blurb:
-      "Start at 14–30 days of meals you already eat, then rotate toward a deep pantry — without waste.",
+    slug: "water-year",
+    title: "Water for a year mindset",
+    blurb: "Store, purify, rotate — continuous access.",
+    horizon: "Year",
+    minutes: 8,
+    reframe:
+      "You are not stocking for a movie scene. You are removing one reason to panic when the tap is uncertain.",
+    body: [
+      "Calculate liters per person per day for two weeks first, then expand.",
+      "Pair stored water with a purify method you have tested once.",
+      "Rotate containers so nothing becomes a forgotten science experiment.",
+    ],
+    placeLinks: [
+      { label: "Find water retail", href: "/app/nearby" },
+      { label: "Prepare stock list", href: "/app/prepare" },
+    ],
+  },
+  {
+    slug: "food-rotation",
+    title: "Food you will actually eat",
+    blurb: "90 days of familiar meals, then deeper layers.",
+    horizon: "90d → year",
+    minutes: 10,
+    reframe:
+      "The calm version of you shops for the stressed version of you — same brands, dated shelves.",
+    body: [
+      "List seven dinners your household already accepts.",
+      "Buy deeper into those, not novelty survival food.",
+      "Label and FIFO. Waste is a readiness failure.",
+    ],
+    placeLinks: [
+      { label: "Grocery / farm map", href: "/app/nearby" },
+      { label: "1-year stock", href: "/app/prepare" },
+    ],
+  },
+  {
+    slug: "cash-float",
+    title: "Cash when rails fail",
+    blurb: "Small float, tested, separate from daily spend.",
+    horizon: "Ongoing",
+    minutes: 6,
+    reframe:
+      "Mental accounting is a feature. A labeled buffer is how you stop spending the money that was supposed to buy time.",
+    body: [
+      "Choose an amount that covers 2–4 weeks of essentials only.",
+      "Park it where you will not swipe it for normal life.",
+      "Know two ATMs before you need them.",
+    ],
+    placeLinks: [
+      { label: "Cash map", href: "/app/nearby" },
+      { label: "Offline value", href: "/app/offline-value" },
+      { label: "Money focus", href: "/app/focus/money" },
+    ],
+  },
+  {
+    slug: "docs-vault",
+    title: "Documents offline",
+    blurb: "IDs and proofs when accounts lag.",
+    horizon: "Once + review",
     minutes: 12,
-    horizon: "12 months",
+    reframe:
+      "Paper and encrypted copies are dull. They are also how you prove who you are when systems argue.",
     body: [
-      "Write 10 meals your household already cooks that use dry, canned, frozen, or long-life staples.",
-      "Build a 14-day bridge first: two full cycles of those ingredients, labeled with pack dates.",
-      "Water baseline: about 3 liters per person per day for drinking and basic hygiene. Store what you can rotate; add purification so you are not only counting bottles.",
-      "Extend toward 90 days of staples you will actually eat. Only then expand volume toward a year using rotation (first-in, first-out).",
-      "Practice cooking two shelf-stable meals without delivery apps so stress does not invent a menu.",
-      "Review quarterly: eat the oldest stock, replace what you used, adjust for household size.",
+      "Scan or photograph critical IDs.",
+      "Store in Vault with a passphrase you can recall offline.",
+      "Keep one paper packet in a known place at home.",
+    ],
+    placeLinks: [
+      { label: "Open Vault", href: "/app/vault" },
+      { label: "Community focus", href: "/app/focus/documents" },
     ],
   },
   {
-    slug: "year-cash-access",
-    title: "Money access for a disrupted year",
-    blurb:
-      "Cash float, second payment rails, and a buffer sized from your real income — not hope.",
-    minutes: 10,
-    horizon: "12 months",
+    slug: "power-light",
+    title: "Light and power gaps",
+    blurb: "Banks charged, kit ready, grid optional for a night.",
+    horizon: "72h+",
+    minutes: 7,
+    reframe:
+      "Darkness is when small problems feel large. Light and a charged bank shrink the night.",
     body: [
-      "Size a cash float for 2–4 weeks of essentials you control — separate from long-term savings.",
-      "Confirm one backup payment method and test it this month.",
-      "Use Tiltshield runway numbers: if income stopped, how many days do you really cover?",
-      "Automate a transfer toward a 90-day essential buffer after income lands; keep that discipline across the year.",
-      "Do not post photos of cash. Split small amounts if that fits your security context.",
-      "Retake the assessment when rent, income, or dependents change.",
+      "One headlamp or lantern per key room.",
+      "Power banks on a charge schedule.",
+      "Know a hardware or outdoor store for replacements.",
+    ],
+    placeLinks: [
+      { label: "Hardware / outdoor", href: "/app/nearby" },
+      { label: "Home focus", href: "/app/focus/home" },
     ],
   },
   {
-    slug: "year-health-meds",
-    title: "Health buffer across 12 months",
-    blurb:
-      "Meds, first aid, and care continuity — only within what your clinician allows.",
+    slug: "household-plan",
+    title: "Household meetup plan",
+    blurb: "Who, where, without one phone.",
+    horizon: "Family",
     minutes: 9,
-    horizon: "12 months",
+    reframe:
+      "Shared dependency is invisible until it breaks. Write the meetup. Name the backup person.",
     body: [
-      "List critical prescriptions and OTC items your household actually uses.",
-      "With a clinician’s guidance, work toward a lawful buffer of critical meds and a complete first-aid kit.",
-      "Store meds correctly (temperature, light, expiry). Rotate anything nearing expiry.",
-      "Know the nearest clinic and pharmacy offline — save them in Prepare → Network.",
-      "Document allergies and conditions on paper in the Vault, not only on your phone.",
-      "Review the kit every quarter the same day you rotate pantry stock.",
+      "Primary and backup meeting places.",
+      "Three offline phone numbers on paper.",
+      "Add household members in Family if you use seats.",
     ],
-  },
-  {
-    slug: "year-power-home",
-    title: "Power, light, and home systems",
-    blurb:
-      "Lights, charge, priorities, and documents that survive a dead phone.",
-    minutes: 8,
-    horizon: "12 months",
-    body: [
-      "Charge and test power banks monthly; keep one light source that does not depend on the grid alone.",
-      "Decide what must stay powered (comms, medical devices) vs what can wait.",
-      "Encrypt IDs, insurance, and recovery sheets in the Vault with a passphrase you will remember offline.",
-      "Print or write one recovery sheet for the top accounts if your phone is gone.",
-      "Walk your home once: water shutoff, main electrics, exits — everyone should know them.",
-      "Revisit after any move or major appliance change.",
-    ],
-  },
-  {
-    slug: "year-local-network",
-    title: "Local network for a long disruption",
-    blurb:
-      "Vendors and people who still work when one app is down — built before you need them.",
-    minutes: 8,
-    horizon: "12 months",
-    body: [
-      "Use Prepare → Network or Nearby to search pharmacies, markets, clinics, fuel, and ATMs near you.",
-      "Save at least three trusted places offline inside Tiltshield, not only inside one delivery app.",
-      "Prefer vendors who accept cash or more than one payment method.",
-      "Agree a household meetup point and one offline contact who is not only in your phone.",
-      "Touch the list quarterly: call or visit under calm conditions.",
-      "After any move, rebuild the list for the new area the same week.",
-    ],
-  },
-  {
-    slug: "year-digital-recovery",
-    title: "Digital recovery without the primary phone",
-    blurb:
-      "If the device is lost — which accounts still open?",
-    minutes: 10,
-    horizon: "12 months",
-    body: [
-      "List critical accounts: email, bank, government portals, cloud, any offline seed material.",
-      "Print or write recovery codes for the top five. Store offline — not only on the same phone.",
-      "Prefer a second factor that is not SMS-only where possible.",
-      "Keep one trusted human contact on paper who can help if email is locked.",
-      "Quarterly drill: open recovery without the primary device.",
-      "Pair this with the Vault so documents and codes are encrypted on-device.",
+    placeLinks: [
+      { label: "Family", href: "/app/family" },
+      { label: "Mobility focus", href: "/app/focus/communication" },
     ],
   },
 ];
 
-export function getGuide(slug: string) {
+export function getGuide(slug: string): Guide | undefined {
   return GUIDES.find((g) => g.slug === slug);
 }
