@@ -5,6 +5,11 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { loadSession, type TiltSession } from "@/lib/session";
 import { sortStockIds } from "@/lib/prepare-rank";
+import {
+  planMovesFromAssessment,
+  foodStory,
+  runwayStory,
+} from "@/lib/plan-from-assessment";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,23 +34,17 @@ type StockItem = {
 };
 
 const YEAR_STOCK: StockItem[] = [
-  { id: "water_plan", label: "Water plan at home", group: "Year foundation", hint: "Store + purify" },
-  { id: "food_90", label: "90 days of normal food", group: "Year foundation", hint: "Then grow the buffer" },
-  { id: "food_rotate", label: "Date labels on food", group: "Year foundation" },
-  { id: "cash_float", label: "Cash for 2–4 weeks", group: "Money & access" },
-  { id: "alt_pay", label: "Second way to pay (tested)", group: "Money & access" },
+  { id: "water_plan", label: "Water you can reach at home", group: "Year foundation", hint: "Store + a simple purify method" },
+  { id: "food_90", label: "90 days of food you already eat", group: "Year foundation", hint: "Same meals — deeper shelves" },
+  { id: "food_rotate", label: "Dates on every package", group: "Year foundation", hint: "Oldest first so nothing is wasted" },
+  { id: "cash_float", label: "Cash for 2–4 weeks of essentials", group: "Money & access" },
+  { id: "alt_pay", label: "A second way to pay — tested", group: "Money & access" },
   { id: "meds_30", label: "Extra critical meds (if safe)", group: "Health" },
   { id: "first_aid", label: "First-aid kit ready", group: "Health" },
   { id: "light_power", label: "Lights and charged power banks", group: "Home" },
-  { id: "docs_offline", label: "IDs saved offline", group: "Docs & people" },
-  { id: "vendor_3", label: "3 nearby places you can use offline", group: "Docs & people" },
-  { id: "family_plan", label: "Family meetup plan", group: "Docs & people" },
-];
-
-const PLAN_MOVES = [
-  { title: "Build a 7–30 day cash + food bridge", impact: "High impact", minutes: "20 min" },
-  { title: "Save IDs offline in Vault", impact: "High impact", minutes: "10 min" },
-  { title: "Map 3 places you can use offline", impact: "Medium impact", minutes: "15 min" },
+  { id: "docs_offline", label: "ID copies you can reach offline", group: "Docs & people" },
+  { id: "vendor_3", label: "Three places nearby that work offline", group: "Docs & people" },
+  { id: "family_plan", label: "Household meetup plan", group: "Docs & people" },
 ];
 
 const STOCK_KEY = "tiltshield_year_stock";
@@ -103,18 +102,16 @@ export default function PreparePage() {
   }
 
   const answers = session?.answers;
-  const pantryDays = answers?.food_buffer_days ?? 0;
+  const moves = answers ? planMovesFromAssessment(answers) : [];
   const groups = Array.from(new Set(YEAR_STOCK.map((k) => k.group)));
   const done = YEAR_STOCK.filter((k) => checks[k.id]).length;
-  const stockList = answers
-    ? sortStockIds(YEAR_STOCK, answers)
-    : YEAR_STOCK;
+  const stockList = answers ? sortStockIds(YEAR_STOCK, answers) : YEAR_STOCK;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Prepare"
-        subtitle="Simple checklist. One box at a time toward a safer year."
+        subtitle="Your year of calm — built from what you told us, one honest step at a time."
         backHref="/app/overview"
         showBack
       />
@@ -122,9 +119,9 @@ export default function PreparePage() {
       <div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
         {(
           [
-            ["plan", "Plan"],
-            ["stock", "1-year stock"],
-            ["finder", "Finder"],
+            ["plan", "Your plan"],
+            ["stock", "Year stock"],
+            ["finder", "Places"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -145,13 +142,24 @@ export default function PreparePage() {
 
       {tab === "plan" && (
         <div className="space-y-3">
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
-            You have about <strong>{pantryDays}</strong> food days noted. Aim for 90 days next.
-          </div>
-          {PLAN_MOVES.map((a, i) => (
-            <div
-              key={a.title}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5"
+          {answers && (
+            <>
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-zinc-300">
+                {runwayStory(answers)}
+              </div>
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
+                {foodStory(answers)}
+              </div>
+            </>
+          )}
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Ordered for your gaps
+          </p>
+          {moves.map((a, i) => (
+            <Link
+              key={a.id}
+              href={a.href}
+              className="block rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 transition hover:border-emerald-500/25"
             >
               <div className="flex items-start gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
@@ -159,23 +167,27 @@ export default function PreparePage() {
                 </span>
                 <div>
                   <p className="text-sm font-medium text-zinc-100">{a.title}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    {a.impact} · {a.minutes}
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                    {a.why}
+                  </p>
+                  <p className="mt-1 text-[11px] text-emerald-400/90">
+                    {a.minutes} · Open →
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
           <p className="text-center text-xs text-zinc-600">
-            Year checklist {done}/{YEAR_STOCK.length}
+            Year checklist {done}/{YEAR_STOCK.length} complete
           </p>
         </div>
       )}
 
       {tab === "stock" && (
         <div className="space-y-4">
-          <p className="text-xs text-zinc-500">
-            Why a year? Short kits run out. Tick what you have. Then add the next layer.
+          <p className="text-sm leading-relaxed text-zinc-400">
+            A year is not one shopping trip. It is water, food you will eat, money
+            you can touch, medicine, light, papers, and people — layered over time.
           </p>
           {groups.map((g) => (
             <div key={g}>
@@ -227,14 +239,14 @@ export default function PreparePage() {
 
       {tab === "finder" && (
         <div className="space-y-4">
-          <p className="text-xs text-zinc-500">
-            Find real places near you. Save the ones you trust.
+          <p className="text-sm text-zinc-400">
+            Find real places near you. Save the ones you would trust on a hard day.
           </p>
           <div className="flex gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Farm, solar, ATM, co-op…"
+              placeholder="Pharmacy, market, ATM…"
               className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-2.5 text-sm text-zinc-100"
             />
             <Button
@@ -271,7 +283,7 @@ export default function PreparePage() {
             href="/app/nearby"
             className="block text-center text-sm font-medium text-emerald-400"
           >
-            Open full Independent Finder →
+            Open full map →
           </Link>
         </div>
       )}
