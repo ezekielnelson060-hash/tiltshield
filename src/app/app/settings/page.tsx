@@ -8,7 +8,7 @@ import {
   loadFamilyMembers,
   saveFamilyMembers,
 } from "@/lib/family";
-import { AppTopBar } from "@/components/app/page-header";
+import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 
 const NAME_KEY = "tiltshield_display_name";
@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [paying, setPaying] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,8 +52,8 @@ export default function SettingsPage() {
 
   function onPhoto(file: File | null) {
     if (!file || !file.type.startsWith("image/")) return;
-    if (file.size > 1.5 * 1024 * 1024) {
-      alert("Use a photo under 1.5 MB.");
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Max 2 MB photo.");
       return;
     }
     const reader = new FileReader();
@@ -69,14 +70,35 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   }
 
+  async function unlock() {
+    setPaying(true);
+    try {
+      const res = await fetch("/api/flutterwave/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: "lifetime" }),
+      });
+      const json = await res.json();
+      if (json.link) {
+        window.location.href = json.link;
+        return;
+      }
+      alert(json.error || "Payment not configured.");
+    } finally {
+      setPaying(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <AppTopBar title="Settings" backHref="/app/more" />
-      <p className="-mt-2 text-sm text-zinc-500">
-        Profile, plan, and data on this device.
-      </p>
+      <PageHeader
+        title="Settings"
+        subtitle="Profile, plan, and privacy — data stays under your control."
+        backHref="/app/more"
+        showBack
+      />
 
-      <section className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
           Profile
         </p>
@@ -84,28 +106,16 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-emerald-500/30"
+            className="relative flex h-16 w-16 overflow-hidden items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/30 to-teal-600/20 text-xl font-bold text-emerald-300 ring-2 ring-emerald-500/25"
+            aria-label="Change photo"
           >
             {photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photo} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-400/30 to-teal-600/20 text-lg font-bold text-emerald-300">
-                {(displayName || "Y").slice(0, 1).toUpperCase()}
-              </span>
+              (displayName || "Y").slice(0, 1).toUpperCase()
             )}
           </button>
-          <div>
-            <p className="text-sm font-medium text-zinc-100">Profile photo</p>
-            <p className="mt-0.5 text-xs text-zinc-500">Stored only on this device.</p>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="mt-1 text-xs font-medium text-emerald-400"
-            >
-              {photo ? "Change photo" : "Add photo"}
-            </button>
-          </div>
           <input
             ref={fileRef}
             type="file"
@@ -113,66 +123,67 @@ export default function SettingsPage() {
             className="hidden"
             onChange={(e) => onPhoto(e.target.files?.[0] || null)}
           />
-        </div>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your first name"
-            className="flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600"
-          />
-          <Button type="button" size="sm" onClick={saveName}>
-            {saved ? "Saved" : "Save"}
-          </Button>
+          <div className="min-w-0 flex-1">
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Display name"
+              className="w-full rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50"
+            />
+            <div className="mt-2 flex gap-2">
+              <Button type="button" size="sm" onClick={saveName}>
+                {saved ? "Saved" : "Save name"}
+              </Button>
+              <button
+                type="button"
+                className="text-xs text-zinc-500 hover:text-zinc-300"
+                onClick={() => fileRef.current?.click()}
+              >
+                Change photo
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-white/[0.08] divide-y divide-white/[0.06]">
-        <div className="bg-white/[0.03] px-5 py-4">
-          <p className="text-sm font-medium text-zinc-200">Subscription</p>
-          <p className="mt-1 text-xs text-zinc-500">
-            {premium
-              ? "Lifetime access — full plan unlocked"
-              : "Free tier — upgrade for full scenarios & family"}
-          </p>
-          {!premium && (
-            <Button
-              className="mt-3"
-              size="sm"
-              onClick={async () => {
-                const res = await fetch("/api/flutterwave/initialize", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ product: "lifetime" }),
-                });
-                const json = await res.json();
-                if (json.link) window.location.href = json.link;
-                else alert(json.error || "Payment not configured");
-              }}
-            >
-              Pay $29 — lifetime unlock
-            </Button>
-          )}
-        </div>
-        <div className="bg-white/[0.03] px-5 py-4">
-          <p className="text-sm font-medium text-zinc-200">Assessment</p>
-          <Link href="/assessment" className="mt-2 inline-block text-sm text-emerald-400">
-            Retake assessment →
-          </Link>
-        </div>
-        <div className="bg-white/[0.03] px-5 py-4">
-          <p className="text-sm font-medium text-zinc-200">Family</p>
-          <Link href="/app/family" className="mt-2 inline-block text-sm text-emerald-400">
-            Manage family →
-          </Link>
-        </div>
-        <div className="bg-white/[0.03] px-5 py-4">
-          <p className="text-sm font-medium text-zinc-200">Privacy</p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Answers and vault stay on your device by default.
-          </p>
-        </div>
+      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Plan
+        </p>
+        <p className="mt-2 text-sm text-zinc-200">
+          {premium ? "Founding / Premium — full What If, family, vault." : "Free plan — core assessment & limited scenarios."}
+        </p>
+        {!premium && (
+          <Button className="mt-3" size="sm" disabled={paying} onClick={() => void unlock()}>
+            {paying ? "Opening…" : "Unlock $29 lifetime"}
+          </Button>
+        )}
       </section>
+
+      <section className="space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Shortcuts
+        </p>
+        {[
+          { href: "/app/family", label: "Family profiles" },
+          { href: "/app/vault", label: "Document vault" },
+          { href: "/app/history", label: "Score history" },
+          { href: "/assessment", label: "Retake assessment" },
+        ].map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-200 transition hover:border-emerald-500/25"
+          >
+            {l.label}
+            <span className="text-zinc-600">→</span>
+          </Link>
+        ))}
+      </section>
+
+      <p className="text-center text-[11px] text-zinc-600">
+        Assessment & vault data stay on this device unless you sync with your account.
+      </p>
     </div>
   );
 }
