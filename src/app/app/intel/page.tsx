@@ -5,6 +5,8 @@ import Link from "next/link";
 import { loadSession } from "@/lib/session";
 import { personalizeIntel, type IntelScope } from "@/lib/intel";
 import { cn } from "@/lib/utils";
+import { IconBolt } from "@/components/app/icons";
+import { PageHeader } from "@/components/app/page-header";
 
 const TABS: { id: IntelScope | "all"; label: string }[] = [
   { id: "all", label: "For you" },
@@ -14,44 +16,48 @@ const TABS: { id: IntelScope | "all"; label: string }[] = [
 ];
 
 export default function IntelPage() {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
-  const [topCat, setTopCat] = useState<string | undefined>();
-  const [overall, setOverall] = useState(50);
-  const [incomeSources, setIncomeSources] = useState(1);
-  const [altPay, setAltPay] = useState(true);
+  const [tab, setTab] = useState<IntelScope | "all">("all");
+  const [ready, setReady] = useState(false);
+  const [ctx, setCtx] = useState({
+    overall: 50,
+    topCategory: undefined as string | undefined,
+    hasAltPayment: false,
+    incomeSources: 1,
+  });
 
   useEffect(() => {
     const s = loadSession();
     if (s) {
-      setOverall(s.scores.overall);
-      setTopCat(s.vulnerabilities[0]?.category);
-      setIncomeSources(s.answers.income_sources || 1);
-      setAltPay(!!s.answers.alt_payment_method);
+      setCtx({
+        overall: s.scores.overall,
+        topCategory: s.vulnerabilities[0]?.category,
+        hasAltPayment: !!s.answers.alt_payment_method,
+        incomeSources: s.answers.income_sources || 1,
+      });
     }
+    setReady(true);
   }, []);
 
   const items = useMemo(() => {
-    const personalized = personalizeIntel({
-      overall,
-      topCategory: topCat,
-      hasAltPayment: altPay,
-      incomeSources,
+    if (!ready) return [];
+    const all = personalizeIntel({
+      overall: ctx.overall,
+      topCategory: ctx.topCategory,
+      hasAltPayment: ctx.hasAltPayment,
+      incomeSources: ctx.incomeSources,
     });
-    if (tab === "all") return personalized;
-    if (tab === "watchlist") {
-      return personalized.filter((i) => i.impact === "high");
-    }
-    return personalized.filter((i) => i.scope === tab);
-  }, [tab, overall, topCat, altPay, incomeSources]);
+    if (tab === "all") return all;
+    return all.filter((i) => i.scope === tab);
+  }, [ready, ctx, tab]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Intel</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Information that may affect your resilience.
-        </p>
-      </div>
+      <PageHeader
+        title="Intel"
+        subtitle="Developments that may affect your resilience — for you, local, and global."
+        backHref="/app/overview"
+        showBack
+      />
 
       <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
         {TABS.map((t) => (
@@ -75,10 +81,11 @@ export default function IntelPage() {
         {items.map((item) => (
           <article
             key={item.id}
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition hover:border-white/12"
+            className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] transition hover:border-white/12"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              <span className="flex items-center gap-1 rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                <IconBolt className="h-3 w-3 text-amber-400/80" />
                 {item.category}
               </span>
               <span className="text-[10px] text-zinc-600">{item.hoursAgo}h ago</span>
@@ -95,24 +102,16 @@ export default function IntelPage() {
                 {item.impact}
               </span>
             </div>
-            <h2 className="mt-3 text-sm font-semibold leading-snug text-zinc-50">
-              {item.title}
-            </h2>
+            <h2 className="mt-3 text-sm font-semibold leading-snug text-zinc-50">{item.title}</h2>
             <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">{item.summary}</p>
             {item.actionHint && (
               <p className="mt-3 text-xs text-emerald-400/90">{item.actionHint}</p>
             )}
             <div className="mt-3 flex gap-2">
-              <Link
-                href="/app/what-if"
-                className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
-              >
+              <Link href="/app/what-if" className="text-xs font-medium text-emerald-400 hover:text-emerald-300">
                 Run What If →
               </Link>
-              <Link
-                href="/app/prepare"
-                className="text-xs font-medium text-zinc-500 hover:text-zinc-300"
-              >
+              <Link href="/app/prepare" className="text-xs font-medium text-zinc-500 hover:text-zinc-300">
                 Prepare
               </Link>
             </div>
