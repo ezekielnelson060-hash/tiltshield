@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { GUIDES, getGuide } from "@/lib/guides";
-import { Button } from "@/components/ui/button";
+import { getGuide } from "@/lib/guides";
 import { PageHeader } from "@/components/app/page-header";
+import { Button } from "@/components/ui/button";
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -26,51 +26,50 @@ export default function GuideDetailPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title={guide.title}
-        subtitle={`${guide.horizon} horizon · ${guide.minutes} min · do in order`}
+        subtitle={`${guide.horizon} · ${guide.minutes} min`}
         backHref="/app/guides"
         showBack
       />
-      <p className="-mt-2 text-sm text-zinc-500">{guide.blurb}</p>
+
+      <div className="rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-[#152032] to-[#0a1018] px-5 py-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400/90">
+          Reframe
+        </p>
+        <p className="mt-3 text-base font-medium leading-relaxed text-zinc-100">
+          {guide.reframe}
+        </p>
+      </div>
+
+      <p className="text-sm text-zinc-500">{guide.blurb}</p>
 
       <ol className="space-y-3">
         {guide.body.map((step, i) => (
           <li
             key={i}
-            className="flex gap-3 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]"
+            className="flex gap-3 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-4"
           >
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
               {i + 1}
             </span>
-            <p className="text-sm leading-relaxed text-zinc-300">{step}</p>
+            <p className="text-sm text-zinc-300">{step}</p>
           </li>
         ))}
       </ol>
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link href="/app/prepare">Open 1-year stock</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/app/guides">All guides</Link>
-        </Button>
-      </div>
-
-      <section className="space-y-2 border-t border-white/[0.06] pt-6">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-          Continue
-        </p>
-        {GUIDES.filter((g) => g.slug !== guide.slug)
-          .slice(0, 3)
-          .map((g) => (
-            <Link
-              key={g.slug}
-              href={`/app/guides/${g.slug}`}
-              className="block rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300 transition hover:border-emerald-500/25"
-            >
-              {g.title}
-            </Link>
-          ))}
-      </section>
+      {guide.placeLinks && guide.placeLinks.length > 0 && (
+        <section className="space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Know a place · take action
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {guide.placeLinks.map((l) => (
+              <Button key={l.href} asChild size="sm" variant="outline">
+                <Link href={l.href}>{l.label}</Link>
+              </Button>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
