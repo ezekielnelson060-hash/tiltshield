@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { loadSession, type TiltSession } from "@/lib/session";
-import { rankPrepareActions } from "@/lib/prepare-rank";
 import { sortStockIds } from "@/lib/prepare-rank";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
@@ -39,8 +38,14 @@ const YEAR_STOCK: StockItem[] = [
   { id: "first_aid", label: "First-aid kit ready", group: "Health" },
   { id: "light_power", label: "Lights and charged power banks", group: "Home" },
   { id: "docs_offline", label: "IDs saved offline", group: "Docs & people" },
-  { id: "vendors_3", label: "3 nearby places you can use offline", group: "Docs & people" },
-  { id: "meetup", label: "Family meetup plan", group: "Docs & people" },
+  { id: "vendor_3", label: "3 nearby places you can use offline", group: "Docs & people" },
+  { id: "family_plan", label: "Family meetup plan", group: "Docs & people" },
+];
+
+const PLAN_MOVES = [
+  { title: "Build a 7–30 day cash + food bridge", impact: "High impact", minutes: "20 min" },
+  { title: "Save IDs offline in Vault", impact: "High impact", minutes: "10 min" },
+  { title: "Map 3 places you can use offline", impact: "Medium impact", minutes: "15 min" },
 ];
 
 const STOCK_KEY = "tiltshield_year_stock";
@@ -96,10 +101,12 @@ export default function PreparePage() {
   }
 
   const answers = session?.answers;
-  const ranked = answers ? rankPrepareActions(answers) : [];
   const pantryDays = answers?.food_buffer_days ?? 0;
   const groups = Array.from(new Set(YEAR_STOCK.map((k) => k.group)));
   const done = YEAR_STOCK.filter((k) => checks[k.id]).length;
+  const stockList = answers
+    ? sortStockIds(YEAR_STOCK, answers)
+    : YEAR_STOCK;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
@@ -139,9 +146,9 @@ export default function PreparePage() {
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
             You have about <strong>{pantryDays}</strong> food days noted. Aim for 90 days next.
           </div>
-          {ranked.slice(0, 5).map((a, i) => (
+          {PLAN_MOVES.map((a, i) => (
             <div
-              key={a.id}
+              key={a.title}
               className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5"
             >
               <div className="flex items-start gap-3">
@@ -151,7 +158,7 @@ export default function PreparePage() {
                 <div>
                   <p className="text-sm font-medium text-zinc-100">{a.title}</p>
                   <p className="mt-0.5 text-xs text-zinc-500">
-                    {a.impact} · {a.minutes} min
+                    {a.impact} · {a.minutes}
                   </p>
                 </div>
               </div>
@@ -174,10 +181,7 @@ export default function PreparePage() {
                 {g}
               </p>
               <div className="space-y-2">
-                {(answers
-                  ? sortStockIds(YEAR_STOCK, answers)
-                  : YEAR_STOCK
-                )
+                {stockList
                   .filter((k) => k.group === g)
                   .map((k) => (
                     <button
