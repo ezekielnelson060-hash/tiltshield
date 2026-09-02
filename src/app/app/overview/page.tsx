@@ -35,6 +35,7 @@ import {
   buildExposurePipeline,
   regionalResilienceHint,
 } from "@/lib/pipeline";
+import { MiniMapInset } from "@/components/map/mini-inset";
 import type { CategoryScores } from "@/types";
 
 const CATEGORY_TILES: {
@@ -211,7 +212,7 @@ export default function TodayPage() {
             {greetingForHour()}, {name} <span className="inline-block">👋</span>
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Building toward a year of household resilience — here's today's picture.
+            Building toward a year of household resilience — here&apos;s today&apos;s picture.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -295,7 +296,7 @@ export default function TodayPage() {
         <GlassCard tone="success">
           <div className="flex items-start justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-              Today's priority
+              Today&apos;s priority
             </p>
             <IllusTarget size={52} />
           </div>
@@ -393,7 +394,10 @@ export default function TodayPage() {
               See all
             </Link>
           </div>
-          <div className="mt-3 space-y-2">
+          <div className="mt-3">
+            <MiniMapInset />
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
             {[
               { label: "Pharmacy", icon: "💊" },
               { label: "Grocery", icon: "🛒" },
@@ -402,17 +406,10 @@ export default function TodayPage() {
             ].map((row) => (
               <div
                 key={row.label}
-                className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-[#080d16] px-3 py-2.5"
+                className="flex items-center gap-2 rounded-xl border border-white/[0.05] bg-[#080d16] px-2.5 py-2 text-xs text-zinc-300"
               >
-                <span className="flex items-center gap-2 text-sm text-zinc-300">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] text-xs">
-                    {row.icon}
-                  </span>
-                  {row.label}
-                </span>
-                <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                  <IconPin className="h-3 w-3 text-emerald-500/80" /> Near you
-                </span>
+                <span>{row.icon}</span>
+                {row.label}
               </div>
             ))}
           </div>
@@ -488,16 +485,16 @@ export default function TodayPage() {
             Unlock the full resilience system
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            All What If scenarios, family profiles, history, and vault — $29 lifetime.
+            Lifetime $29: tools, vault, history, advanced What If. Household $49: all of that + up to 6 profiles.
           </p>
-          <Button
-            className="mt-4"
-            size="sm"
-            onClick={() => void unlock()}
-            disabled={paying}
-          >
-            {paying ? "Opening checkout…" : "Become a founding member"}
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => void unlock()} disabled={paying}>
+              {paying ? "Opening checkout…" : "Lifetime · $29"}
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/app/family">Household · $49</Link>
+            </Button>
+          </div>
         </GlassCard>
       )}
     </div>
