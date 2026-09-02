@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 type Props = { className?: string };
 
+/** Compact map for Today — OpenStreetMap tiles (no API key). */
 export function MiniMapInset({ className }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "denied">("loading");
@@ -32,8 +33,9 @@ export function MiniMapInset({ className }: Props) {
         doubleClickZoom: false,
       }).setView([lat, lng], 13);
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        maxZoom: 18,
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "© OSM",
       }).addTo(map);
 
       const icon = L.divIcon({
@@ -49,9 +51,7 @@ export function MiniMapInset({ className }: Props) {
 
     if (typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          void boot(pos.coords.latitude, pos.coords.longitude);
-        },
+        (pos) => void boot(pos.coords.latitude, pos.coords.longitude),
         () => {
           void boot(20, 0);
           setStatus("denied");
