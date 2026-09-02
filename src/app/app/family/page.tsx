@@ -62,7 +62,7 @@ export default function FamilyPage() {
     if (!unlocked) return;
     if (!name.trim()) return;
     if (members.length >= 6) {
-      setError("Family plan supports up to 6 profiles.");
+      setError("Household plan supports up to 6 profiles.");
       return;
     }
     addFamilyMember(name, relation);
@@ -253,10 +253,11 @@ export default function FamilyPage() {
       ) : (
         <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
           <p className="text-sm font-medium text-zinc-100">
-            Unlock household profiles
+            Unlock household · $49 lifetime
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            Track readiness for partner and kids across a year of preparation.
+            Includes full premium tools plus up to 6 profiles. Individual Lifetime
+            ($29) does not include family seats — this is the household tier.
           </p>
           <Button
             className="mt-4"
@@ -264,7 +265,7 @@ export default function FamilyPage() {
             disabled={paying}
             onClick={() => void unlockFamily()}
           >
-            {paying ? "Opening checkout…" : "Unlock family plan"}
+            {paying ? "Opening checkout…" : "Unlock household · $49"}
           </Button>
           {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
         </section>
@@ -274,7 +275,7 @@ export default function FamilyPage() {
         href="/app/prepare"
         className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300 transition hover:border-white/15"
       >
-        <span>Household plan</span>
+        <span>Household prepare plan</span>
         <span className="text-emerald-400">View →</span>
       </Link>
     </div>
