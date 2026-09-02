@@ -24,26 +24,24 @@ export function runWhatIf(
               : "low";
       const incomeNote =
         answers.income_sources <= 1
-          ? " You depend on a single income source, so this hits harder."
-          : answers.income_sources === 2
-            ? " Two income sources may cushion a partial loss, but a full stop still drains the buffer."
-            : " Multiple sources help, but a simultaneous stop still tests cash runway.";
+          ? " One income means this hits harder."
+          : " Extra income helps, but a full stop still drains the buffer.";
       return {
         scenario,
-        title: "What if your income stopped today?",
+        title: "What if money in stopped today?",
         summary:
           runwayDays === 0
-            ? "You have effectively no cash runway at your current expense level."
-            : `You can operate for about ${runwayDays} days on savings alone.`,
+            ? "You have almost no cash runway right now."
+            : `You can run about ${runwayDays} days on savings alone.`,
         detail:
           expenses > 0
-            ? `At ${formatMoney(expenses)}/month essential spend and ~${formatMoney(Math.round(savings))} accessible savings.${incomeNote}`
-            : `Add monthly expenses for a precise runway.${incomeNote}`,
+            ? `About ${formatMoney(expenses)}/month essentials and ~${formatMoney(Math.round(savings))} saved.${incomeNote}`
+            : `Add your monthly spend for a clearer number.${incomeNote}`,
         severity,
         recommendation:
           runwayDays < 90
-            ? `Target 90 days (~${formatMoney(Math.round(expenses * 3))}). Automate a weekly buffer transfer.`
-            : "Maintain at least 90 days of expenses and review quarterly.",
+            ? "Aim for 90 days of essentials. Start a small weekly transfer."
+            : "Keep at least 90 days and check every few months.",
       };
     }
     case "job_loss": {
@@ -51,15 +49,15 @@ export function runWhatIf(
         runwayDays < 30 ? "critical" : runwayDays < 90 ? "high" : "medium";
       return {
         scenario,
-        title: "What if you lost your primary job?",
-        summary: `Job loss lasts longer than a short disruption. Your liquid runway is about ${runwayDays} days.`,
+        title: "What if your main job ended?",
+        summary: `Job loss lasts. Your liquid runway is about ${runwayDays} days.`,
         detail:
           answers.income_sources <= 1
-            ? "With one income source, job loss is a full stop until you replace it."
-            : "Other sources may reduce the hit, but primary-job loss still cuts most households sharply.",
+            ? "With one income, this is a full stop until you replace it."
+            : "Other income may help, but the main job still matters a lot.",
         severity,
         recommendation:
-          "Build runway toward 90 days and map one backup income path you could start within 30 days.",
+          "Build toward 90 days and name one backup way to earn within 30 days.",
       };
     }
     case "banking_down": {
@@ -75,16 +73,16 @@ export function runWhatIf(
         scenario,
         title: "What if banks and cards failed for 72 hours?",
         summary: hasAlt
-          ? "You have a backup payment path — test that it still works under stress."
-          : "You have no alternative payment method on record.",
+          ? "You have a backup pay path — test it works."
+          : "No backup payment method on file.",
         detail:
           offlineVal > 0
-            ? "Offline value (cash or self-custody) reduces total dependence on bank apps."
-            : "Without cash or a tested second rail, essentials become hard within hours.",
+            ? "Cash or offline value reduces total dependence on bank apps."
+            : "Without cash or a second rail, basics get hard fast.",
         severity,
         recommendation: hasAlt
-          ? "Refresh a modest cash reserve and test your backup quarterly."
-          : "Set a small cash float and activate one non-primary payment option this week.",
+          ? "Keep a small cash float. Test the backup every few months."
+          : "Set a small cash float and turn on one non-primary pay option this week.",
       };
     }
     case "digital_payments_only": {
@@ -96,16 +94,31 @@ export function runWhatIf(
             : "medium";
       return {
         scenario,
-        title: "What if everyday payments required a digital account?",
+        title: "What if card and app pay stopped working?",
         summary:
           digiPay >= 4
-            ? "Your day-to-day life is highly dependent on digital payment rails."
-            : "You already use non-digital options sometimes — that reduces exposure.",
+            ? "Daily life leans hard on digital pay rails."
+            : "You sometimes use other ways — that helps.",
         detail:
-          "Payment networks, app outages, or account freezes can block grocery and transport when dependency is high.",
+          "Network or account freezes can block food and travel when dependency is high.",
         severity,
         recommendation:
-          "Keep a tested secondary method and a small cash float for essentials. Practice one cash-based purchase this month.",
+          "Keep a second method and a small cash float. Practice one cash purchase this month.",
+      };
+    }
+    case "major_expense":
+    case "currency_volatility": {
+      const hit = Math.round(expenses * (scenario === "currency_volatility" ? 0.25 : 1));
+      return {
+        scenario,
+        title:
+          scenario === "currency_volatility"
+            ? "What if money bought less?"
+            : "What if a large bill hit this month?",
+        summary: `A shock near ${formatMoney(hit)} tests your ~${runwayDays}-day buffer.`,
+        detail: "Cost shocks are system stress too — not only outages.",
+        severity: runwayDays < 30 ? "high" : "medium",
+        recommendation: "Grow a labeled buffer and list one offline pay path.",
       };
     }
     case "phone_lost": {
@@ -117,16 +130,16 @@ export function runWhatIf(
             : "medium";
       return {
         scenario,
-        title: "What if your phone was gone this afternoon?",
+        title: "What if your phone was gone today?",
         summary: answers.phone_backup_plan
-          ? "You report a recovery path for critical accounts."
-          : "Critical accounts may be hard to open without this device.",
+          ? "You have a recovery path for key accounts."
+          : "Key accounts may be hard without this device.",
         detail: answers.offline_contacts
-          ? "Offline contacts help you reach people without the phone’s address book."
-          : "Without offline contacts, even calling for help depends on memory or other devices.",
+          ? "Offline contacts help you reach people without the phone book."
+          : "Without offline contacts, help depends on memory or other devices.",
         severity,
         recommendation:
-          "Print recovery codes for top accounts and keep one offline contact sheet.",
+          "Print recovery codes. Keep one paper contact list.",
       };
     }
     case "internet_outage": {
@@ -134,30 +147,46 @@ export function runWhatIf(
         (answers.cloud_dependency || 3) >= 4 ? "high" : "medium";
       return {
         scenario,
-        title: "What if the internet was down for 48 hours?",
+        title: "What if the internet was down for days?",
         summary:
           (answers.cloud_dependency || 3) >= 4
-            ? "High cloud dependence means many workflows pause offline."
-            : "Lower cloud dependence limits how much freezes offline.",
+            ? "High cloud use means many tasks pause offline."
+            : "Lower cloud use limits what freezes offline.",
         detail: answers.has_offline_docs
-          ? "Offline documents reduce identity and recovery friction during an outage."
-          : "Important records only in the cloud are harder to use offline.",
+          ? "Offline documents help with ID and recovery."
+          : "Records only in the cloud are hard to use offline.",
         severity,
         recommendation:
-          "Download offline copies of IDs, insurance, and recovery codes. Test one offline workflow.",
+          "Save offline copies of IDs and recovery codes. Test one offline workflow.",
+      };
+    }
+    case "email_compromised":
+    case "cloud_down":
+    case "two_factor_down": {
+      return {
+        scenario,
+        title: "What if your digital login path broke?",
+        summary:
+          "Email, cloud, or 2FA failure can lock banking and family contact together.",
+        detail: answers.phone_backup_plan
+          ? "You noted a phone backup plan — practice it once."
+          : "No phone backup plan on file — shared lockout risk.",
+        severity: answers.phone_backup_plan ? "medium" : "high",
+        recommendation:
+          "Print recovery codes. Store ID copies in Vault. Test login without your main phone.",
       };
     }
     case "power_grid": {
       return {
         scenario,
         title: "What if power was out for 72 hours?",
-        summary: "Lighting, charging, refrigeration, and some payments become constrained.",
+        summary: "Light, charging, cold food, and some payments get hard.",
         detail: answers.has_med_kit
-          ? "A basic kit helps with minor injuries when services are slow."
-          : "Without a kit, small issues force unnecessary trips during an outage.",
+          ? "A basic kit helps with small injuries when help is slow."
+          : "Without a kit, small problems force trips during an outage.",
         severity: "high",
         recommendation:
-          "Charge a power bank, set flashlights, and plan 72 hours of food that does not need continuous power.",
+          "Charge a power bank. Set flashlights. Plan 72 hours of food that needs no power.",
       };
     }
     case "medical_emergency": {
@@ -165,16 +194,19 @@ export function runWhatIf(
         runwayDays < 30 ? "critical" : runwayDays < 60 ? "high" : "medium";
       return {
         scenario,
-        title: "What if a sudden medical bill hit this month?",
-        summary: `Your liquid buffer is about ${runwayDays} days of essential spend (~${formatMoney(Math.round(savings))}).`,
+        title: "What if a sudden medical bill hit?",
+        summary: `Liquid buffer is about ${runwayDays} days (~${formatMoney(Math.round(savings))}).`,
         detail:
-          "Unexpected medical costs compete directly with rent and food unless a separate buffer exists.",
+          "Medical costs compete with rent and food unless a separate buffer exists.",
         severity,
         recommendation:
-          "Separate a medical contingency from everyday spending and know your local clinic path offline.",
+          "Separate a medical cushion. Know a clinic path offline.",
       };
     }
-    case "food_prices_double": {
+    case "food_prices_double":
+    case "store_unavailable":
+    case "fuel_scarce":
+    case "water_disruption": {
       const foodShare = expenses * 0.25;
       const extra = Math.round(foodShare);
       const severity =
@@ -185,28 +217,64 @@ export function runWhatIf(
             : "low";
       return {
         scenario,
-        title: "What if grocery prices doubled overnight?",
+        title: "What if a basic essential was hard to get?",
         summary:
-          expenses > 0
-            ? `Food cost pressure rises by about ${formatMoney(extra)}/month (≈25% of essentials).`
-            : "Add expenses to quantify food price shock.",
+          expenses > 0 && scenario === "food_prices_double"
+            ? `Food pressure rises by about ${formatMoney(extra)}/month.`
+            : `Food on file: about ${answers.food_buffer_days || 0} days.`,
         detail:
-          (answers.food_buffer_days || 0) >= 14
-            ? "A longer pantry buffer slows the need to buy at peak prices."
-            : "A thin pantry forces you into the market immediately at the new price.",
+          "Local gaps matter. Pin a second store and a water plan.",
         severity,
         recommendation:
-          "Stock staples you already eat. Aim for 14–30 pantry days before chasing bulk you will not use.",
+          "Use Finder for a second grocery, pharmacy, and water option.",
+      };
+    }
+    case "transit_down":
+    case "vehicle_unavailable":
+    case "travel_disruption": {
+      return {
+        scenario,
+        title: "What if your usual travel path stopped?",
+        summary: "Mobility stress hits work, food runs, and family meetups.",
+        detail: "Write a backup route and a meetup that does not need live maps.",
+        severity: "medium",
+        recommendation:
+          "Save one transit or fuel pin in Finder. Share the meetup in Family.",
+      };
+    }
+    case "comms_outage":
+    case "platforms_down":
+    case "info_unreliable": {
+      return {
+        scenario,
+        title: "What if normal information channels went quiet?",
+        summary: "When feeds fail, paper contacts and trusted people matter.",
+        detail: "Keep three offline numbers and one meeting place written down.",
+        severity: "medium",
+        recommendation:
+          "Open Family plan. Write contacts on paper. Pin a community place nearby.",
+      };
+    }
+    case "relocation":
+    case "family_emergency": {
+      return {
+        scenario,
+        title: "What if life forced a sudden household shift?",
+        summary: `Cash runway about ${runwayDays} days. Keep docs offline in Vault.`,
+        detail: "Moves and family emergencies mix money, docs, and people.",
+        severity: runwayDays < 30 ? "high" : "medium",
+        recommendation:
+          "Vault critical docs. Name a backup contact. Keep a small go list in Prepare.",
       };
     }
     default:
       return {
         scenario,
         title: "Scenario",
-        summary: "Complete your assessment for a personalized result.",
+        summary: "Complete your assessment for a personal result.",
         detail: "",
         severity: "medium",
-        recommendation: "Retake the assessment with full income and expense data.",
+        recommendation: "Retake the assessment with full income and spend data.",
       };
   }
 }
