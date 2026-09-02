@@ -6,26 +6,39 @@ import { GUIDES } from "@/lib/guides";
 import { PageHeader } from "@/components/app/page-header";
 import { cn } from "@/lib/utils";
 
-/** Reframe-deck style guide browser. */
+/** Reframe-deck style guide browser — one card in focus. */
 export default function GuidesPage() {
   const [i, setI] = useState(0);
   const g = GUIDES[i];
   const n = GUIDES.length;
 
+  function prev() {
+    setI((x) => Math.max(0, x - 1));
+  }
+  function next() {
+    setI((x) => Math.min(n - 1, x + 1));
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Guides"
-        subtitle="A deck for the version of you that needs the next clear step — not a lecture."
+        subtitle="Clear steps for the version of you that needs the next move — not a lecture."
         backHref="/app/more"
         showBack
       />
 
       <div className="relative mx-auto max-w-sm">
-        <div className="absolute inset-x-4 top-3 h-full rounded-[1.75rem] border border-white/[0.04] bg-white/[0.02]" />
-        <div className="absolute inset-x-2 top-1.5 h-full rounded-[1.75rem] border border-white/[0.06] bg-white/[0.03]" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-4 top-3 h-[92%] rounded-[1.75rem] border border-white/[0.04] bg-white/[0.02]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-2 top-1.5 h-[96%] rounded-[1.75rem] border border-white/[0.06] bg-white/[0.03]"
+        />
 
-        <article className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-[#152032] to-[#0a1018] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
+        <article className="relative z-10 overflow-hidden rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-[#152032] to-[#0a1018] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
           <div className="border-b border-white/[0.06] px-5 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400/90">
               Reframe · {i + 1}/{n}
@@ -53,39 +66,39 @@ export default function GuidesPage() {
             </Link>
           </div>
         </article>
+      </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            disabled={i === 0}
-            onClick={() => setI((x) => Math.max(0, x - 1))}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-zinc-300 disabled:opacity-30"
-          >
-            ← Prev
-          </button>
-          <div className="flex gap-1.5">
-            {GUIDES.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                aria-label={`Card ${idx + 1}`}
-                onClick={() => setI(idx)}
-                className={cn(
-                  "h-1.5 rounded-full transition",
-                  idx === i ? "w-4 bg-emerald-400" : "w-1.5 bg-zinc-600"
-                )}
-              />
-            ))}
-          </div>
-          <button
-            type="button"
-            disabled={i >= n - 1}
-            onClick={() => setI((x) => Math.min(n - 1, x + 1))}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-zinc-300 disabled:opacity-30"
-          >
-            Next →
-          </button>
+      <div className="relative z-20 mx-auto flex max-w-sm items-center justify-between gap-3">
+        <button
+          type="button"
+          disabled={i === 0}
+          onClick={prev}
+          className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-xs font-medium text-zinc-200 disabled:opacity-30"
+        >
+          ← Prev
+        </button>
+        <div className="flex gap-1.5">
+          {GUIDES.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              aria-label={`Card ${idx + 1}`}
+              onClick={() => setI(idx)}
+              className={cn(
+                "h-1.5 rounded-full transition",
+                idx === i ? "w-4 bg-emerald-400" : "w-1.5 bg-zinc-600"
+              )}
+            />
+          ))}
         </div>
+        <button
+          type="button"
+          disabled={i >= n - 1}
+          onClick={next}
+          className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-xs font-medium text-zinc-200 disabled:opacity-30"
+        >
+          Next →
+        </button>
       </div>
 
       <p className="text-center text-[11px] text-zinc-600">

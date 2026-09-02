@@ -62,7 +62,7 @@ export default function FamilyPage() {
     if (!unlocked) return;
     if (!name.trim()) return;
     if (members.length >= 6) {
-      setError("Family plan supports up to 6 profiles.");
+      setError("Household plan supports up to 6 profiles.");
       return;
     }
     addFamilyMember(name, relation);
@@ -129,72 +129,107 @@ export default function FamilyPage() {
           Members
         </p>
         <div className="space-y-2">
-          {members.map((m) => (
-            <div
-              key={m.id}
-              className={cn(
-                "flex items-center gap-3 rounded-2xl border px-4 py-3.5",
-                active === m.id
-                  ? "border-emerald-500/40 bg-emerald-500/10"
-                  : "border-white/[0.08] bg-white/[0.03]"
-              )}
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-semibold text-emerald-300">
-                {(m.name || "?")[0].toUpperCase()}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-zinc-100">
-                  {m.name}
-                  {m.id === "self" ? " · You" : ""}
-                </p>
-                <p className="text-[11px] text-zinc-500">
-                  {RELATION_LABELS[m.relationship] || m.relationship}
-                </p>
-              </div>
-              <span className="text-sm font-semibold tabular-nums text-zinc-300">
-                {m.readinessScore ?? session?.scores.overall ?? "—"}
-              </span>
-              <button
-                type="button"
-                onClick={() => switchTo(m.id)}
-                className="text-xs font-medium text-emerald-400"
+          {members.map((m) => {
+            const isActive = m.id === active;
+            return (
+              <div
+                key={m.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border px-4 py-3 transition",
+                  isActive
+                    ? "border-emerald-500/30 bg-emerald-500/10"
+                    : "border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02]"
+                )}
               >
-                Open
-              </button>
-              {m.id !== "self" && unlocked && (
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/25 to-teal-600/15 text-sm font-bold text-emerald-300">
+                  {m.name.slice(0, 1).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-zinc-100">
+                    {m.name}
+                    {m.id === "self" ? " · You" : ""}
+                  </p>
+                  <p className="text-[11px] text-zinc-500">
+                    {RELATION_LABELS[m.relationship] || m.relationship}
+                  </p>
+                </div>
+                <span className="text-sm font-semibold tabular-nums text-zinc-300">
+                  {m.readinessScore ?? loadSession()?.scores.overall ?? "—"}
+                </span>
                 <button
                   type="button"
-                  onClick={async () => {
-                    removeFamilyMember(m.id);
-                    await syncFamilyToCloud();
-                    await refresh();
-                  }}
-                  className="text-xs text-zinc-600 hover:text-red-400"
+                  onClick={() => switchTo(m.id)}
+                  className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
                 >
-                  Remove
+                  Open
                 </button>
-              )}
-            </div>
-          ))}
+                {m.id !== "self" && unlocked && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      removeFamilyMember(m.id);
+                      await syncFamilyToCloud();
+                      await refresh();
+                    }}
+                    className="text-xs text-zinc-600 hover:text-red-400"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Family emergency plan
-        </p>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-300">
-          <li>Primary contact: You</li>
-          <li>Meetup: Home (write a backup place on paper)</li>
-          <li>Backup contact: add a member below</li>
-          <li>
-            Documents:{" "}
-            <Link href="/app/vault" className="text-emerald-400">
-              Open Vault →
-            </Link>
-          </li>
-        </ul>
-      </section>
+      {unlocked ? (
+        <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Add member
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              className="flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600"
+            />
+            <select
+              value={relation}
+              onChange={(e) => setRelation(e.target.value as FamilyRelation)}
+              className="rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-300"
+            >
+              <option value="partner">Partner</option>
+              <option value="child">Children</option>
+              <option value="parent">Parents</option>
+              <option value="roommate">Roommates</option>
+              <option value="other">Other</option>
+            </select>
+            <Button type="button" size="sm" onClick={() => void onAdd()}>
+              Add
+            </Button>
+          </div>
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
+          <p className="text-sm font-medium text-zinc-100">
+            Unlock household profiles
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Household plan $49 lifetime — premium tools plus up to 6 profiles.
+          </p>
+          <Button
+            className="mt-4"
+            size="sm"
+            disabled={paying}
+            onClick={() => void unlockFamily()}
+          >
+            {paying ? "Opening checkout…" : "Unlock household · $49"}
+          </Button>
+          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        </section>
+      )}
 
       {deps.length > 0 && (
         <section className="space-y-2">
@@ -204,7 +239,7 @@ export default function FamilyPage() {
           {deps.map((d) => (
             <div
               key={d.id}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5"
+              className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-3.5"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-medium text-zinc-100">{d.title}</p>
@@ -232,54 +267,13 @@ export default function FamilyPage() {
         </section>
       )}
 
-      {unlocked ? (
-        <section className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            Add member
-          </p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
-              className="flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50"
-            />
-            <select
-              value={relation}
-              onChange={(e) => setRelation(e.target.value as FamilyRelation)}
-              className="rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-300"
-            >
-              <option value="partner">Partner</option>
-              <option value="child">Children</option>
-              <option value="parent">Parents</option>
-              <option value="roommate">Roommates</option>
-              <option value="other">Other</option>
-            </select>
-            <Button type="button" size="sm" onClick={() => void onAdd()}>
-              Add
-            </Button>
-          </div>
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-        </section>
-      ) : (
-        <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
-          <p className="text-sm font-medium text-zinc-100">
-            Unlock household profiles
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Household $49 — premium tools plus up to 6 profiles.
-          </p>
-          <Button
-            className="mt-4"
-            size="sm"
-            disabled={paying}
-            onClick={() => void unlockFamily()}
-          >
-            {paying ? "Opening…" : "Unlock household · $49"}
-          </Button>
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-        </section>
-      )}
+      <Link
+        href="/app/prepare"
+        className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-3 text-sm text-zinc-300 transition hover:border-white/15"
+      >
+        <span>Open the household year plan</span>
+        <span className="text-emerald-400">→</span>
+      </Link>
     </div>
   );
 }
