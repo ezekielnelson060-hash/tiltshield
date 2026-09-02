@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/calculators";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/app/page-header";
 
 type Tab = "runway" | "job" | "food" | "digital";
 
@@ -27,7 +29,7 @@ function severityClass(s: string) {
   return "border-emerald-500/25 bg-emerald-500/5";
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-zinc-400">{label}</span>
@@ -37,7 +39,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-50 focus:border-emerald-500 focus:outline-none";
+  "w-full rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 focus:border-emerald-500/50 focus:outline-none";
 
 export default function CalculatorsPage() {
   const [tab, setTab] = useState<Tab>("runway");
@@ -111,26 +113,27 @@ export default function CalculatorsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8 lg:px-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Calculators</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Standalone tools. Adjust the numbers — results update instantly.
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+      <PageHeader
+        title="Calculators"
+        subtitle="Standalone tools. Adjust the numbers — results update instantly."
+        backHref="/app/more"
+        showBack
+      />
+
+      {fromAssessment ? (
+        <p className="-mt-3 text-xs text-emerald-500/90">
+          Prefixed from your latest assessment. Change any field to explore “what if.”
         </p>
-        {fromAssessment ? (
-          <p className="mt-2 text-xs text-emerald-500/90">
-            Prefixed from your latest assessment. Change any field to explore “what if.”
-          </p>
-        ) : (
-          <p className="mt-2 text-xs text-zinc-600">
-            No assessment on this device yet.{" "}
-            <Link href="/assessment" className="text-emerald-400 hover:underline">
-              Get your score
-            </Link>{" "}
-            for personal defaults.
-          </p>
-        )}
-      </div>
+      ) : (
+        <p className="-mt-3 text-xs text-zinc-600">
+          No assessment on this device yet.{" "}
+          <Link href="/assessment" className="text-emerald-400 hover:underline">
+            Get your score
+          </Link>{" "}
+          for personal defaults.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
@@ -142,7 +145,7 @@ export default function CalculatorsPage() {
               "rounded-full border px-3 py-1.5 text-xs font-medium transition",
               tab === t.id
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                : "border-white/[0.1] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
             )}
           >
             {t.label}
@@ -152,7 +155,7 @@ export default function CalculatorsPage() {
 
       <p className="text-sm text-zinc-500">{TABS.find((t) => t.id === tab)?.blurb}</p>
 
-      <div className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
         {(tab === "runway" || tab === "job" || tab === "food") && (
           <>
             <Field label="Essential monthly expenses ($)">
@@ -194,7 +197,7 @@ export default function CalculatorsPage() {
 
         {tab === "food" && (
           <>
-            <Field label="Days you could eat without shopping (fridge + pantry + store room)">
+            <Field label="Days you could eat without shopping">
               <input
                 type="number"
                 min={0}
@@ -230,7 +233,7 @@ export default function CalculatorsPage() {
 
         {tab === "digital" && (
           <>
-            <Field label="Digital payment dependence (1 = often cash/local, 5 = almost everything digital)">
+            <Field label="Digital payment dependence (1–5)">
               <input
                 type="range"
                 min={1}
@@ -352,7 +355,7 @@ export default function CalculatorsPage() {
           <Link href="/app/what-if">Open What If scenarios</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link href="/app/actions">See actions</Link>
+          <Link href="/app/prepare">Open Prepare</Link>
         </Button>
       </div>
     </div>
@@ -379,7 +382,7 @@ function ResultCard({
         <p className="mt-2 text-3xl font-bold tracking-tight text-zinc-50">{headline}</p>
         <p className="mt-2 text-sm leading-relaxed text-zinc-400">{sub}</p>
       </div>
-      <dl className="space-y-2 border-t border-zinc-800/80 pt-4">
+      <dl className="space-y-2 border-t border-white/[0.08] pt-4">
         {rows.map((r) => (
           <div key={r.k} className="flex justify-between gap-4 text-sm">
             <dt className="text-zinc-500">{r.k}</dt>
