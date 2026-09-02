@@ -10,6 +10,7 @@ import {
 } from "@/lib/vault";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
+import { IllusEmptyVault } from "@/components/illustrations";
 
 export default function VaultPage() {
   const [items, setItems] = useState<VaultMeta[]>([]);
@@ -88,7 +89,7 @@ export default function VaultPage() {
         showBack
       />
 
-      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
+      <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
         <label className="block">
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
             Vault passphrase
@@ -166,10 +167,12 @@ export default function VaultPage() {
           </div>
         ))}
         {items.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-white/[0.08] px-4 py-8 text-center text-sm text-zinc-500">
-            No encrypted documents yet. Add IDs, insurance PDFs, or recovery
-            sheets for a full year of offline access.
-          </p>
+          <div className="rounded-2xl border border-dashed border-white/[0.08] px-4 py-6">
+            <IllusEmptyVault />
+            <p className="text-center text-sm text-zinc-500">
+              Add IDs, insurance PDFs, or recovery sheets for a full year of offline access.
+            </p>
+          </div>
         )}
       </section>
     </div>
