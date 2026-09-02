@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   loadVaultMeta,
   encryptAndStore,
@@ -8,6 +9,7 @@ import {
   deleteVaultItem,
   type VaultMeta,
 } from "@/lib/vault";
+import { isPremium } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 import { IllusEmptyVault } from "@/components/illustrations";
@@ -20,9 +22,11 @@ export default function VaultPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [premium, setPremium] = useState(false);
 
   useEffect(() => {
     setItems(loadVaultMeta());
+    setPremium(isPremium());
   }, []);
 
   async function onAdd() {
@@ -80,11 +84,36 @@ export default function VaultPage() {
     setItems(loadVaultMeta());
   }
 
+  if (!premium) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+        <PageHeader
+          title="Document vault"
+          subtitle="Encrypted local storage for IDs and recovery files — Lifetime or Household."
+          backHref="/app/more"
+          showBack
+        />
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
+          <p className="text-sm font-medium text-zinc-100">Premium feature</p>
+          <p className="mt-2 text-sm text-zinc-400">
+            Vault unlocks with Lifetime ($29) or Household ($49). Files never leave this device.
+          </p>
+          <Link
+            href="/app/overview"
+            className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+          >
+            Unlock from Today →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Document vault"
-        subtitle="Encrypted on this device only (AES-GCM). Servers never receive your files or passphrase — part of your year-long readiness."
+        subtitle="Encrypted on this device only (AES-GCM). Servers never receive your files or passphrase."
         backHref="/app/more"
         showBack
       />
