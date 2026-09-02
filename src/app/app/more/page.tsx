@@ -43,6 +43,19 @@ export default function MorePage() {
       /* */
     }
     setPrem(isPremium());
+    // Drop old service-worker caches so UI updates after deploys
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.update());
+      });
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          keys
+            .filter((k) => k.startsWith("tiltshield-app-") && k !== "tiltshield-app-v4")
+            .forEach((k) => caches.delete(k));
+        });
+      }
+    }
   }, []);
 
   return (
@@ -92,6 +105,10 @@ export default function MorePage() {
           </Link>
         ))}
       </div>
+
+      <p className="pt-2 text-center text-[10px] text-zinc-600">
+        App build · Sep 2026 · cache v4
+      </p>
     </div>
   );
 }
