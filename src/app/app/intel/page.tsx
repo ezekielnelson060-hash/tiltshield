@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
-import { personalIntelMeaning } from "@/lib/intel-meaning";
+import { meaningForYou } from "@/lib/intel-meaning";
 import type { AssessmentAnswers, CategoryScores } from "@/types";
 import { PageHeader } from "@/components/app/page-header";
 import { GlassCard } from "@/components/app/glass-card";
@@ -101,7 +101,6 @@ export default function IntelPage() {
           impact?: string;
           url?: string;
           link?: string;
-          publishedAt?: string;
         }>;
         if (!raw.length) return;
         const mapped: Card[] = raw.slice(0, 20).map((h, i) => ({
@@ -128,21 +127,15 @@ export default function IntelPage() {
   const filtered =
     tab === "all"
       ? cards
-      : cards.filter((c) =>
-          c.category.toLowerCase().includes(
-            tab === "money"
-              ? "financ"
-              : tab === "food"
-                ? "essential"
-                : tab === "health"
-                  ? "health"
-                  : tab === "digital"
-                    ? "digital"
-                    : tab === "energy"
-                      ? "energy"
-                      : tab
-          )
-        );
+      : cards.filter((c) => {
+          const cat = c.category.toLowerCase();
+          if (tab === "money") return /financ|bank|payment|money/.test(cat + c.title.toLowerCase());
+          if (tab === "food") return /essential|food|grocery/.test(cat + c.title.toLowerCase());
+          if (tab === "health") return /health|pharma|medic/.test(cat + c.title.toLowerCase());
+          if (tab === "digital") return /digital|cyber|tech/.test(cat + c.title.toLowerCase());
+          if (tab === "energy") return /energy|grid|power|outage/.test(cat + c.title.toLowerCase());
+          return true;
+        });
 
   const show = filtered.length ? filtered : cards;
 
@@ -183,14 +176,11 @@ export default function IntelPage() {
         {show.map((item) => {
           let meaning: string | null = null;
           try {
-            if (answers && scores) {
-              meaning = personalIntelMeaning({
-                category: item.category,
-                title: item.title,
-                answers,
-                scores,
-              });
-            }
+            meaning = meaningForYou(
+              { category: item.category, title: item.title, impact: item.impact },
+              answers,
+              scores
+            );
           } catch {
             meaning = null;
           }
