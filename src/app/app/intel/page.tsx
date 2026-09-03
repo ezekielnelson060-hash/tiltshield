@@ -6,6 +6,8 @@ import { loadSession } from "@/lib/session";
 import { personalizeIntel, type IntelScope, type IntelItem } from "@/lib/intel";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
+import { meaningForYou } from "@/lib/intel-meaning";
+import type { AssessmentAnswers, CategoryScores } from "@/types";
 
 const TABS: { id: IntelScope | "all"; label: string }[] = [
   { id: "all", label: "For you" },
@@ -32,6 +34,8 @@ export default function IntelPage() {
   const [overall, setOverall] = useState(50);
   const [incomeSources, setIncomeSources] = useState(1);
   const [altPay, setAltPay] = useState(true);
+  const [answers, setAnswers] = useState<AssessmentAnswers | null>(null);
+  const [scores, setScores] = useState<CategoryScores | null>(null);
   const [live, setLive] = useState<(IntelItem & { url?: string })[]>([]);
   const [liveAt, setLiveAt] = useState<string | null>(null);
   const [liveErr, setLiveErr] = useState(false);
@@ -43,6 +47,8 @@ export default function IntelPage() {
       setTopCat(s.vulnerabilities[0]?.category);
       setIncomeSources(s.answers.income_sources || 1);
       setAltPay(!!s.answers.alt_payment_method);
+      setAnswers(s.answers);
+      setScores(s.scores);
     }
   }, []);
 
@@ -79,7 +85,6 @@ export default function IntelPage() {
                 )
               : 1,
             relevanceKeys: h.relevanceKeys,
-            actionHint: "See how this touches your plan — then act.",
             url: h.url && h.url.startsWith("http") ? h.url : undefined,
           })
         );
@@ -205,9 +210,14 @@ export default function IntelPage() {
                   <span className="text-emerald-400">↗</span>
                 </a>
               )}
-              {item.actionHint && (
-                <p className="mt-3 text-xs text-emerald-400/90">{item.actionHint}</p>
-              )}
+              <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/80">
+                  What this means for you
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-300">
+                  {meaningForYou(item, answers, scores)}
+                </p>
+              </div>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
                   href="/app/what-if"
