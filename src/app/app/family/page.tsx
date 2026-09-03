@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { detectHouseholdDependencies } from "@/lib/household";
 import { createClient } from "@/lib/supabase/client";
+import { HouseholdPlanCard } from "@/components/app/household-plan-card";
+import { HouseholdInvite } from "@/components/app/household-invite";
 
 export default function FamilyPage() {
   const router = useRouter();
@@ -208,6 +210,16 @@ export default function FamilyPage() {
         </div>
       </section>
 
+      {unlocked && (
+        <Link
+          href="/assessment?mode=member"
+          className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-zinc-300"
+        >
+          <span>Run short pulse for active member (~5 questions)</span>
+          <span className="text-emerald-400">→</span>
+        </Link>
+      )}
+
       {unlocked ? (
         <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -294,11 +306,18 @@ export default function FamilyPage() {
         </section>
       )}
 
+      {unlocked && (
+        <>
+          <HouseholdPlanCard />
+          <HouseholdInvite />
+        </>
+      )}
+
       <Link
         href="/app/prepare"
         className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-4 py-3 text-sm text-zinc-300 transition hover:border-white/15"
       >
-        <span>Open the household year plan</span>
+        <span>Open full Prepare tools</span>
         <span className="text-emerald-400">→</span>
       </Link>
     </div>
