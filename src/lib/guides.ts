@@ -5,118 +5,195 @@ export type Guide = {
   horizon: string;
   minutes: number;
   reframe: string;
-  body: string[];
-  placeLinks?: { label: string; href: string }[];
+  /** Course sections: heading + paragraphs */
+  sections: { heading: string; paragraphs: string[] }[];
+  placeLinks: { label: string; href: string }[];
 };
 
 export const GUIDES: Guide[] = [
   {
     slug: "water-year",
-    title: "Water for a year mindset",
-    blurb: "Store, purify, rotate — continuous access.",
+    title: "Water you can trust for a year",
+    blurb: "Store, purify, rotate. Continuous access without drama.",
     horizon: "Year",
-    minutes: 8,
+    minutes: 12,
     reframe:
-      "You are not stocking for a movie scene. You are removing one reason to panic when the tap is uncertain.",
-    body: [
-      "Calculate liters per person per day for two weeks first, then expand.",
-      "Pair stored water with a purify method you have tested once.",
-      "Rotate containers so nothing becomes a forgotten science experiment.",
+      "You are not preparing for a movie. You are removing one reason to panic when the tap is uncertain.",
+    sections: [
+      {
+        heading: "What you are building",
+        paragraphs: [
+          "A year of water is not one bulk buy. It is layers: short reserve at home, a purify method you have tested, and a restock habit.",
+          "Start with two weeks for every person in the home. Then expand. If you try to do twelve months on day one, you will quit.",
+        ],
+      },
+      {
+        heading: "What to do this week",
+        paragraphs: [
+          "Count people and pets. Write liters per day for drinking and basic cooking only.",
+          "Buy containers you can actually move. Label the fill date.",
+          "Pick one purify method (boil, filter, or tablets) and run it once on a small batch so you know it works.",
+        ],
+      },
+      {
+        heading: "How to keep it alive",
+        paragraphs: [
+          "Rotate the oldest containers into normal use every few months so nothing becomes a forgotten science experiment.",
+          "Save one water retail place in Nearby so you are not searching under stress.",
+        ],
+      },
     ],
     placeLinks: [
-      { label: "Find water retail", href: "/app/nearby" },
-      { label: "Prepare stock list", href: "/app/prepare" },
+      { label: "Find water near you", href: "/app/nearby?q=bottled%20water" },
+      { label: "Open year stock checklist", href: "/app/prepare" },
     ],
   },
   {
     slug: "food-rotation",
     title: "Food you will actually eat",
-    blurb: "90 days of familiar meals, then deeper layers.",
-    horizon: "90d → year",
-    minutes: 10,
+    blurb: "90 days of familiar meals, then deeper layers toward a year.",
+    horizon: "90 days to year",
+    minutes: 14,
     reframe:
-      "The calm version of you shops for the stressed version of you — same brands, dated shelves.",
-    body: [
-      "List seven dinners your household already accepts.",
-      "Buy deeper into those, not novelty survival food.",
-      "Label and FIFO. Waste is a readiness failure.",
+      "Calm you shops for stressed you. Same meals. Deeper shelves. Dates on every package.",
+    sections: [
+      {
+        heading: "The rule",
+        paragraphs: [
+          "Do not buy novelty survival food you will not cook. Buy more of what you already eat.",
+          "Ninety days of normal food is the first real milestone. A year is that habit repeated and expanded.",
+        ],
+      },
+      {
+        heading: "What to do this week",
+        paragraphs: [
+          "List seven dinners your household accepts without a fight.",
+          "Buy one extra cycle of those staples. Write the month on the box.",
+          "Put older items in front so nothing expires in the dark.",
+        ],
+      },
+      {
+        heading: "Toward a year",
+        paragraphs: [
+          "Add bulk staples only after the 90-day layer feels normal.",
+          "Use more than one store or a local farm when you can, so one closure does not wipe your plan.",
+        ],
+      },
     ],
     placeLinks: [
-      { label: "Grocery / farm map", href: "/app/nearby" },
-      { label: "1-year stock", href: "/app/prepare" },
+      { label: "Grocery map", href: "/app/nearby?q=supermarket" },
+      { label: "Year stock checklist", href: "/app/prepare" },
     ],
   },
   {
     slug: "cash-float",
-    title: "Cash when rails fail",
-    blurb: "Small float, tested, separate from daily spend.",
+    title: "Cash when cards fail",
+    blurb: "A small float you can touch, separate from daily spend.",
     horizon: "Ongoing",
-    minutes: 6,
+    minutes: 10,
     reframe:
-      "Mental accounting is a feature. A labeled buffer is how you stop spending the money that was supposed to buy time.",
-    body: [
-      "Choose an amount that covers 2–4 weeks of essentials only.",
-      "Park it where you will not swipe it for normal life.",
-      "Know two ATMs before you need them.",
+      "A labeled buffer buys time. That is the whole job of cash when payment rails stall.",
+    sections: [
+      {
+        heading: "How much",
+        paragraphs: [
+          "Aim for two to four weeks of essentials only: food, transport, basic utilities, medicine. Not lifestyle spend.",
+          "If that number feels impossible, start with three days and raise it every payday.",
+        ],
+      },
+      {
+        heading: "What to do this week",
+        paragraphs: [
+          "Withdraw a starter amount and put it where you will not swipe it by habit.",
+          "Open Nearby, search ATM, and save two locations in your network.",
+          "Practice paying one small bill in cash this week so the path is not theoretical.",
+        ],
+      },
     ],
     placeLinks: [
-      { label: "Cash map", href: "/app/nearby" },
-      { label: "Offline value", href: "/app/offline-value" },
-      { label: "Money focus", href: "/app/focus/money" },
+      { label: "Cash map", href: "/app/nearby?q=ATM" },
+      { label: "Offline value paths", href: "/app/offline-value" },
     ],
   },
   {
     slug: "docs-vault",
-    title: "Documents offline",
-    blurb: "IDs and proofs when accounts lag.",
-    horizon: "Once + review",
+    title: "Documents when systems argue",
+    blurb: "IDs and proofs offline, not only in email.",
+    horizon: "Once, then review",
     minutes: 12,
     reframe:
-      "Paper and encrypted copies are dull. They are also how you prove who you are when systems argue.",
-    body: [
-      "Scan or photograph critical IDs.",
-      "Store in Vault with a passphrase you can recall offline.",
-      "Keep one paper packet in a known place at home.",
+      "Paper and an encrypted copy are dull. They are how you prove who you are when accounts lag.",
+    sections: [
+      {
+        heading: "What belongs offline",
+        paragraphs: [
+          "Identity, insurance, property or lease proof, key medical notes, and recovery codes for critical accounts.",
+        ],
+      },
+      {
+        heading: "What to do this week",
+        paragraphs: [
+          "Photograph or scan the minimum set.",
+          "Store a copy in Vault with a passphrase you can recall without your phone.",
+          "Keep one paper packet in a known place at home.",
+        ],
+      },
     ],
     placeLinks: [
       { label: "Open Vault", href: "/app/vault" },
-      { label: "Community focus", href: "/app/focus/documents" },
+      { label: "Documents focus", href: "/app/focus/documents" },
+    ],
+  },
+  {
+    slug: "med-kit",
+    title: "Health kit that is ready",
+    blurb: "First aid and critical meds without a pharmacy run.",
+    horizon: "Ongoing",
+    minutes: 10,
+    reframe:
+      "A kit you never opened is only a box. Open it once. Know what is inside.",
+    sections: [
+      {
+        heading: "Baseline",
+        paragraphs: [
+          "Bandages, pain relief, thermometer, gloves, and any personal critical meds with a safe extra supply if your clinician agrees.",
+        ],
+      },
+      {
+        heading: "What to do this week",
+        paragraphs: [
+          "Open your kit and discard expired items.",
+          "List prescriptions that cannot lapse. Set a refill reminder before the bottle runs out.",
+          "Save a pharmacy in Nearby.",
+        ],
+      },
+    ],
+    placeLinks: [
+      { label: "Pharmacy map", href: "/app/nearby?q=pharmacy" },
+      { label: "Health focus", href: "/app/focus/skills" },
     ],
   },
   {
     slug: "power-light",
-    title: "Light and power gaps",
-    blurb: "Banks charged, kit ready, grid optional for a night.",
-    horizon: "72h+",
-    minutes: 7,
+    title: "Light when the grid blinks",
+    blurb: "Phones charged, one light, one plan.",
+    horizon: "Ongoing",
+    minutes: 8,
     reframe:
-      "Darkness is when small problems feel large. Light and a charged bank shrink the night.",
-    body: [
-      "One headlamp or lantern per key room.",
-      "Power banks on a charge schedule.",
-      "Know a hardware or outdoor store for replacements.",
+      "You do not need a bunker. You need hours of light and a charged way to communicate.",
+    sections: [
+      {
+        heading: "What to do this week",
+        paragraphs: [
+          "Pick a charging order: phone, light, radio if you have one.",
+          "Test a flashlight or lantern. Put it where anyone in the home can find it.",
+          "If you use a power bank, charge it on a schedule, not only when you remember.",
+        ],
+      },
     ],
     placeLinks: [
-      { label: "Hardware / outdoor", href: "/app/nearby" },
-      { label: "Home focus", href: "/app/focus/home" },
-    ],
-  },
-  {
-    slug: "household-plan",
-    title: "Household meetup plan",
-    blurb: "Who, where, without one phone.",
-    horizon: "Family",
-    minutes: 9,
-    reframe:
-      "Shared dependency is invisible until it breaks. Write the meetup. Name the backup person.",
-    body: [
-      "Primary and backup meeting places.",
-      "Three offline phone numbers on paper.",
-      "Add household members in Family if you use seats.",
-    ],
-    placeLinks: [
-      { label: "Family", href: "/app/family" },
-      { label: "Mobility focus", href: "/app/focus/communication" },
+      { label: "Hardware near you", href: "/app/nearby?q=hardware" },
+      { label: "Power What If", href: "/app/what-if" },
     ],
   },
 ];

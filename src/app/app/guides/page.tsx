@@ -2,108 +2,120 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { GUIDES } from "@/lib/guides";
+import { GUIDES, type Guide } from "@/lib/guides";
 import { PageHeader } from "@/components/app/page-header";
-import { cn } from "@/lib/utils";
+import { GlassCard } from "@/components/app/glass-card";
+import { Button } from "@/components/ui/button";
 
-/** Reframe-deck style guide browser — one card in focus. */
 export default function GuidesPage() {
-  const [i, setI] = useState(0);
-  const g = GUIDES[i];
-  const n = GUIDES.length;
+  const [active, setActive] = useState<Guide | null>(null);
+  const [section, setSection] = useState(0);
 
-  function prev() {
-    setI((x) => Math.max(0, x - 1));
-  }
-  function next() {
-    setI((x) => Math.min(n - 1, x + 1));
+  if (active) {
+    const s = active.sections[section];
+    const last = section >= active.sections.length - 1;
+    return (
+      <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => {
+            setActive(null);
+            setSection(0);
+          }}
+          className="text-xs font-medium text-emerald-400"
+        >
+          ← All guides
+        </button>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Course · {section + 1} of {active.sections.length} · {active.minutes} min
+        </p>
+        <h1 className="text-2xl font-semibold text-zinc-50">{active.title}</h1>
+        <p className="text-sm text-emerald-300/90">{active.reframe}</p>
+
+        <GlassCard>
+          <h2 className="text-lg font-semibold text-zinc-50">{s.heading}</h2>
+          <div className="mt-3 space-y-3">
+            {s.paragraphs.map((p) => (
+              <p key={p.slice(0, 24)} className="text-sm leading-relaxed text-zinc-300">
+                {p}
+              </p>
+            ))}
+          </div>
+        </GlassCard>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={section === 0}
+            onClick={() => setSection((x) => Math.max(0, x - 1))}
+          >
+            Back
+          </Button>
+          <Button
+            className="flex-1"
+            onClick={() => {
+              if (last) {
+                setActive(null);
+                setSection(0);
+              } else {
+                setSection((x) => x + 1);
+              }
+            }}
+          >
+            {last ? "Finish" : "Next"}
+          </Button>
+        </div>
+
+        {last && (
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-500">Put it into action</p>
+            {active.placeLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="block rounded-xl border border-white/10 px-4 py-3 text-sm text-emerald-400"
+              >
+                {l.label} →
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Guides"
-        subtitle="Clear steps for the version of you that needs the next move — not a lecture."
+        subtitle="Short courses. Read a section, do the week actions, then open the map or checklist."
         backHref="/app/more"
         showBack
       />
-
-      <div className="relative mx-auto max-w-sm">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-4 top-3 h-[92%] rounded-[1.75rem] border border-white/[0.04] bg-white/[0.02]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-2 top-1.5 h-[96%] rounded-[1.75rem] border border-white/[0.06] bg-white/[0.03]"
-        />
-
-        <article className="relative z-10 overflow-hidden rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-[#152032] to-[#0a1018] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
-          <div className="border-b border-white/[0.06] px-5 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-400/90">
-              Reframe · {i + 1}/{n}
-            </p>
-          </div>
-          <div className="space-y-4 px-5 py-6">
-            <h2 className="text-xl font-semibold leading-snug text-zinc-50">
-              {g.title}
-            </h2>
-            <p className="text-sm leading-relaxed text-zinc-300">{g.reframe}</p>
-            <p className="text-xs text-zinc-500">{g.blurb}</p>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                {g.horizon}
-              </span>
-              <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] text-zinc-500">
-                {g.minutes} min
-              </span>
-            </div>
-            <Link
-              href={`/app/guides/${g.slug}`}
-              className="flex w-full items-center justify-center rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-400"
-            >
-              Open this card →
-            </Link>
-          </div>
-        </article>
-      </div>
-
-      <div className="relative z-20 mx-auto flex max-w-sm items-center justify-between gap-3">
-        <button
-          type="button"
-          disabled={i === 0}
-          onClick={prev}
-          className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-xs font-medium text-zinc-200 disabled:opacity-30"
-        >
-          ← Prev
-        </button>
-        <div className="flex gap-1.5">
-          {GUIDES.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              aria-label={`Card ${idx + 1}`}
-              onClick={() => setI(idx)}
-              className={cn(
-                "h-1.5 rounded-full transition",
-                idx === i ? "w-4 bg-emerald-400" : "w-1.5 bg-zinc-600"
-              )}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          disabled={i >= n - 1}
-          onClick={next}
-          className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-xs font-medium text-zinc-200 disabled:opacity-30"
-        >
-          Next →
-        </button>
-      </div>
-
-      <p className="text-center text-[11px] text-zinc-600">
-        Each card ends in places and tools — Finder, Vault, Prepare — not theory only.
+      <p className="text-xs text-zinc-500">
+        What you should do: pick one guide, finish every section, then use the
+        action links at the end.
       </p>
+      <div className="space-y-2">
+        {GUIDES.map((g) => (
+          <button
+            key={g.slug}
+            type="button"
+            onClick={() => {
+              setActive(g);
+              setSection(0);
+            }}
+            className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-left transition hover:border-emerald-500/25"
+          >
+            <p className="text-sm font-medium text-zinc-100">{g.title}</p>
+            <p className="mt-1 text-xs text-zinc-500">{g.blurb}</p>
+            <p className="mt-2 text-[10px] uppercase tracking-wide text-zinc-600">
+              {g.horizon} · {g.minutes} min · {g.sections.length} sections
+            </p>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
