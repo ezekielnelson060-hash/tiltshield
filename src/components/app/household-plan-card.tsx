@@ -5,6 +5,7 @@ import {
   loadHouseholdPlan,
   toggleHouseholdPlanItem,
   householdPlanProgress,
+  pullPlanFromCloud,
   type HouseholdPlanItem,
 } from "@/lib/household-plan";
 import { GlassCard } from "@/components/app/glass-card";
@@ -15,6 +16,7 @@ export function HouseholdPlanCard() {
 
   useEffect(() => {
     setItems(loadHouseholdPlan());
+    void pullPlanFromCloud().then(setItems);
   }, []);
 
   const prog = householdPlanProgress(items.length ? items : loadHouseholdPlan());
@@ -25,7 +27,7 @@ export function HouseholdPlanCard() {
         Shared year plan
       </p>
       <p className="mt-1 text-xs text-zinc-500">
-        One list for the roof — not separate checklists per person.
+        One list for the roof — syncs when you are signed in.
       </p>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
         <div

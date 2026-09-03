@@ -1,4 +1,4 @@
-/** Shared year checklist for the whole household (local-first). */
+/** Shared year checklist for the whole household (local + optional cloud). */
 
 export type HouseholdPlanItem = {
   id: string;
@@ -31,7 +31,6 @@ export function loadHouseholdPlan(): HouseholdPlanItem[] {
       return seed;
     }
     const parsed = JSON.parse(raw) as HouseholdPlanItem[];
-    // merge new default ids
     const byId = new Map(parsed.map((p) => [p.id, p]));
     return DEFAULT_ITEMS.map((d) => byId.get(d.id) || { ...d, done: false });
   } catch {
@@ -39,15 +38,57 @@ export function loadHouseholdPlan(): HouseholdPlanItem[] {
   }
 }
 
+function persistLocal(list: HouseholdPlanItem[]) {
+  localStorage.setItem(KEY, JSON.stringify(list));
+}
+
 export function toggleHouseholdPlanItem(id: string): HouseholdPlanItem[] {
   const list = loadHouseholdPlan().map((i) =>
     i.id === id ? { ...i, done: !i.done } : i
   );
-  localStorage.setItem(KEY, JSON.stringify(list));
+  persistLocal(list);
+  void pushPlanToCloud(list);
   return list;
 }
 
 export function householdPlanProgress(list: HouseholdPlanItem[]) {
   const done = list.filter((i) => i.done).length;
-  return { done, total: list.length, pct: Math.round((done / list.length) * 100) };
+  return {
+    done,
+    total: list.length,
+    pct: Math.round((done / Math.max(1, list.length)) * 100),
+  };
+}
+
+export async function pushPlanToCloud(list?: HouseholdPlanItem[]) {
+  try {
+    const plan = list || loadHouseholdPlan();
+    await fetch("/api/household/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
+  } catch {
+    /* offline */
+  }
+}
+
+export async function pullPlanFromCloud(): Promise<HouseholdPlanItem[]> {
+  try {
+    const res = await fetch("/api/household/plan");
+    const json = await res.json();
+    if (Array.isArray(json.plan) && json.plan.length) {
+      const byId = new Map(
+        (json.plan as HouseholdPlanItem[]).map((p) => [p.id, p])
+      );
+      const merged = DEFAULT_ITEMS.map(
+        (d) => byId.get(d.id) || { ...d, done: false }
+      );
+      persistLocal(merged);
+      return merged;
+    }
+  } catch {
+    /* */
+  }
+  return loadHouseholdPlan();
 }
