@@ -29,7 +29,7 @@ const NearbyMap = dynamic(
 
 export default function NearbyPage() {
   const [query, setQuery] = useState("");
-  const [active, setActive] = useState<NearbyCategory | null>("pharmacy");
+  const [active, setActive] = useState<string | null>("pharmacy");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [selected, setSelected] = useState<NearbyPlace | null>(null);
@@ -78,24 +78,24 @@ export default function NearbyPage() {
     [coords]
   );
 
+  // Deep link from What If / Prepare: /app/nearby?q=ATM
   useEffect(() => {
-    if (cat?.query) void runSearch(cat.query);
-  }, [cat?.query, coords, runSearch]);
-
-  function onChip(id: NearbyCategory) {
-    setActive(id);
-    const c = NEARBY_CATEGORIES.find((x) => x.id === id);
-    if (c) {
-      setQuery(c.label);
-      void runSearch(c.query);
+    try {
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) {
+        setQuery(q);
+        void runSearch(q);
+      }
+    } catch {
+      /* */
     }
-  }
+  }, [coords, runSearch]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Nearby"
-        subtitle="What do you need? Find real places — not restaurant lists."
+        subtitle="What do you need? Search real places — then save the ones you trust."
         backHref="/app/overview"
         showBack
       />
@@ -107,44 +107,36 @@ export default function NearbyPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter") void runSearch(query);
           }}
-          placeholder="Bottled water, pharmacy, generator…"
-          className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600"
+          placeholder="Pharmacy, ATM, market, water…"
+          className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600"
         />
         <Button
           size="sm"
-          className="shrink-0"
           disabled={loading}
           onClick={() => void runSearch(query || cat?.query || "pharmacy")}
         >
-          Search
+          {loading ? "…" : "Search"}
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {(
-          [
-            ["pharmacy", "💊 Health"],
-            ["food", "🛒 Food"],
-            ["fuel", "⛽ Fuel"],
-            ["cash", "🏦 Banking"],
-            ["hardware", "🧰 Supplies"],
-            ["solar", "🔋 Power"],
-            ["water", "💧 Water"],
-            ["community", "🏠 Community"],
-          ] as const
-        ).map(([id, label]) => (
+        {NEARBY_CATEGORIES.map((c) => (
           <button
-            key={id}
+            key={c.id}
             type="button"
-            onClick={() => onChip(id as NearbyCategory)}
+            onClick={() => {
+              setActive(c.id);
+              setQuery(c.query);
+              void runSearch(c.query);
+            }}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
-              active === id
+              "rounded-full border px-3 py-1.5 text-xs transition",
+              active === c.id
                 ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
                 : "border-white/10 bg-white/[0.04] text-zinc-400"
             )}
           >
-            {label}
+            {c.label}
           </button>
         ))}
       </div>
@@ -157,49 +149,10 @@ export default function NearbyPage() {
         className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
       />
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-        {loading ? "Searching…" : `${places.length} places`}
-      </p>
-
-      <div className="space-y-2">
-        {places.map((pl) => (
-          <GlassCard key={pl.id} className="!p-4">
-            <div className="flex items-start justify-between gap-3">
-              <button
-                type="button"
-                className="min-w-0 flex-1 text-left"
-                onClick={() => setSelected(pl)}
-              >
-                <p className="text-sm font-medium text-zinc-100">{pl.name}</p>
-                <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">
-                  {pl.address}
-                </p>
-                {pl.distanceKm != null && (
-                  <p className="mt-1 text-[11px] text-emerald-400">
-                    {formatDistance(pl.distanceKm)}
-                  </p>
-                )}
-              </button>
-              <a
-                href={mapsSearchUrl(pl.name, pl.lat, pl.lon)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 text-xs font-medium text-emerald-400"
-              >
-                Directions
-              </a>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
-
-      {!loading && places.length === 0 && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center">
-          <p className="text-sm text-zinc-400">
-            {error || "Search or tap a need above."}
-          </p>
+      {error && (
+        <GlassCard tone="danger">
+          <p className="text-sm text-zinc-300">{error}</p>
           <a
-            className="mt-3 block text-sm font-medium text-emerald-400"
             href={mapsSearchUrl(
               query || cat?.query || "pharmacy",
               coords?.lat,
@@ -207,19 +160,45 @@ export default function NearbyPage() {
             )}
             target="_blank"
             rel="noopener noreferrer"
+            className="mt-2 inline-block text-xs font-medium text-emerald-400"
           >
-            Search in Google Maps →
+            Open in Google Maps →
           </a>
-          <button
-            type="button"
-            className="mt-2 text-xs text-zinc-500 underline"
-            onClick={() =>
-              void runSearch(query || cat?.query || "pharmacy")
-            }
+        </GlassCard>
+      )}
+
+      <div className="space-y-2">
+        {places.map((pl) => (
+          <a
+            key={pl.id}
+            href={mapsSearchUrl(pl.name, pl.lat, pl.lon)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setSelected(pl)}
+            className={cn(
+              "flex items-center justify-between rounded-2xl border px-4 py-3 transition",
+              selected?.id === pl.id
+                ? "border-emerald-500/35 bg-emerald-500/10"
+                : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
+            )}
           >
-            Search again (wider)
-          </button>
-        </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-100">{pl.name}</p>
+              {pl.distanceM != null && (
+                <p className="text-[11px] text-zinc-500">
+                  {formatDistance(pl.distanceM)}
+                </p>
+              )}
+            </div>
+            <span className="text-xs text-emerald-400">Map ↗</span>
+          </a>
+        ))}
+      </div>
+
+      {!loading && places.length === 0 && !error && (
+        <p className="text-center text-xs text-zinc-600">
+          Pick a need above or type what you&apos;re looking for.
+        </p>
       )}
     </div>
   );
