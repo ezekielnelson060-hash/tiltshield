@@ -3,9 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 /**
  * POST /api/flutterwave/webhook
- * Set in Flutterwave dashboard (Live or Test):
- *   URL: https://YOUR_TILTSHIELD_DOMAIN/api/flutterwave/webhook
- *   Secret hash: same value as env FLUTTERWAVE_SECRET_HASH
+ * Dashboard URL: https://YOUR_DOMAIN/api/flutterwave/webhook
+ * Secret hash: FLUTTERWAVE_SECRET_HASH
  */
 export async function POST(req: NextRequest) {
   const secretHash = process.env.FLUTTERWAVE_SECRET_HASH;
@@ -34,6 +33,7 @@ export async function POST(req: NextRequest) {
   let product: "lifetime" | "family" | null = null;
   if (productRaw.includes("family")) product = "family";
   else if (productRaw.includes("lifetime")) product = "lifetime";
+  const metaUserId = String(meta.user_id || meta.userId || "").trim();
 
   const ok =
     status === "successful" ||
@@ -47,17 +47,27 @@ export async function POST(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (supabaseUrl && serviceKey && email) {
+  if (supabaseUrl && serviceKey) {
     try {
       const admin = createClient(supabaseUrl, serviceKey, {
         auth: { persistSession: false, autoRefreshToken: false },
       });
-      const { data: listed } = await admin.auth.admin.listUsers({ perPage: 200 });
-      const user = listed?.users?.find((u) => u.email?.toLowerCase() === email);
-      if (user) {
+
+      let userId = metaUserId || "";
+      if (!userId && email) {
+        const { data: users } = await admin.auth.admin.listUsers({
+          perPage: 200,
+        });
+        const user = users?.users?.find(
+          (u) => u.email?.toLowerCase() === email
+        );
+        if (user) userId = user.id;
+      }
+
+      if (userId) {
         await admin.from("profiles").upsert(
           {
-            id: user.id,
+            id: userId,
             subscription_status: product === "family" ? "family" : "lifetime",
           },
           { onConflict: "id" }

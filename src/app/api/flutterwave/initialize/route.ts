@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * POST body: { email?, name?, product?: "lifetime" | "family" }
+ * POST body: { email?, name?, userId?, product?: "lifetime" | "family" }
  * lifetime = $29 one-time (individual full access)
  * family = $49 one-time household (premium + multi-member profiles)
- * Override with FLUTTERWAVE_AMOUNT / FLUTTERWAVE_FAMILY_AMOUNT
  */
 export async function POST(req: NextRequest) {
   const secret = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -23,11 +22,13 @@ export async function POST(req: NextRequest) {
   let email = "customer@tiltshield.app";
   let name = "Tiltshield User";
   let product: "lifetime" | "family" = "lifetime";
+  let userId = "";
   try {
     const body = await req.json();
     if (body?.email) email = String(body.email);
     if (body?.name) name = String(body.name);
     if (body?.product === "family") product = "family";
+    if (body?.userId) userId = String(body.userId);
   } catch {
     /* */
   }
@@ -65,7 +66,10 @@ export async function POST(req: NextRequest) {
               : "Individual lifetime — full tools ($29)",
           logo: `${appUrl}/icon-192.png`,
         },
-        meta: { product: `tiltshield_${product}` },
+        meta: {
+          product: `tiltshield_${product}`,
+          user_id: userId || undefined,
+        },
       }),
     });
 
