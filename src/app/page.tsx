@@ -120,6 +120,19 @@ export default function HomePage() {
             Income. Food. Payments. Power. Phone. Neighbors you can still call.
             Tiltshield turns those into a practical readiness plan.
           </p>
+          <div className="mx-auto mt-10 max-w-[320px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-lg shadow-black/40">
+            <video
+              className="aspect-[9/16] h-auto w-full max-h-[360px] object-cover"
+              controls
+              playsInline
+              preload="metadata"
+            >
+              <source src="/media/tiltshield-demo.mp4" type="video/mp4" />
+            </video>
+            <p className="border-t border-zinc-900 px-3 py-2 text-[11px] text-zinc-500">
+              A quick look inside Today — score, priority, nearby, intel
+            </p>
+          </div>
         </div>
       </section>
 
@@ -227,125 +240,46 @@ export default function HomePage() {
           </h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Free
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Free</p>
               <p className="mt-3 text-4xl font-bold text-zinc-50">$0</p>
               <ul className="mt-8 space-y-3 text-sm text-zinc-400">
-                <li className="flex gap-2">
-                  <span className="text-emerald-500">✓</span> Income-based assessment
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-500">✓</span> Readiness score
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-500">✓</span> Biggest exposure
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-500">✓</span> Limited What If
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-500">✓</span> Prepare basics + Finder
-                </li>
+                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Income-based assessment</li>
+                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Readiness score</li>
+                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Biggest exposure</li>
+                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Limited What If</li>
+                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Prepare basics + Finder</li>
               </ul>
               <Button asChild variant="outline" className="mt-10 w-full" size="lg">
                 <Link href="/assessment">Start free</Link>
               </Button>
             </div>
             <div className="relative rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-8 shadow-lg shadow-emerald-950/20">
-              <p className="absolute -top-3 right-6 rounded-full bg-emerald-500 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-950">
-                Popular
-              </p>
-              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                Lifetime
-              </p>
-              <p className="mt-3 text-4xl font-bold text-zinc-50">
-                $29{" "}
-                <span className="text-base font-normal text-zinc-500">one-time</span>
-              </p>
+              <p className="absolute -top-3 right-6 rounded-full bg-emerald-500 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-950">Popular</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Lifetime</p>
+              <p className="mt-3 text-4xl font-bold text-zinc-50">$29 <span className="text-base font-normal text-zinc-500">one-time</span></p>
               <ul className="mt-8 space-y-3 text-sm text-zinc-300">
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Everything in Free
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> All What If scenarios
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Vault + history
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Calculators + live intel
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-zinc-600">—</span>{" "}
-                  <span className="text-zinc-500">No household seats</span>
-                </li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Everything in Free</li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> All What If scenarios</li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Vault + history</li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Calculators + live intel</li>
               </ul>
               <Button asChild className="mt-10 w-full" size="lg">
                 <Link href="/assessment">Get Lifetime · $29</Link>
               </Button>
             </div>
             <div className="rounded-2xl border border-white/15 bg-zinc-950 p-8">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Household
-              </p>
-              <p className="mt-3 text-4xl font-bold text-zinc-50">
-                $49{" "}
-                <span className="text-base font-normal text-zinc-500">one-time</span>
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Household</p>
+              <p className="mt-3 text-4xl font-bold text-zinc-50">$49 <span className="text-base font-normal text-zinc-500">one-time</span></p>
               <ul className="mt-8 space-y-3 text-sm text-zinc-300">
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Everything in Lifetime
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Up to 6 profiles
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Shared dependency insights
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-emerald-400">✓</span> Household readiness score
-                </li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Everything in Lifetime</li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Up to 6 profiles</li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Shared dependency insights</li>
+                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Household readiness score</li>
               </ul>
               <Button asChild variant="outline" className="mt-10 w-full" size="lg">
                 <Link href="/assessment">Get Household · $49</Link>
               </Button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-b border-zinc-900">
-        <div className="mx-auto max-w-2xl px-4 py-20">
-          <h2 className="text-center text-3xl font-semibold text-zinc-50">FAQ</h2>
-          <div className="mt-12 space-y-8">
-            {[
-              [
-                "What exactly is Tiltshield?",
-                "A preparation system for households. It starts from your take-home income, scores readiness, and helps you stock, plan, and practice What If scenarios.",
-              ],
-              [
-                "How is my readiness score calculated?",
-                "From income, expenses, buffers, food stores, payment options, kits, and local vendors across eight categories.",
-              ],
-              [
-                "Is this financial advice?",
-                "No. Tiltshield helps you prepare practically — buffers, kits, vendors, and scenarios. Not regulated advice.",
-              ],
-              [
-                "Does Tiltshield predict the future?",
-                "No. It helps you prepare for system changes — payments, income, power, food — with concrete household steps.",
-              ],
-              [
-                "What happens to my data?",
-                "Assessment answers stay on your device by default. We do not sell personal profiles.",
-              ],
-            ].map(([q, a]) => (
-              <div key={q} className="border-b border-zinc-900 pb-8 last:border-0">
-                <h3 className="text-base font-medium text-zinc-100">{q}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{a}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -371,58 +305,30 @@ export default function HomePage() {
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <p className="text-sm font-semibold text-zinc-50">Tiltshield</p>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-500">
-                Prepare for what might come next.
-              </p>
+              <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-500">Prepare for what might come next.</p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Product
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Product</p>
               <ul className="mt-4 space-y-2.5 text-sm text-zinc-400">
-                <li>
-                  <a href="#product" className="hover:text-zinc-200">
-                    How it works
-                  </a>
-                </li>
-                <li>
-                  <Link href="/assessment" className="hover:text-zinc-200">
-                    Assessment
-                  </Link>
-                </li>
-                <li>
-                  <a href="#what-if" className="hover:text-zinc-200">
-                    What If?
-                  </a>
-                </li>
-                <li>
-                  <a href="#pricing" className="hover:text-zinc-200">
-                    Pricing
-                  </a>
-                </li>
+                <li><a href="#product" className="hover:text-zinc-200">How it works</a></li>
+                <li><Link href="/assessment" className="hover:text-zinc-200">Assessment</Link></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Prepare
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Account</p>
               <ul className="mt-4 space-y-2.5 text-sm text-zinc-400">
-                <li>Home kits</li>
-                <li>Independent Finder</li>
-                <li>Calculators</li>
+                <li><Link href="/login" className="hover:text-zinc-200">Log in</Link></li>
+                <li><Link href="/signup" className="hover:text-zinc-200">Sign up</Link></li>
               </ul>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Company
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Legal</p>
               <ul className="mt-4 space-y-2.5 text-sm text-zinc-400">
-                <li>Privacy</li>
-                <li>Terms</li>
+                <li><span className="text-zinc-500">Not financial advice</span></li>
               </ul>
             </div>
           </div>
-          <div className="mt-14 flex flex-col gap-2 border-t border-zinc-900 pt-8 text-xs text-zinc-600 sm:flex-row sm:justify-between">
+          <div className="mt-12 flex flex-col gap-2 border-t border-zinc-900 pt-8 text-xs text-zinc-600 sm:flex-row sm:justify-between">
             <p>© {new Date().getFullYear()} Tiltshield. All rights reserved.</p>
             <p>Built for people who prefer agency over anxiety.</p>
           </div>
