@@ -35,10 +35,10 @@ type StockItem = {
 
 const YEAR_STOCK: StockItem[] = [
   { id: "water_plan", label: "Water you can reach at home", group: "Year foundation", hint: "Store + a simple purify method" },
-  { id: "food_90", label: "90 days of food you already eat", group: "Year foundation", hint: "Same meals — deeper shelves" },
+  { id: "food_90", label: "90 days of food you already eat", group: "Year foundation", hint: "Same meals, deeper shelves" },
   { id: "food_rotate", label: "Dates on every package", group: "Year foundation", hint: "Oldest first so nothing is wasted" },
-  { id: "cash_float", label: "Cash for 2–4 weeks of essentials", group: "Money & access" },
-  { id: "alt_pay", label: "A second way to pay — tested", group: "Money & access" },
+  { id: "cash_float", label: "Cash for 2 to 4 weeks of essentials", group: "Money & access" },
+  { id: "alt_pay", label: "A second way to pay (tested)", group: "Money & access" },
   { id: "meds_30", label: "Extra critical meds (if safe)", group: "Health" },
   { id: "first_aid", label: "First-aid kit ready", group: "Health" },
   { id: "light_power", label: "Lights and charged power banks", group: "Home" },
@@ -111,10 +111,15 @@ export default function PreparePage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Prepare"
-        subtitle="Your year of calm — built from what you told us, one honest step at a time."
+        subtitle="Your year plan, built from what you told us. One honest step at a time."
         backHref="/app/overview"
         showBack
       />
+
+      <p className="text-xs text-zinc-500">
+        What you should do: follow Your plan in order, tick Year stock only when
+        it is true in real life, use Places to find suppliers.
+      </p>
 
       <div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
         {(
@@ -185,10 +190,18 @@ export default function PreparePage() {
 
       {tab === "stock" && (
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-zinc-400">
-            A year is not one shopping trip. It is water, food you will eat, money
-            you can touch, medicine, light, papers, and people — layered over time.
-          </p>
+          <div className="space-y-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+            <p className="text-sm font-medium text-zinc-100">What Year stock is</p>
+            <p className="text-xs leading-relaxed text-zinc-400">
+              A checklist for building toward a year of basics at home: water, food
+              you already eat, cash you can touch, medicine, light, papers, and
+              people. Layered over months, not one shopping trip.
+            </p>
+            <p className="text-xs leading-relaxed text-zinc-400">
+              Tick a box only when that item is true in real life. Use Nearby or a
+              Guide when you need a place or a how-to.
+            </p>
+          </div>
           {groups.map((g) => (
             <div key={g}>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
