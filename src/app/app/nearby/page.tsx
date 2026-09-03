@@ -6,7 +6,6 @@ import {
   NEARBY_CATEGORIES,
   searchNearbyPlaces,
   mapsSearchUrl,
-  type NearbyCategory,
   type NearbyPlace,
 } from "@/lib/nearby";
 import { formatDistance } from "@/lib/locale";
@@ -14,6 +13,11 @@ import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
+import {
+  loadTrustedPlaces,
+  saveTrustedPlace,
+  removeTrustedPlace,
+} from "@/lib/network";
 
 const NearbyMap = dynamic(
   () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
@@ -35,8 +39,10 @@ export default function NearbyPage() {
   const [selected, setSelected] = useState<NearbyPlace | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trustedIds, setTrustedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    setTrustedIds(new Set(loadTrustedPlaces().map((p) => p.id)));
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) =>
@@ -78,7 +84,6 @@ export default function NearbyPage() {
     [coords]
   );
 
-  // Deep link from What If / Prepare: /app/nearby?q=ATM
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search).get("q");
@@ -95,7 +100,7 @@ export default function NearbyPage() {
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Nearby"
-        subtitle="What do you need? Search real places — then save the ones you trust."
+        subtitle="What do you need? Search, then save the places you would trust on a hard day."
         backHref="/app/overview"
         showBack
       />
@@ -168,31 +173,70 @@ export default function NearbyPage() {
       )}
 
       <div className="space-y-2">
-        {places.map((pl) => (
-          <a
-            key={pl.id}
-            href={mapsSearchUrl(pl.name, pl.lat, pl.lon)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setSelected(pl)}
-            className={cn(
-              "flex items-center justify-between rounded-2xl border px-4 py-3 transition",
-              selected?.id === pl.id
-                ? "border-emerald-500/35 bg-emerald-500/10"
-                : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
-            )}
-          >
-            <div>
-              <p className="text-sm font-medium text-zinc-100">{pl.name}</p>
-              {pl.distanceM != null && (
-                <p className="text-[11px] text-zinc-500">
-                  {formatDistance(pl.distanceM)}
-                </p>
+        {places.map((pl) => {
+          const saved = trustedIds.has(pl.id);
+          return (
+            <div
+              key={pl.id}
+              className={cn(
+                "flex items-center gap-2 rounded-2xl border px-4 py-3 transition",
+                selected?.id === pl.id
+                  ? "border-emerald-500/35 bg-emerald-500/10"
+                  : "border-white/[0.08] bg-white/[0.03]"
               )}
+            >
+              <button
+                type="button"
+                className="min-w-0 flex-1 text-left"
+                onClick={() => setSelected(pl)}
+              >
+                <p className="text-sm font-medium text-zinc-100">{pl.name}</p>
+                {pl.distanceM != null && (
+                  <p className="text-[11px] text-zinc-500">
+                    {formatDistance(pl.distanceM)}
+                  </p>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (saved) {
+                    setTrustedIds(
+                      new Set(removeTrustedPlace(pl.id).map((p) => p.id))
+                    );
+                  } else {
+                    saveTrustedPlace({
+                      id: pl.id,
+                      name: pl.name,
+                      lat: pl.lat,
+                      lon: pl.lon,
+                      query: query || cat?.query,
+                    });
+                    setTrustedIds(
+                      new Set(loadTrustedPlaces().map((p) => p.id))
+                    );
+                  }
+                }}
+                className={cn(
+                  "shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold",
+                  saved
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : "bg-white/[0.06] text-zinc-300 hover:bg-emerald-500/15 hover:text-emerald-300"
+                )}
+              >
+                {saved ? "Saved" : "Save"}
+              </button>
+              <a
+                href={mapsSearchUrl(pl.name, pl.lat, pl.lon)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 text-xs text-emerald-400"
+              >
+                Map ↗
+              </a>
             </div>
-            <span className="text-xs text-emerald-400">Map ↗</span>
-          </a>
-        ))}
+          );
+        })}
       </div>
 
       {!loading && places.length === 0 && !error && (
@@ -200,6 +244,31 @@ export default function NearbyPage() {
           Pick a need above or type what you&apos;re looking for.
         </p>
       )}
+
+      {trustedIds.size > 0 && (
+        <Link
+          href="/app/network"
+          className="block text-center text-xs font-medium text-emerald-400"
+        >
+          View your network ({trustedIds.size}) →
+        </Link>
+      )}
     </div>
+  );
+}
+
+function Link({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
   );
 }
