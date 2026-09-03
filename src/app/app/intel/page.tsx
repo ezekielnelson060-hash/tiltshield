@@ -1,31 +1,46 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
-import { personalizeIntel, type IntelScope, type IntelItem } from "@/lib/intel";
-import { cn } from "@/lib/utils";
-import { PageHeader } from "@/components/app/page-header";
-import { meaningForYou } from "@/lib/intel-meaning";
+import { personalizeIntel, type IntelItem } from "@/lib/intel";
+import { meaningForIntel } from "@/lib/intel-meaning";
 import type { AssessmentAnswers, CategoryScores } from "@/types";
+import { PageHeader } from "@/components/app/page-header";
+import { GlassCard } from "@/components/app/glass-card";
+import { cn } from "@/lib/utils";
 
-const TABS: { id: IntelScope | "all"; label: string }[] = [
-  { id: "all", label: "For you" },
-  { id: "local", label: "Local" },
-  { id: "global", label: "Global" },
-  { id: "watchlist", label: "Watchlist" },
-];
+const TABS = [
+  { id: "all", label: "All" },
+  { id: "money", label: "Money" },
+  { id: "food", label: "Food" },
+  { id: "health", label: "Health" },
+  { id: "digital", label: "Digital" },
+  { id: "energy", label: "Energy" },
+] as const;
 
+/** Strip tags and junk so RSS never leaks raw HTML or href strings. */
 function cleanText(s: string): string {
-  return (s || "")
-    .replace(/<[^>]+>/g, " ")
+  if (!s) return "";
+  return s
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/https?:\/\/\S+/gi, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function extractUrl(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const m = raw.match(/https?:\/\/[^\s"'<>]+/i);
+  if (m && m[0].startsWith("http")) return m[0];
+  if (raw.startsWith("http")) return raw.split(/\s/)[0];
+  return undefined;
 }
 
 export default function IntelPage() {
@@ -44,105 +59,82 @@ export default function IntelPage() {
     const s = loadSession();
     if (s) {
       setOverall(s.scores.overall);
-      setTopCat(s.vulnerabilities[0]?.category);
+      setTopCat(s.vulnerabilities?.[0]?.category);
       setIncomeSources(s.answers.income_sources || 1);
       setAltPay(!!s.answers.alt_payment_method);
       setAnswers(s.answers);
       setScores(s.scores);
     }
-  }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/intel/live");
-        const json = await res.json();
-        if (cancelled || !json?.items) return;
-        const mapped = json.items.map(
-          (h: {
-            id: string;
-            title: string;
-            summary: string;
-            category: string;
-            impact: "low" | "medium" | "high";
-            relevanceKeys?: string[];
-            publishedAt?: string | null;
-            url?: string;
-          }) => ({
-            id: h.id,
-            scope: "global" as const,
-            title: cleanText(h.title),
-            summary: cleanText(h.summary).slice(0, 220),
-            impact: h.impact,
-            category: h.category,
-            hoursAgo: h.publishedAt
-              ? Math.max(
-                  0,
-                  Math.round(
-                    (Date.now() - new Date(h.publishedAt).getTime()) / 3600000
-                  )
-                )
-              : 1,
-            relevanceKeys: h.relevanceKeys,
-            url: h.url && h.url.startsWith("http") ? h.url : undefined,
-          })
+        const data = await res.json();
+        const headlines = (data.headlines || []) as Array<{
+          title?: string;
+          summary?: string;
+          category?: string;
+          impact?: string;
+          hoursAgo?: number;
+          url?: string;
+          link?: string;
+        }>;
+        setLive(
+          headlines.map((h, i) => ({
+            id: `live-${i}`,
+            title: cleanText(h.title || "Update"),
+            summary: cleanText(h.summary || "").slice(0, 220),
+            category: (h.category || "world") as IntelItem["category"],
+            impact: (h.impact || "medium") as IntelItem["impact"],
+            hoursAgo: h.hoursAgo ?? 0,
+            url: extractUrl(h.url || h.link),
+          }))
         );
-        setLive(mapped);
-        setLiveAt(json.fetchedAt || null);
+        setLiveAt(data.fetchedAt || new Date().toISOString());
       } catch {
-        if (!cancelled) setLiveErr(true);
+        setLiveErr(true);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  const items = useMemo(() => {
-    const personalized = personalizeIntel({
-      overall,
-      topCategory: topCat,
-      hasAltPayment: altPay,
-      incomeSources,
-    });
-    const merged = [...live, ...personalized];
-    const seen = new Set<string>();
-    const unique = merged.filter((i) => {
-      const k = i.title.toLowerCase().slice(0, 48);
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-    if (tab === "all") return unique;
-    if (tab === "watchlist") {
-      return unique.filter((i) => i.impact === "high");
-    }
-    return unique.filter(
-      (i) => i.scope === tab || (tab === "global" && i.id.startsWith("live-"))
-    );
-  }, [tab, overall, topCat, altPay, incomeSources, live]);
+  const baseline = personalizeIntel({
+    overall,
+    topCategory: topCat,
+    hasAltPayment: altPay,
+    incomeSources,
+  });
+
+  const merged = [...live, ...baseline];
+  const filtered =
+    tab === "all"
+      ? merged
+      : merged.filter((i) => i.category.toLowerCase().includes(tab));
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Intel"
-        subtitle="Signals from the world, ranked against your readiness — not noise."
+        subtitle="World signals ranked against your readiness. Read what it means for you, then act."
         backHref="/app/overview"
         showBack
       />
 
-      <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
+      <p className="text-xs text-zinc-500">
+        What you should do here: open one story, read "what this means for you",
+        then run What If or open Prepare.
+      </p>
+
+      <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex-1 rounded-lg py-2 text-xs font-medium transition",
+              "rounded-full border px-3 py-1.5 text-xs transition",
               tab === t.id
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                : "border-white/10 bg-white/[0.04] text-zinc-400"
             )}
           >
             {t.label}
@@ -150,29 +142,28 @@ export default function IntelPage() {
         ))}
       </div>
 
-      <p className="text-[11px] text-zinc-500">
-        {liveAt
-          ? `Live feed · updated ${new Date(liveAt).toLocaleTimeString()}`
-          : liveErr
-            ? "Live feed offline — showing curated intel"
-            : "Loading live signals…"}
-      </p>
+      {liveErr && (
+        <p className="text-xs text-amber-400/90">
+          Live feed is slow. Baseline signals still show below.
+        </p>
+      )}
 
       <div className="space-y-3">
-        {items.map((item) => {
+        {filtered.map((item) => {
           const url = (item as { url?: string }).url;
+          const meaning =
+            answers && scores
+              ? meaningForIntel(item, answers, scores)
+              : null;
           return (
-            <article
-              key={item.id}
-              className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-4"
-            >
+            <GlassCard key={item.id}>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
                   {item.category}
                 </span>
                 {item.id.startsWith("live-") && (
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-400">
-                    Live
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                    LIVE
                   </span>
                 )}
                 <span className="text-[10px] text-zinc-600">
@@ -182,20 +173,20 @@ export default function IntelPage() {
                   className={cn(
                     "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
                     item.impact === "high"
-                      ? "bg-red-500/15 text-red-300"
+                      ? "bg-red-500/15 text-red-400"
                       : item.impact === "medium"
-                        ? "bg-amber-500/15 text-amber-300"
-                        : "bg-zinc-500/15 text-zinc-400"
+                        ? "bg-amber-500/15 text-amber-400"
+                        : "bg-white/5 text-zinc-500"
                   )}
                 >
                   {item.impact}
                 </span>
               </div>
-              <h2 className="mt-3 text-sm font-semibold leading-snug text-zinc-50">
+              <p className="mt-3 text-sm font-semibold leading-snug text-zinc-50">
                 {item.title}
-              </h2>
+              </p>
               {item.summary && (
-                <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+                <p className="mt-2 text-xs leading-relaxed text-zinc-500">
                   {item.summary}
                 </p>
               )}
@@ -204,40 +195,29 @@ export default function IntelPage() {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-zinc-200 transition hover:border-emerald-500/30 hover:text-emerald-300"
+                  className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-zinc-200"
                 >
-                  <span>Read the full story</span>
+                  Read the full story
                   <span className="text-emerald-400">↗</span>
                 </a>
               )}
-              <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/80">
-                  What this means for you
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-zinc-300">
-                  {meaningForYou(item, answers, scores)}
-                </p>
+              {meaning && (
+                <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/90">
+                    What this means for you
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
+                    {meaning}
+                  </p>
+                </div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-3 text-xs font-medium text-emerald-400">
+                <Link href="/app/what-if">Run What If →</Link>
+                <Link href="/app/prepare">Prepare</Link>
               </div>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Link
-                  href="/app/what-if"
-                  className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
-                >
-                  Run What If →
-                </Link>
-                <Link
-                  href="/app/prepare"
-                  className="text-xs font-medium text-zinc-400 hover:text-zinc-200"
-                >
-                  Prepare
-                </Link>
-              </div>
-            </article>
+            </GlassCard>
           );
         })}
-        {items.length === 0 && (
-          <p className="text-sm text-zinc-500">No items in this filter yet.</p>
-        )}
       </div>
     </div>
   );
