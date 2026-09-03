@@ -1,114 +1,97 @@
-import type { AssessmentAnswers, CategoryScores, Vulnerability } from "@/types";
 import { getActiveMemberId, updateMemberScore } from "@/lib/family";
+import type {
+  AssessmentAnswers,
+  CategoryScores,
+  Vulnerability,
+} from "@/types";
 
-export interface TiltSession {
+export type TiltSession = {
   answers: AssessmentAnswers;
   scores: CategoryScores;
   vulnerabilities: Vulnerability[];
-  completedAt?: string;
   memberId?: string;
-}
+  savedAt?: string;
+};
 
-export interface HistoryEntry {
-  date: string;
+export type HistoryEntry = {
+  at: string;
   overall: number;
-  money?: number;
-  food?: number;
-  digital?: number;
-  emergency?: number;
-  runwayDays?: number;
-  monthlyIncome?: number;
-  monthlyExpenses?: number;
   memberId?: string;
-  source?: "local" | "cloud";
-}
+};
 
-const PREMIUM_KEY = "tiltshield_lifetime";
+const SESSION_KEY = "tiltshield_session";
 const HISTORY_KEY = "tiltshield_history";
+const PREMIUM_KEY = "tiltshield_lifetime";
+const FAMILY_KEY = "tiltshield_family";
 
 function sessionKey(memberId?: string) {
-  const id =
-    memberId ||
-    (typeof window !== "undefined" ? getActiveMemberId() : "self");
-  return `tiltshield_session_${id}`;
+  const mid = memberId || (typeof window !== "undefined" ? getActiveMemberId() : "self");
+  return mid === "self" ? SESSION_KEY : `${SESSION_KEY}_${mid}`;
 }
 
 export function loadSession(memberId?: string): TiltSession | null {
   if (typeof window === "undefined") return null;
   try {
     const key = sessionKey(memberId);
-    const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
-    if (
-      !raw &&
-      (!memberId || memberId === "self" || getActiveMemberId() === "self")
-    ) {
-      const legacy =
-        sessionStorage.getItem("tiltshield_session") ||
-        localStorage.getItem("tiltshield_session");
-      if (legacy) return JSON.parse(legacy) as TiltSession;
-    }
+    const raw =
+      sessionStorage.getItem(key) ||
+      localStorage.getItem(key) ||
+      localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as TiltSession;
+    const parsed = JSON.parse(raw) as TiltSession;
+    if (!parsed?.scores || !parsed?.answers) return null;
+    if (!Array.isArray(parsed.vulnerabilities)) parsed.vulnerabilities = [];
+    return parsed;
   } catch {
     return null;
   }
 }
 
-export function saveSession(data: TiltSession) {
+export function saveSession(session: TiltSession) {
   if (typeof window === "undefined") return;
-  const memberId = data.memberId || getActiveMemberId();
+  const mid = session.memberId || getActiveMemberId();
   const payload: TiltSession = {
-    ...data,
-    memberId,
-    completedAt: data.completedAt || new Date().toISOString(),
+    ...session,
+    memberId: mid,
+    savedAt: new Date().toISOString(),
+    vulnerabilities: session.vulnerabilities || [],
   };
-  const key = sessionKey(memberId);
-  sessionStorage.setItem(key, JSON.stringify(payload));
-  localStorage.setItem(key, JSON.stringify(payload));
-  if (memberId === "self") {
-    sessionStorage.setItem("tiltshield_session", JSON.stringify(payload));
-    localStorage.setItem("tiltshield_session", JSON.stringify(payload));
+  const key = sessionKey(mid);
+  const str = JSON.stringify(payload);
+  localStorage.setItem(key, str);
+  sessionStorage.setItem(key, str);
+  if (mid === "self") {
+    localStorage.setItem(SESSION_KEY, str);
   }
   try {
-    updateMemberScore(memberId, payload.scores.overall);
+    updateMemberScore(mid, payload.scores.overall);
   } catch {
     /* */
   }
+  appendHistory({
+    at: payload.savedAt!,
+    overall: payload.scores.overall,
+    memberId: mid,
+  });
+}
+
+function appendHistory(entry: HistoryEntry) {
   try {
     const hist = loadHistory();
-    const entry: HistoryEntry = {
-      date: payload.completedAt!,
-      overall: payload.scores.overall,
-      money: payload.scores.money,
-      food: payload.scores.food,
-      digital: payload.scores.digital,
-      emergency: payload.scores.emergency,
-      runwayDays: Math.round((payload.answers.emergency_fund_months || 0) * 30),
-      monthlyIncome: payload.answers.monthly_income,
-      monthlyExpenses: payload.answers.monthly_expenses,
-      memberId,
-      source: "local",
-    };
-    const last = hist[hist.length - 1];
-    if (
-      last &&
-      last.memberId === memberId &&
-      Math.abs(new Date(entry.date).getTime() - new Date(last.date).getTime()) <
-        10 * 60 * 1000
-    ) {
-      hist[hist.length - 1] = entry;
-    } else {
-      hist.push(entry);
-    }
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(-48)));
+    hist.unshift(entry);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(0, 48)));
   } catch {
     /* */
   }
 }
 
+/** Lifetime OR Household both unlock full tools. Household alone does seats. */
 export function isPremium(): boolean {
   if (typeof window === "undefined") return false;
-  return localStorage.getItem(PREMIUM_KEY) === "1";
+  return (
+    localStorage.getItem(PREMIUM_KEY) === "1" ||
+    localStorage.getItem(FAMILY_KEY) === "1"
+  );
 }
 
 export function setPremium(v: boolean) {
@@ -130,48 +113,14 @@ export function loadHistory(memberId?: string): HistoryEntry[] {
   }
 }
 
-export function mergeCloudHistory(cloud: HistoryEntry[]) {
-  if (typeof window === "undefined") return;
-  const local = loadHistory();
-  const map = new Map<string, HistoryEntry>();
-  for (const h of local) {
-    map.set(`${h.date}|${h.overall}|${h.memberId || "self"}`, h);
-  }
-  for (const h of cloud) {
-    const k = `${h.date}|${h.overall}|${h.memberId || "self"}`;
-    if (!map.has(k)) map.set(k, { ...h, source: "cloud" });
-  }
-  const merged = Array.from(map.values()).sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(merged.slice(-48)));
-}
-
 export function daysSinceLastAssessment(memberId?: string): number | null {
-  const hist = loadHistory(memberId);
-  const session = loadSession(memberId);
-  const last = hist[hist.length - 1]?.date || session?.completedAt || null;
-  if (!last) return null;
-  return Math.floor(
-    (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24)
-  );
-}
-
-export const CATEGORY_LABELS: Record<string, string> = {
-  money: "Money",
-  digital: "Digital",
-  food: "Food",
-  documents: "Documents",
-  communication: "Communication",
-  home: "Home",
-  skills: "Skills",
-  emergency: "Emergency",
-};
-
-export function categoryStatus(
-  score: number
-): "healthy" | "attention" | "critical" {
-  if (score >= 70) return "healthy";
-  if (score >= 45) return "attention";
-  return "critical";
+  const s = loadSession(memberId);
+  if (!s?.savedAt) {
+    const h = loadHistory(memberId)[0];
+    if (!h?.at) return null;
+    const ms = Date.now() - new Date(h.at).getTime();
+    return Math.max(0, Math.floor(ms / 86400000));
+  }
+  const ms = Date.now() - new Date(s.savedAt).getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
 }
