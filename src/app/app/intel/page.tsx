@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
-import { personalizeIntel, type IntelItem } from "@/lib/intel";
-import { meaningForIntel } from "@/lib/intel-meaning";
+import { personalIntelMeaning } from "@/lib/intel-meaning";
 import type { AssessmentAnswers, CategoryScores } from "@/types";
 import { PageHeader } from "@/components/app/page-header";
 import { GlassCard } from "@/components/app/glass-card";
@@ -19,110 +18,142 @@ const TABS = [
   { id: "energy", label: "Energy" },
 ] as const;
 
-/** Strip tags and junk so RSS never leaks raw HTML or href strings. */
+type Card = {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  impact: string;
+  hoursAgo: number;
+  url?: string;
+};
+
+const FALLBACK: Card[] = [
+  {
+    id: "fb-1",
+    title: "Payment rails and cash access stay a core watch item",
+    summary:
+      "When digital payments stall, households with tested cash and local vendors absorb less shock.",
+    category: "Financial",
+    impact: "high",
+    hoursAgo: 6,
+  },
+  {
+    id: "fb-2",
+    title: "Food price pressure keeps home buffers relevant",
+    summary:
+      "A simple multi-week food stock reduces exposure when shelves or prices move fast.",
+    category: "Essentials",
+    impact: "medium",
+    hoursAgo: 12,
+  },
+  {
+    id: "fb-3",
+    title: "Grid and outage stories still drive backup-power checks",
+    summary:
+      "Phone charge, cold storage, and lighting plans matter more than headline panic.",
+    category: "Energy",
+    impact: "medium",
+    hoursAgo: 18,
+  },
+];
+
 function cleanText(s: string): string {
   if (!s) return "";
   return s
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
     .replace(/https?:\/\/\S+/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function extractUrl(raw: string | undefined): string | undefined {
-  if (!raw) return undefined;
-  const m = raw.match(/https?:\/\/[^\s"'<>]+/i);
-  if (m && m[0].startsWith("http")) return m[0];
-  if (raw.startsWith("http")) return raw.split(/\s/)[0];
-  return undefined;
-}
-
 export default function IntelPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
-  const [topCat, setTopCat] = useState<string | undefined>();
-  const [overall, setOverall] = useState(50);
-  const [incomeSources, setIncomeSources] = useState(1);
-  const [altPay, setAltPay] = useState(true);
   const [answers, setAnswers] = useState<AssessmentAnswers | null>(null);
   const [scores, setScores] = useState<CategoryScores | null>(null);
-  const [live, setLive] = useState<(IntelItem & { url?: string })[]>([]);
+  const [cards, setCards] = useState<Card[]>(FALLBACK);
   const [liveAt, setLiveAt] = useState<string | null>(null);
-  const [liveErr, setLiveErr] = useState(false);
+  const [liveOk, setLiveOk] = useState(false);
 
   useEffect(() => {
-    const s = loadSession();
-    if (s) {
-      setOverall(s.scores.overall);
-      setTopCat(s.vulnerabilities?.[0]?.category);
-      setIncomeSources(s.answers.income_sources || 1);
-      setAltPay(!!s.answers.alt_payment_method);
-      setAnswers(s.answers);
-      setScores(s.scores);
+    try {
+      const s = loadSession();
+      if (s) {
+        setAnswers(s.answers);
+        setScores(s.scores);
+      }
+    } catch {
+      /* */
     }
 
     void (async () => {
       try {
         const res = await fetch("/api/intel/live");
+        if (!res.ok) return;
         const data = await res.json();
-        const headlines = (data.headlines || []) as Array<{
+        const raw = (data.items || data.headlines || []) as Array<{
+          id?: string;
           title?: string;
           summary?: string;
           category?: string;
           impact?: string;
-          hoursAgo?: number;
           url?: string;
           link?: string;
+          publishedAt?: string;
         }>;
-        setLive(
-          headlines.map((h, i) => ({
-            id: `live-${i}`,
-            title: cleanText(h.title || "Update"),
-            summary: cleanText(h.summary || "").slice(0, 220),
-            category: (h.category || "world") as IntelItem["category"],
-            impact: (h.impact || "medium") as IntelItem["impact"],
-            hoursAgo: h.hoursAgo ?? 0,
-            url: extractUrl(h.url || h.link),
-          }))
-        );
+        if (!raw.length) return;
+        const mapped: Card[] = raw.slice(0, 20).map((h, i) => ({
+          id: h.id || `live-${i}`,
+          title: cleanText(String(h.title || "Update")).slice(0, 140),
+          summary: cleanText(String(h.summary || "")).slice(0, 220),
+          category: String(h.category || "Watch"),
+          impact: String(h.impact || "medium"),
+          hoursAgo: 3 + i,
+          url:
+            (h.url && h.url.startsWith("http") && h.url) ||
+            (h.link && h.link.startsWith("http") && h.link) ||
+            undefined,
+        }));
+        setCards(mapped);
+        setLiveOk(true);
         setLiveAt(data.fetchedAt || new Date().toISOString());
       } catch {
-        setLiveErr(true);
+        /* keep fallback */
       }
     })();
   }, []);
 
-  const baseline = personalizeIntel({
-    overall,
-    topCategory: topCat,
-    hasAltPayment: altPay,
-    incomeSources,
-  });
-
-  const merged = [...live, ...baseline];
   const filtered =
     tab === "all"
-      ? merged
-      : merged.filter((i) => i.category.toLowerCase().includes(tab));
+      ? cards
+      : cards.filter((c) =>
+          c.category.toLowerCase().includes(
+            tab === "money"
+              ? "financ"
+              : tab === "food"
+                ? "essential"
+                : tab === "health"
+                  ? "health"
+                  : tab === "digital"
+                    ? "digital"
+                    : tab === "energy"
+                      ? "energy"
+                      : tab
+          )
+        );
+
+  const show = filtered.length ? filtered : cards;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Intel"
-        subtitle="World signals ranked against your readiness. Read what it means for you, then act."
+        subtitle="World signals translated into what it means for your plan."
         backHref="/app/overview"
         showBack
       />
-
-      <p className="text-xs text-zinc-500">
-        What you should do here: open one story, read "what this means for you",
-        then run What If or open Prepare.
-      </p>
 
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
@@ -142,23 +173,32 @@ export default function IntelPage() {
         ))}
       </div>
 
-      {liveErr && (
-        <p className="text-xs text-amber-400/90">
-          Live feed is slow. Baseline signals still show below.
-        </p>
-      )}
+      <p className="text-[11px] text-zinc-600">
+        {liveOk
+          ? `Live feed · updated ${liveAt ? new Date(liveAt).toLocaleString() : "recently"}`
+          : "Baseline watch list · live feed connects when available"}
+      </p>
 
       <div className="space-y-3">
-        {filtered.map((item) => {
-          const url = (item as { url?: string }).url;
-          const meaning =
-            answers && scores
-              ? meaningForIntel(item, answers, scores)
-              : null;
+        {show.map((item) => {
+          let meaning: string | null = null;
+          try {
+            if (answers && scores) {
+              meaning = personalIntelMeaning({
+                category: item.category,
+                title: item.title,
+                answers,
+                scores,
+              });
+            }
+          } catch {
+            meaning = null;
+          }
+
           return (
             <GlassCard key={item.id}>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
                   {item.category}
                 </span>
                 {item.id.startsWith("live-") && (
@@ -166,9 +206,6 @@ export default function IntelPage() {
                     LIVE
                   </span>
                 )}
-                <span className="text-[10px] text-zinc-600">
-                  {item.hoursAgo}h ago
-                </span>
                 <span
                   className={cn(
                     "ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
@@ -190,9 +227,9 @@ export default function IntelPage() {
                   {item.summary}
                 </p>
               )}
-              {url && (
+              {item.url && (
                 <a
-                  href={url}
+                  href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-zinc-200"
@@ -214,6 +251,7 @@ export default function IntelPage() {
               <div className="mt-3 flex flex-wrap gap-3 text-xs font-medium text-emerald-400">
                 <Link href="/app/what-if">Run What If →</Link>
                 <Link href="/app/prepare">Prepare</Link>
+                <Link href="/app/nearby">Nearby</Link>
               </div>
             </GlassCard>
           );
