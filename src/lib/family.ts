@@ -1,35 +1,49 @@
-export type FamilyRelation = "self" | "partner" | "child" | "parent" | "roommate" | "other";
+export type FamilyRelation =
+  | "self"
+  | "partner"
+  | "child"
+  | "parent"
+  | "roommate"
+  | "other";
 
-export interface FamilyMember {
+export type FamilyMember = {
   id: string;
   name: string;
   relationship: FamilyRelation;
-  isPrimary: boolean;
   readinessScore?: number;
+  /** Set when synced to Supabase family_members.id */
   cloudId?: string;
-}
+};
 
 const MEMBERS_KEY = "tiltshield_family_members";
 const ACTIVE_KEY = "tiltshield_active_member";
 const FAMILY_KEY = "tiltshield_family";
 
+function defaultSelf(): FamilyMember {
+  return {
+    id: "self",
+    name: "You",
+    relationship: "self",
+    readinessScore: undefined,
+  };
+}
+
 export function loadFamilyMembers(): FamilyMember[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return [defaultSelf()];
   try {
     const raw = localStorage.getItem(MEMBERS_KEY);
     if (!raw) {
-      const self: FamilyMember = {
-        id: "self",
-        name: "Me",
-        relationship: "self",
-        isPrimary: true,
-      };
-      saveFamilyMembers([self]);
-      return [self];
+      const seed = [defaultSelf()];
+      localStorage.setItem(MEMBERS_KEY, JSON.stringify(seed));
+      return seed;
     }
-    return JSON.parse(raw) as FamilyMember[];
+    const list = JSON.parse(raw) as FamilyMember[];
+    if (!list.some((m) => m.id === "self")) {
+      list.unshift(defaultSelf());
+    }
+    return list;
   } catch {
-    return [{ id: "self", name: "Me", relationship: "self", isPrimary: true }];
+    return [defaultSelf()];
   }
 }
 
@@ -46,56 +60,52 @@ export function getActiveMemberId(): string {
 export function setActiveMemberId(id: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem(ACTIVE_KEY, id);
-  window.dispatchEvent(new CustomEvent("tiltshield:member-change", { detail: { id } }));
 }
 
 export function getActiveMember(): FamilyMember {
-  const members = loadFamilyMembers();
   const id = getActiveMemberId();
-  return members.find((m) => m.id === id) || members[0];
+  return loadFamilyMembers().find((m) => m.id === id) || defaultSelf();
 }
 
-export function addFamilyMember(
-  name: string,
-  relationship: FamilyRelation
-): FamilyMember {
+export function addFamilyMember(name: string, relationship: FamilyRelation) {
   const members = loadFamilyMembers();
-  const m: FamilyMember = {
-    id: crypto.randomUUID(),
+  const id = `m_${Date.now().toString(36)}`;
+  members.push({
+    id,
     name: name.trim() || "Member",
     relationship,
-    isPrimary: false,
-  };
-  saveFamilyMembers([...members, m]);
-  return m;
+  });
+  saveFamilyMembers(members);
+  return id;
 }
 
 export function removeFamilyMember(id: string) {
   if (id === "self") return;
-  const members = loadFamilyMembers().filter((m) => m.id !== id);
-  saveFamilyMembers(members);
+  saveFamilyMembers(loadFamilyMembers().filter((m) => m.id !== id));
   if (getActiveMemberId() === id) setActiveMemberId("self");
 }
 
-export function updateMemberScore(id: string, score: number) {
+export function updateMemberScore(memberId: string, score: number) {
   const members = loadFamilyMembers().map((m) =>
-    m.id === id ? { ...m, readinessScore: score } : m
+    m.id === memberId ? { ...m, readinessScore: score } : m
   );
   saveFamilyMembers(members);
 }
 
-export function patchMemberCloudId(localId: string, cloudId: string) {
+export function setMemberCloudId(localId: string, cloudId: string) {
   const members = loadFamilyMembers().map((m) =>
     m.id === localId ? { ...m, cloudId } : m
   );
   saveFamilyMembers(members);
 }
 
+/**
+ * Household seats unlock only with family purchase (or explicit family flag).
+ * Individual lifetime does NOT include multi-member profiles.
+ */
 export function isFamilyUnlocked(): boolean {
   if (typeof window === "undefined") return false;
-  if (localStorage.getItem("tiltshield_lifetime") === "1") return true;
-  if (localStorage.getItem(FAMILY_KEY) === "1") return true;
-  return false;
+  return localStorage.getItem(FAMILY_KEY) === "1";
 }
 
 export function setFamilyUnlocked(v: boolean) {
