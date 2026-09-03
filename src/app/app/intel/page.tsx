@@ -61,9 +61,15 @@ const FALLBACK: Card[] = [
 function cleanText(s: string): string {
   if (!s) return "";
   return s
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, " ")
+    .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, '"')
+    .replace(/&#39;/g, "'")
     .replace(/https?:\/\/\S+/gi, "")
     .replace(/\s+/g, " ")
     .trim();
