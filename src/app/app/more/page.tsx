@@ -18,6 +18,7 @@ import {
 
 const LINKS = [
   { href: "/app/nearby", label: "Nearby", desc: "What do you need? Map + places", Icon: IconPin },
+  { href: "/app/network", label: "Your network", desc: "Trusted places you saved", Icon: IconCommunity },
   { href: "/app/family", label: "Household", desc: "Family scores & emergency plan", Icon: IconCommunity },
   { href: "/app/history", label: "Progress", desc: "Score now vs last check", Icon: IconTarget },
   { href: "/app/calculators", label: "Calculators", desc: "Runway, buffer, exposure", Icon: IconWallet },
@@ -43,7 +44,6 @@ export default function MorePage() {
       /* */
     }
     setPrem(isPremium());
-    // Drop old service-worker caches so UI updates after deploys
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistrations().then((regs) => {
         regs.forEach((r) => r.update());

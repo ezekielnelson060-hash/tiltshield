@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
   NEARBY_CATEGORIES,
@@ -254,21 +255,5 @@ export default function NearbyPage() {
         </Link>
       )}
     </div>
-  );
-}
-
-function Link({
-  href,
-  className,
-  children,
-}: {
-  href: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a href={href} className={className}>
-      {children}
-    </a>
   );
 }
