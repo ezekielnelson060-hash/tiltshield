@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/app/glass-card";
 import { CATEGORY_ICONS } from "@/components/app/icons";
 import { TodaysPriority } from "@/components/app/todays-priority";
-import { AssessmentReminder } from "@/components/app/assessment-reminder";
 import {
   searchNearbyPlaces,
   mapsSearchUrl,
@@ -220,14 +219,23 @@ export default function OverviewPage() {
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
-          {greetingForHour()}, {name}
+          {greetingForHour()}, {name}{" "}
+          <span className="inline-block" aria-hidden>
+            👋
+          </span>
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Command center for the next 24 hours — score, gap, places, intel.
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+            Your area
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+            Assessed recently
+          </span>
+          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-400/90">
+            Live intel on
+          </span>
+        </div>
       </div>
-
-      <AssessmentReminder />
 
       {/* Score + exposure row */}
       <div className="grid gap-3 sm:grid-cols-[1fr_1.1fr]">
