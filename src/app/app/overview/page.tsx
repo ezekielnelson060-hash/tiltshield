@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   loadSession,
   isPremium,
-  daysSinceLastAssessment,
   type TiltSession,
 } from "@/lib/session";
 import { computeBufferPlan } from "@/lib/buffer";
 import {
-  formatMoney,
   greetingForHour,
   resilienceLabel,
+  formatDistance,
 } from "@/lib/locale";
 import { getActiveMember } from "@/lib/family";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,24 @@ import { GlassCard } from "@/components/app/glass-card";
 import { CATEGORY_ICONS } from "@/components/app/icons";
 import { TodaysPriority } from "@/components/app/todays-priority";
 import { AssessmentReminder } from "@/components/app/assessment-reminder";
+import {
+  searchNearbyPlaces,
+  mapsSearchUrl,
+  type NearbyPlace,
+} from "@/lib/nearby";
 import type { CategoryScores } from "@/types";
+
+const NearbyMap = dynamic(
+  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-44 items-center justify-center rounded-xl bg-[#080d16] text-xs text-zinc-600">
+        Map…
+      </div>
+    ),
+  }
+);
 
 const CATEGORY_TILES: {
   key: keyof CategoryScores;
@@ -68,20 +85,25 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+type IntelBrief = { title: string; category?: string; url?: string };
+
 export default function OverviewPage() {
   const [session, setSession] = useState<TiltSession | null>(null);
   const [name, setName] = useState("there");
   const [premium, setPrem] = useState(false);
-  const [daysSince, setDaysSince] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
+  const [places, setPlaces] = useState<NearbyPlace[]>([]);
+  const [intel, setIntel] = useState<IntelBrief[]>([]);
 
   useEffect(() => {
     try {
       const s = loadSession();
       setSession(s);
       setPrem(isPremium());
-      setDaysSince(daysSinceLastAssessment());
       setName(
         localStorage.getItem("tiltshield_display_name") ||
           getActiveMember().name ||
@@ -91,6 +113,53 @@ export default function OverviewPage() {
       setSession(null);
     }
     setReady(true);
+
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const c = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          setCoords(c);
+          void searchNearbyPlaces("pharmacy", c, { limit: 6 })
+            .then(setPlaces)
+            .catch(() => setPlaces([]));
+        },
+        () => {
+          void searchNearbyPlaces("pharmacy", null, {
+            national: true,
+            limit: 6,
+          })
+            .then(setPlaces)
+            .catch(() => setPlaces([]));
+        },
+        { timeout: 8000 }
+      );
+    }
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/intel/live");
+        if (!res.ok) return;
+        const data = await res.json();
+        const list = (data.headlines || data.items || []).slice(0, 4).map(
+          (h: {
+            title?: string;
+            category?: string;
+            url?: string;
+            link?: string;
+          }) => ({
+            title: String(h.title || "Update").slice(0, 120),
+            category: h.category,
+            url: h.url || h.link,
+          })
+        );
+        setIntel(list);
+      } catch {
+        setIntel([]);
+      }
+    })();
   }, []);
 
   async function unlock() {
@@ -121,7 +190,7 @@ export default function OverviewPage() {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p className="text-lg font-semibold text-zinc-50">Start here</p>
         <p className="mt-2 text-sm text-zinc-400">
-          Answer 9 short questions so Today can show your score, priority, and
+          Nine short questions so Today can show your score, priority, map, and
           next move.
         </p>
         <Button asChild className="mt-6">
@@ -134,51 +203,38 @@ export default function OverviewPage() {
   const scores = session.scores;
   const answers = session.answers;
   const vulnerabilities = session.vulnerabilities || [];
-  const top = vulnerabilities[0];
   const label = resilienceLabel(scores.overall || 0);
-
-  let runwayDays = 0;
-  let bufferGap = 0;
+  let runwayDays = Math.round((answers.emergency_fund_months || 0) * 30);
   try {
-    const plan = computeBufferPlan({
+    computeBufferPlan({
       monthlyIncome: answers.monthly_income || 0,
       monthlyExpenses: answers.monthly_expenses || 0,
       emergencyFundMonths: answers.emergency_fund_months || 0,
       targetMonths: 3,
     });
-    runwayDays = Math.round((answers.emergency_fund_months || 0) * 30);
-    bufferGap = plan.gapAmount || 0;
   } catch {
-    runwayDays = Math.round((answers.emergency_fund_months || 0) * 30);
+    /* */
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
           {greetingForHour()}, {name}
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Your command center for the next 24 hours. Read your score, fix the
-          top gap, then take one move.
+          Command center for the next 24 hours — score, gap, places, intel.
         </p>
-        {daysSince !== null && (
-          <p className="mt-2 text-xs text-zinc-600">
-            Last check {daysSince === 0 ? "today" : `${daysSince} days ago`}
-          </p>
-        )}
       </div>
 
       <AssessmentReminder />
 
-      <GlassCard tone="accent">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Your resilience
-        </p>
-        <div className="mt-3 flex items-center gap-4">
-          <div className="relative">
+      {/* Score + exposure row */}
+      <div className="grid gap-3 sm:grid-cols-[1fr_1.1fr]">
+        <GlassCard className="flex items-center gap-4">
+          <div className="relative shrink-0">
             <ScoreRing score={scores.overall || 0} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
               <span className="text-2xl font-bold tabular-nums text-zinc-50">
                 {scores.overall || 0}
               </span>
@@ -186,102 +242,165 @@ export default function OverviewPage() {
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-emerald-400">{label}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              Your resilience
+            </p>
+            <p className="mt-1 text-lg font-semibold text-emerald-400">{label}</p>
             <p className="mt-1 text-xs text-zinc-500">
               About {runwayDays} days of essentials runway on file
             </p>
-            {bufferGap > 0 && (
-              <p className="mt-1 text-xs text-zinc-500">
-                Gap to a 3-month buffer: {formatMoney(bufferGap)}
-              </p>
-            )}
           </div>
-        </div>
-      </GlassCard>
+        </GlassCard>
 
-      <GlassCard tone={top ? "danger" : "success"}>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Your priority
-        </p>
-        <p className="mt-2 text-lg font-semibold text-zinc-50">
-          {top?.title || "No critical gap flagged"}
-        </p>
-        <p className="mt-2 text-sm text-zinc-400">
-          {top?.description ||
-            "Keep stacking food, cash access, and offline backups."}
-        </p>
-        <Link
-          href="/app/risk"
-          className="mt-3 inline-block text-xs font-medium text-emerald-400"
-        >
-          See full risk picture →
-        </Link>
-      </GlassCard>
+        <GlassCard tone={runwayDays < 14 ? "danger" : "default"}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Your priority
+          </p>
+          <p className="mt-2 text-lg font-semibold text-zinc-50">
+            {vulnerabilities[0]?.title || "Financial dependency"}
+          </p>
+          <p className="mt-1 text-sm text-zinc-400">
+            {vulnerabilities[0]?.next_action ||
+              "Keep stacking food, cash access, and offline backups."}
+          </p>
+          <Link
+            href="/app/risk"
+            className="mt-3 inline-block text-xs font-medium text-emerald-400"
+          >
+            See full risk picture →
+          </Link>
+        </GlassCard>
+      </div>
 
       <TodaysPriority
         answers={answers}
         vulnerabilities={vulnerabilities}
       />
 
-      <section>
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Open a focus area
-        </p>
-        <p className="mb-3 text-xs text-zinc-500">
-          Tap a tile to see what to do next for that system.
+      {/* Intel strip */}
+      <GlassCard>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Intel · what changed
+          </p>
+          <Link href="/app/intel" className="text-xs font-medium text-emerald-400">
+            All intel →
+          </Link>
+        </div>
+        {intel.length === 0 ? (
+          <p className="mt-3 text-xs text-zinc-500">
+            Live feed loading or quiet right now. Open Intel for the full board.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {intel.map((item, i) => (
+              <li key={i}>
+                {item.url ? (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 transition hover:border-emerald-500/25"
+                  >
+                    <span className="text-[10px] uppercase text-zinc-600">
+                      {item.category || "Watch"}
+                    </span>
+                    <span className="mt-0.5 block text-sm text-zinc-200">
+                      {item.title}
+                    </span>
+                  </a>
+                ) : (
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
+                    <span className="text-sm text-zinc-200">{item.title}</span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </GlassCard>
+
+      {/* Map inset — OMNIV-style nearby */}
+      <GlassCard className="!p-0 overflow-hidden">
+        <div className="flex items-center justify-between px-4 pt-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              Nearby
+            </p>
+            <p className="text-xs text-zinc-500">Pharmacies and essentials near you</p>
+          </div>
+          <Link
+            href="/app/nearby?q=pharmacy"
+            className="text-xs font-medium text-emerald-400"
+          >
+            Open map →
+          </Link>
+        </div>
+        <div className="mt-3 border-t border-white/[0.06]">
+          <NearbyMap
+            places={places}
+            selected={places[0] || null}
+            user={coords}
+            onSelect={() => {}}
+            className="h-44 w-full"
+          />
+        </div>
+        {places.length > 0 && (
+          <ul className="space-y-1 px-3 py-3">
+            {places.slice(0, 3).map((p) => (
+              <li key={p.id}>
+                <a
+                  href={mapsSearchUrl(p.name, p.lat, p.lon)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-white/[0.04]"
+                >
+                  <span className="truncate">{p.name}</span>
+                  <span className="shrink-0 text-[11px] text-zinc-500">
+                    {p.distanceKm != null
+                      ? formatDistance(p.distanceKm)
+                      : "Map"}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </GlassCard>
+
+      {/* Focus tiles */}
+      <div>
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Resilience at a glance
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {CATEGORY_TILES.map((t) => {
-            const Icon = CATEGORY_ICONS[t.key] || CATEGORY_ICONS.money;
+            const Icon = CATEGORY_ICONS[t.key];
             const val = scores[t.key] ?? 0;
             return (
               <Link
                 key={t.key}
                 href={t.href}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 transition hover:border-emerald-500/25"
+                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 transition hover:border-emerald-500/30"
               >
-                <Icon className="h-4 w-4 text-emerald-400" />
-                <p className="mt-2 text-xs font-medium text-zinc-200">{t.label}</p>
-                <p className="text-lg font-bold tabular-nums text-zinc-50">{val}</p>
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
+                </span>
+                <p className="mt-2 text-xs text-zinc-500">{t.label}</p>
+                <p className="text-lg font-semibold tabular-nums text-zinc-100">
+                  {val}
+                </p>
               </Link>
             );
           })}
         </div>
-      </section>
-
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Link
-          href="/app/what-if"
-          className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-sm text-zinc-200"
-        >
-          Test a What If scenario →
-        </Link>
-        <Link
-          href="/app/prepare"
-          className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-sm text-zinc-200"
-        >
-          Work your year plan →
-        </Link>
-        <Link
-          href="/app/nearby"
-          className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-sm text-zinc-200"
-        >
-          Find places near you →
-        </Link>
-        <Link
-          href="/app/intel"
-          className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-sm text-zinc-200"
-        >
-          Read live Intel →
-        </Link>
       </div>
 
       {!premium && (
-        <GlassCard>
+        <GlassCard tone="accent">
           <p className="text-sm font-medium text-zinc-100">Unlock full tools</p>
           <p className="mt-1 text-xs text-zinc-500">
-            Lifetime $29: full simulators, vault, history. Household $49: all of
-            that plus family profiles (buy under Household).
+            Lifetime plan — deeper What If, vault, progress history.
           </p>
           <Button
             size="sm"
@@ -289,7 +408,7 @@ export default function OverviewPage() {
             disabled={paying}
             onClick={() => void unlock()}
           >
-            {paying ? "Opening…" : "Lifetime · $29"}
+            {paying ? "Opening…" : "Unlock · $29"}
           </Button>
         </GlassCard>
       )}
