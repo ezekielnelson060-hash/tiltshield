@@ -9,6 +9,7 @@ import type { WhatIfScenario, WhatIfResult } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
+import { WhatIfTrustedNetwork } from "@/components/app/whatif-trusted";
 import { GlassCard } from "@/components/app/glass-card";
 import {
   searchNearbyPlaces,
@@ -295,6 +296,8 @@ export default function WhatIfPage() {
               )}
             </GlassCard>
           )}
+
+          <WhatIfTrustedNetwork />
         </div>
       )}
 
