@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
 import { detectHouseholdDependencies } from "@/lib/household";
+import { createClient } from "@/lib/supabase/client";
 
 export default function FamilyPage() {
   const router = useRouter();
@@ -73,11 +74,36 @@ export default function FamilyPage() {
 
   async function unlockFamily() {
     setPaying(true);
+    setError(null);
     try {
+      let email: string | undefined;
+      let displayName: string | undefined;
+      let userId: string | undefined;
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          userId = user.id;
+          email = user.email || undefined;
+          displayName =
+            (user.user_metadata?.full_name as string) ||
+            (user.user_metadata?.name as string) ||
+            undefined;
+        }
+      } catch {
+        /* */
+      }
       const res = await fetch("/api/flutterwave/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: "family" }),
+        body: JSON.stringify({
+          product: "family",
+          email,
+          name: displayName,
+          userId,
+        }),
       });
       const json = await res.json();
       if (json.link) {
@@ -218,6 +244,7 @@ export default function FamilyPage() {
           </p>
           <p className="mt-1 text-xs text-zinc-500">
             Household plan $49 lifetime — premium tools plus up to 6 profiles.
+            Individual lifetime does not include family seats.
           </p>
           <Button
             className="mt-4"
