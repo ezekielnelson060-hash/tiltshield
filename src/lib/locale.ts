@@ -1,52 +1,50 @@
-/** Locale-aware formatting. Currency defaults to USD for Tiltshield. */
-
-export function getLocale(): string {
-  if (typeof navigator === "undefined") return "en-US";
-  return navigator.language || "en-US";
-}
-
-/** Product currency is USD globally unless you override. */
-export function getCurrencyCode(): string {
-  if (typeof window !== "undefined") {
-    try {
-      const forced = localStorage.getItem("tiltshield_currency");
-      if (forced && forced.length === 3) return forced.toUpperCase();
-    } catch {
-      /* */
-    }
-  }
-  return "USD";
-}
-
-export function formatMoney(amount: number, currency?: string): string {
-  const cur = currency || getCurrencyCode();
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: cur,
-      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    }).format(amount || 0);
-  } catch {
-    return `$${Math.round(amount || 0)}`;
-  }
-}
-
-export function formatDistance(km: number): string {
-  if (km < 0.1) return "under 100 m";
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(1)} km`;
-}
-
-export function greetingForHour(d = new Date()): string {
-  const h = d.getHours();
+export function greetingForHour(hour?: number): string {
+  const h = hour ?? new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
 }
 
 export function resilienceLabel(score: number): string {
-  if (score >= 80) return "Strong base";
-  if (score >= 60) return "Stable";
-  if (score >= 40) return "Building";
-  return "Exposed";
+  if (score >= 80) return "Steady";
+  if (score >= 60) return "Building";
+  if (score >= 40) return "Fragile";
+  if (score >= 20) return "Exposed";
+  return "Critical";
+}
+
+export function formatMoney(n: number, currency = "USD"): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(n);
+  } catch {
+    return `$${Math.round(n)}`;
+  }
+}
+
+export function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  if (km < 10) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
+}
+
+/** e.g. 3rd Sept 2026 */
+export function formatLongDate(input: string | Date | null | undefined): string {
+  if (!input) return "—";
+  const d = typeof input === "string" ? new Date(input) : input;
+  if (Number.isNaN(d.getTime())) return "—";
+  const day = d.getDate();
+  const ord =
+    day % 10 === 1 && day !== 11
+      ? "st"
+      : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+          ? "rd"
+          : "th";
+  const mon = d.toLocaleString("en-GB", { month: "short" });
+  return `${day}${ord} ${mon} ${d.getFullYear()}`;
 }
