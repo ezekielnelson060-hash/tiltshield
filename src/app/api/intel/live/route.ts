@@ -53,9 +53,7 @@ function stripTags(s: string): string {
   if (!s) return "";
   return s
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    // full anchors
     .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ")
-    // broken / partial anchors that leak into RSS
     .replace(/<a\b[^>]*/gi, " ")
     .replace(/<\/?[a-zA-Z][^>]*>/g, " ")
     .replace(/<[^>]*/g, " ")
@@ -69,7 +67,7 @@ function stripTags(s: string): string {
     .replace(/\bhref\s*=\s*["'][^"']*/gi, " ")
     .replace(/\bhref\s*=/gi, " ")
     .replace(/https?:\/\/\S+/gi, " ")
-    .replace(/[<>]/g, " ")
+    .replace(/[<>"']/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -94,16 +92,17 @@ function parseItems(xml: string, meta: (typeof FEEDS)[0]): LiveIntelHit[] {
       (block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || [])[1] || ""
     );
     if (!title) continue;
-    // Drop summaries that are still markup fragments
-    const summary = (desc || title).slice(0, 220);
-    const cleanSummary =
-      /^[\s<"']*(a\s+href|href\s*=|<a)/i.test(summary) || summary.length < 8
+    const rawSummary = (desc || title).slice(0, 220);
+    const summary =
+      !rawSummary ||
+      rawSummary.length < 12 ||
+      /href|<[a-z]|javascript:/i.test(rawSummary)
         ? title.slice(0, 220)
-        : summary;
+        : rawSummary;
     items.push({
       id: `live-${meta.category}-${Buffer.from(title).toString("base64").slice(0, 16)}`,
       title: title.slice(0, 140),
-      summary: cleanSummary,
+      summary,
       source: meta.source,
       url: link.startsWith("http") ? link : "",
       publishedAt: pub || null,
