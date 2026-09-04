@@ -60,19 +60,29 @@ const FALLBACK: Card[] = [
 
 function cleanText(s: string): string {
   if (!s) return "";
-  return s
-    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, " ")
-    .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/https?:\/\/\S+/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  let t = String(s);
+  t = t.replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, " ");
+  t = t.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ");
+  t = t.replace(/<a\b[^>]*/gi, " ");
+  t = t.replace(/<\/?[a-zA-Z][^>]*>/g, " ");
+  t = t.replace(/<[^>]*/g, " ");
+  t = t.replace(/&nbsp;/gi, " ");
+  t = t.replace(/&amp;/g, "&");
+  t = t.replace(/&lt;/g, "<");
+  t = t.replace(/&gt;/g, ">");
+  t = t.replace(/&quot;/g, '"');
+  t = t.replace(/&#39;/g, "'");
+  t = t.replace(/&#\d+;/g, " ");
+  t = t.replace(/https?:\/\/\S+/gi, " ");
+  t = t.replace(/\bhref\s*=\s*["'][^"']*/gi, " ");
+  t = t.replace(/\bhref\s*=/gi, " ");
+  t = t.replace(/["']?\s*>/g, " ");
+  t = t.replace(/[<>"']/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  if (!t || t.length < 12) return "";
+  if (/href|javascript:|<\/?[a-z]/i.test(t)) return "";
+  if (/^[=/\s]*$/.test(t)) return "";
+  return t;
 }
 
 export default function IntelPage() {
@@ -218,7 +228,9 @@ export default function IntelPage() {
               <p className="mt-3 text-sm font-semibold leading-snug text-zinc-50">
                 {item.title}
               </p>
-              {item.summary && (
+              {item.summary &&
+                item.summary.length > 12 &&
+                !/href|<|>/i.test(item.summary) && (
                 <p className="mt-2 text-xs leading-relaxed text-zinc-500">
                   {item.summary}
                 </p>
