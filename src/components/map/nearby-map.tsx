@@ -9,6 +9,8 @@ type Props = {
   user?: { lat: number; lng: number } | null;
   onSelect?: (p: NearbyPlace) => void;
   className?: string;
+  /** city/nation = local pins; global = show all results worldwide */
+  scope?: "city" | "nation" | "global";
 };
 
 /**
@@ -20,6 +22,7 @@ export function NearbyMap({
   user,
   onSelect,
   className,
+  scope = "city",
 }: Props) {
   const [ready, setReady] = useState(false);
 
@@ -29,7 +32,6 @@ export function NearbyMap({
 
     async function boot() {
       const L = (await import("leaflet")).default;
-      // CSS once
       if (!document.getElementById("leaflet-css")) {
         const link = document.createElement("link");
         link.id = "leaflet-css";
@@ -41,15 +43,16 @@ export function NearbyMap({
       const el = document.getElementById("tiltshield-nearby-map");
       if (!el || cancelled) return;
 
-      // Reset container if remounting
       el.innerHTML = "";
-      // Always prefer a city-scale view when we know the user — never world dump
-      const localPlaces = user
-        ? places.filter((p) => {
-            if (p.distanceKm == null) return true;
-            return p.distanceKm <= 50;
-          })
-        : places.filter((p) => p.distanceKm == null || p.distanceKm <= 50);
+      const maxKm =
+        scope === "global" ? 20000 : scope === "nation" ? 900 : 120;
+      const localPlaces =
+        scope === "global"
+          ? places
+          : places.filter((p) => {
+              if (p.distanceKm == null) return true;
+              return p.distanceKm <= maxKm;
+            });
       const focus =
         selected && localPlaces.some((p) => p.id === selected.id)
           ? selected
@@ -58,9 +61,17 @@ export function NearbyMap({
         ? [user.lat, user.lng]
         : focus
           ? [focus.lat, focus.lon]
-          : [6.45, 3.4]; // safe city default — never world [0,0]
-      // City zoom when user known; never world view
-      const zoom = user ? 13 : focus ? 13 : 11;
+          : [6.45, 3.4];
+      const zoom =
+        scope === "global"
+          ? focus
+            ? 4
+            : 2
+          : user
+            ? 12
+            : focus
+              ? 12
+              : 11;
 
       map = L.map(el, {
         zoomControl: true,
@@ -71,7 +82,6 @@ export function NearbyMap({
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         { attribution: "&copy; OpenStreetMap", maxZoom: 19 }
       );
-      // Esri World Imagery — free for light use, no key
       const satellite = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         { attribution: "Esri", maxZoom: 19 }
@@ -110,7 +120,6 @@ export function NearbyMap({
           .bindTooltip("You");
       }
 
-      // Only local pins — never scatter intercontinental markers
       const pins = localPlaces.length ? localPlaces : focus ? [focus] : [];
       pins.forEach((p) => {
         const m = L.marker([p.lat, p.lon], {
@@ -120,20 +129,23 @@ export function NearbyMap({
         m.on("click", () => onSelect?.(p));
       });
 
-      // Stay city-scale: fit only local pins, clamp min zoom
       if (pins.length > 1) {
         const bounds = L.latLngBounds(
           pins.map((p) => [p.lat, p.lon] as [number, number])
         );
-        if (user) bounds.extend([user.lat, user.lng]);
-        map.fitBounds(bounds.pad(0.2), { maxZoom: 14 });
+        if (user && scope !== "global") bounds.extend([user.lat, user.lng]);
+        map.fitBounds(bounds.pad(0.2), {
+          maxZoom: scope === "global" ? 6 : 14,
+        });
       } else if (pins.length === 1) {
-        map.setView([pins[0].lat, pins[0].lon], 14);
+        map.setView(
+          [pins[0].lat, pins[0].lon],
+          scope === "global" ? 5 : 14
+        );
       } else if (user) {
-        map.setView([user.lat, user.lng], 13);
+        map.setView([user.lat, user.lng], 12);
       }
-      // Hard floor — never allow world view
-      if (map.getZoom() < 10) map.setZoom(11);
+      if (scope !== "global" && map.getZoom() < 10) map.setZoom(11);
 
       setReady(true);
       setTimeout(() => map?.invalidateSize(), 100);
@@ -147,7 +159,7 @@ export function NearbyMap({
         map = null;
       }
     };
-  }, [places, selected?.id, user?.lat, user?.lng, onSelect]);
+  }, [places, selected?.id, user?.lat, user?.lng, onSelect, scope]);
 
   return (
     <div
