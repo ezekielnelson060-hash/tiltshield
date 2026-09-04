@@ -1,34 +1,97 @@
-export function greetingForHour(hour?: number): string {
-  const h = hour ?? new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+/** Locale-aware formatting — currency, distance, dates from the browser. */
+
+export function getLocale(): string {
+  if (typeof navigator === "undefined") return "en-US";
+  return navigator.language || "en-US";
 }
 
-export function resilienceLabel(score: number): string {
-  if (score >= 80) return "Steady";
-  if (score >= 60) return "Building";
-  if (score >= 40) return "Fragile";
-  if (score >= 20) return "Exposed";
-  return "Critical";
-}
-
-export function formatMoney(n: number, currency = "USD"): string {
+export function getCurrencyCode(): string {
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(n);
+    const locale = getLocale();
+    const map: Record<string, string> = {
+      "en-US": "USD",
+      "en-GB": "GBP",
+      "en-AU": "AUD",
+      "en-CA": "CAD",
+      "en-NZ": "NZD",
+      "nl-NL": "EUR",
+      "de-DE": "EUR",
+      "fr-FR": "EUR",
+      "fr-BE": "EUR",
+      "es-ES": "EUR",
+      "it-IT": "EUR",
+      "pt-PT": "EUR",
+      "pt-BR": "BRL",
+      "ja-JP": "JPY",
+      "zh-CN": "CNY",
+      "zh-HK": "HKD",
+      "zh-TW": "TWD",
+      "ko-KR": "KRW",
+      "sv-SE": "SEK",
+      "nb-NO": "NOK",
+      "da-DK": "DKK",
+      "pl-PL": "PLN",
+      "en-NG": "NGN",
+      "en-ZA": "ZAR",
+      "en-IN": "INR",
+      "en-SG": "SGD",
+      "en-IE": "EUR",
+    };
+    if (map[locale]) return map[locale];
+    const base = locale.split("-")[0];
+    const byBase: Record<string, string> = {
+      en: "USD",
+      nl: "EUR",
+      de: "EUR",
+      fr: "EUR",
+      es: "EUR",
+      it: "EUR",
+      pt: "BRL",
+      ja: "JPY",
+      zh: "CNY",
+      ko: "KRW",
+    };
+    return byBase[base] || "USD";
   } catch {
-    return `$${Math.round(n)}`;
+    return "USD";
+  }
+}
+
+export function formatMoney(amount: number, currency?: string): string {
+  const cur = currency || getCurrencyCode();
+  try {
+    return new Intl.NumberFormat(getLocale(), {
+      style: "currency",
+      currency: cur,
+      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    }).format(amount);
+  } catch {
+    return `${cur} ${amount.toLocaleString()}`;
   }
 }
 
 export function formatDistance(km: number): string {
+  const locale = getLocale();
+  if (locale.startsWith("en-US")) {
+    const mi = km * 0.621371;
+    return mi < 0.1 ? `${Math.round(mi * 5280)} ft` : `${mi.toFixed(1)} mi`;
+  }
   if (km < 1) return `${Math.round(km * 1000)} m`;
-  if (km < 10) return `${km.toFixed(1)} km`;
-  return `${Math.round(km)} km`;
+  return `${km.toFixed(1)} km`;
+}
+
+export function greetingForHour(hour?: number): string {
+  const h = hour ?? new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+export function resilienceLabel(score: number): string {
+  if (score >= 75) return "Strong";
+  if (score >= 55) return "Stable";
+  if (score >= 40) return "Attention";
+  return "Fragile";
 }
 
 /** e.g. 3rd Sept 2026 */
