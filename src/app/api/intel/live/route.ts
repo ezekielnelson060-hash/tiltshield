@@ -53,7 +53,9 @@ function stripTags(s: string): string {
   if (!s) return "";
   return s
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    // full anchors
     .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ")
+    // broken / partial anchors that leak into RSS
     .replace(/<a\b[^>]*/gi, " ")
     .replace(/<\/?[a-zA-Z][^>]*>/g, " ")
     .replace(/<[^>]*/g, " ")
@@ -92,10 +94,16 @@ function parseItems(xml: string, meta: (typeof FEEDS)[0]): LiveIntelHit[] {
       (block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i) || [])[1] || ""
     );
     if (!title) continue;
+    // Drop summaries that are still markup fragments
+    const summary = (desc || title).slice(0, 220);
+    const cleanSummary =
+      /^[\s<"']*(a\s+href|href\s*=|<a)/i.test(summary) || summary.length < 8
+        ? title.slice(0, 220)
+        : summary;
     items.push({
       id: `live-${meta.category}-${Buffer.from(title).toString("base64").slice(0, 16)}`,
       title: title.slice(0, 140),
-      summary: (desc || title).slice(0, 220),
+      summary: cleanSummary,
       source: meta.source,
       url: link.startsWith("http") ? link : "",
       publishedAt: pub || null,
