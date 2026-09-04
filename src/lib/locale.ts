@@ -88,10 +88,11 @@ export function greetingForHour(hour?: number): string {
 }
 
 export function resilienceLabel(score: number): string {
-  if (score >= 75) return "Strong";
-  if (score >= 55) return "Stable";
-  if (score >= 40) return "Attention";
-  return "Fragile";
+  if (score >= 80) return "Hardened";
+  if (score >= 65) return "Stable under pressure";
+  if (score >= 45) return "Exposed";
+  if (score >= 25) return "Fragile";
+  return "Breakable";
 }
 
 /** e.g. 3rd Sept 2026 */
