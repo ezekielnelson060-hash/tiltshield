@@ -13,6 +13,7 @@ import { CATEGORY_ICONS } from "@/components/app/icons";
 import { TodaysPriority } from "@/components/app/todays-priority";
 import { mapsSearchUrl } from "@/lib/nearby";
 import { yearPlanSummary } from "@/lib/plan-from-assessment";
+import { buildExposureSnapshot } from "@/lib/break-point";
 import { useTodayData } from "@/hooks/use-today-data";
 import type { CategoryScores } from "@/types";
 
@@ -95,8 +96,8 @@ export function TodayScreen() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p className="text-lg font-semibold text-zinc-50">Start here</p>
-        <p className="mt-2 text-sm text-zinc-400">Nine short questions so Today can show your score, priority, map, and next move.</p>
-        <Button asChild className="mt-6"><Link href="/assessment">Get my resilience score</Link></Button>
+        <p className="mt-2 text-sm text-zinc-400">Nine short questions so Today can show your exposure, break points, map, and next move.</p>
+        <Button asChild className="mt-6"><Link href="/assessment">Measure your exposure</Link></Button>
       </div>
     );
   }
@@ -106,6 +107,7 @@ export function TodayScreen() {
   const vulnerabilities = session.vulnerabilities || [];
   const label = resilienceLabel(scores.overall || 0);
   const runwayDays = Math.round((answers.emergency_fund_months || 0) * 30);
+  const exposure = buildExposureSnapshot(answers, scores);
   try {
     computeBufferPlan({
       monthlyIncome: answers.monthly_income || 0,
@@ -138,18 +140,60 @@ export function TodayScreen() {
             </div>
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Your resilience</p>
-            <p className="mt-1 text-lg font-semibold text-emerald-400">{label}</p>
-            <p className="mt-1 text-xs text-zinc-500">About {runwayDays} days of essentials runway on file</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-400/90">Exposure</p>
+            <p className="mt-1 text-lg font-semibold text-zinc-50">{label}</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+              {exposure
+                ? `You have ${exposure.significantDependencies} significant dependencies.`
+                : "Dependencies still loading."}
+            </p>
+            {exposure?.weakest && (
+              <p className="mt-1 text-xs text-zinc-400">
+                Weakest point · <span className="font-semibold text-red-400">{exposure.weakest.label}</span>
+              </p>
+            )}
           </div>
         </GlassCard>
-        <GlassCard tone={runwayDays < 14 ? "danger" : "default"}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Your priority</p>
-          <p className="mt-2 text-lg font-semibold text-zinc-50">{vulnerabilities[0]?.title || "Financial dependency"}</p>
-          <p className="mt-1 text-sm text-zinc-400">{vulnerabilities[0]?.next_action || "Keep stacking food, cash access, and offline backups."}</p>
-          <Link href="/app/risk" className="mt-3 inline-block text-xs font-medium text-emerald-400">See full risk picture →</Link>
+        <GlassCard tone={exposure && exposure.primary.days < 30 ? "danger" : "default"}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400/90">Break point</p>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-50">
+            {exposure?.primary.value || `${runwayDays} days`}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+            {exposure?.primary.meaning ||
+              `If primary income stops, reserves cover about ${runwayDays} days.`}
+          </p>
+          <Link href="/app/what-if" className="mt-3 inline-block text-xs font-semibold text-emerald-400">
+            Run the scenario →
+          </Link>
         </GlassCard>
       </div>
+
+      {exposure && (
+        <div className="grid gap-2 sm:grid-cols-3">
+          {exposure.points.slice(1, 4).map((bp) => (
+            <div
+              key={bp.id}
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                {bp.label}
+              </p>
+              <p
+                className={
+                  bp.severity === "critical"
+                    ? "mt-1 text-lg font-bold tabular-nums text-red-400"
+                    : bp.severity === "high"
+                      ? "mt-1 text-lg font-bold tabular-nums text-amber-400"
+                      : "mt-1 text-lg font-bold tabular-nums text-zinc-100"
+                }
+              >
+                {bp.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <TodaysPriority answers={answers} vulnerabilities={vulnerabilities} />
       <p className="text-xs leading-relaxed text-zinc-500">{yearPlanSummary(answers)}</p>
@@ -157,7 +201,7 @@ export function TodayScreen() {
       {pipeline.length > 0 ? (
         <GlassCard>
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">What's changed · for you</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">What&apos;s changed · for you</p>
             <Link href="/app/intel" className="text-xs font-medium text-emerald-400">All intel →</Link>
           </div>
           <ul className="mt-3 space-y-3">
@@ -228,7 +272,7 @@ export function TodayScreen() {
       </GlassCard>
 
       <div>
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Resilience at a glance</p>
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Exposure at a glance</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {CATEGORY_TILES.map((t) => {
             const Icon = CATEGORY_ICONS[t.key];
