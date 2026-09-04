@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PlaceRow } from "@/components/app/place-row";
 import {
   NEARBY_CATEGORIES,
   searchNearbyPlaces,
@@ -92,8 +93,7 @@ export default function PreparePage() {
   async function search(q: string) {
     setLoading(true);
     try {
-      let r = await searchNearbyPlaces(q, coords);
-      if (!r.length) r = await searchNearbyPlaces(q, coords, { national: true });
+      const r = await searchNearbyPlaces(q, coords, { limit: 15 });
       setPlaces(r);
       setSelected(r[0] ?? null);
     } finally {
@@ -190,18 +190,9 @@ export default function PreparePage() {
 
       {tab === "stock" && (
         <div className="space-y-4">
-          <div className="space-y-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-            <p className="text-sm font-medium text-zinc-100">What Year stock is</p>
-            <p className="text-xs leading-relaxed text-zinc-400">
-              A checklist for building toward a year of basics at home: water, food
-              you already eat, cash you can touch, medicine, light, papers, and
-              people. Layered over months, not one shopping trip.
-            </p>
-            <p className="text-xs leading-relaxed text-zinc-400">
-              Tick a box only when that item is true in real life. Use Nearby or a
-              Guide when you need a place or a how-to.
-            </p>
-          </div>
+          <p className="text-xs text-zinc-500">
+            Tick only when it is true in real life. Use Places or a Guide when you need a supplier or how-to.
+          </p>
           {groups.map((g) => (
             <div key={g}>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -253,13 +244,16 @@ export default function PreparePage() {
       {tab === "finder" && (
         <div className="space-y-4">
           <p className="text-sm text-zinc-400">
-            Find real places near you. Save the ones you would trust on a hard day.
+            Search like Google Maps — any place you would trust on a hard day. Results stay near you.
           </p>
           <div className="flex gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Pharmacy, market, ATM…"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void search(query || "pharmacy");
+              }}
+              placeholder="e.g. pharmacy near me, market, ATM, hardware…"
               className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-2.5 text-sm text-zinc-100"
             />
             <Button
@@ -285,13 +279,37 @@ export default function PreparePage() {
               </button>
             ))}
           </div>
+          {!coords && (
+            <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-200/90">
+              Allow location so the map stays on your city — without it, results can be far away.
+            </p>
+          )}
           <NearbyMap
             places={places}
             selected={selected}
             user={coords}
             onSelect={setSelected}
-            className="h-48 w-full overflow-hidden rounded-2xl border border-white/10"
+            className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
           />
+          {loading && (
+            <p className="text-center text-xs text-zinc-500">Searching near you…</p>
+          )}
+          {!loading && places.length === 0 && (
+            <p className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-xs text-zinc-500">
+              No places found nearby yet. Try a different word (e.g. &quot;pharmacy&quot;, &quot;market&quot;, &quot;ATM&quot;) or allow location.
+            </p>
+          )}
+          <div className="space-y-2">
+            {places.map((pl) => (
+              <PlaceRow
+                key={pl.id}
+                place={pl}
+                selected={selected?.id === pl.id}
+                onSelect={() => setSelected(pl)}
+                showSave={false}
+              />
+            ))}
+          </div>
           <Link
             href="/app/nearby"
             className="block text-center text-sm font-medium text-emerald-400"
