@@ -93,6 +93,7 @@ export default function PreparePage() {
   async function search(q: string) {
     setLoading(true);
     try {
+      // Global search for suppliers worldwide
       const r = await searchNearbyPlaces(q, coords, {
         scope: "global",
         limit: 20,
@@ -118,11 +119,6 @@ export default function PreparePage() {
         backHref="/app/overview"
         showBack
       />
-
-      <p className="text-xs text-zinc-500">
-        What you should do: follow Your plan in order, tick Year stock only when
-        it is true in real life, use Places to find suppliers.
-      </p>
 
       <div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
         {(
