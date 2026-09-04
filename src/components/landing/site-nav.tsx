@@ -7,28 +7,28 @@ import { Button } from "@/components/ui/button";
 const PRODUCT_ITEMS = [
   {
     href: "/app/overview",
-    title: "Overview",
-    desc: "Your personal resilience command center",
+    title: "Today",
+    desc: "Exposure, break points, intel — command center",
   },
   {
     href: "/app/risk",
-    title: "My Risk",
-    desc: "See where you're exposed",
+    title: "Exposure",
+    desc: "Where you are weak and what depends on what",
   },
   {
     href: "/app/what-if",
     title: "What If?",
-    desc: "Stress-test your life against scenarios",
+    desc: "Stress-test income, rails, power, food",
   },
   {
     href: "/app/prepare",
-    title: "Actions",
-    desc: "Know exactly what to fix next",
+    title: "1-year plan",
+    desc: "Stock, places, and moves for a full year",
   },
   {
     href: "/app/history",
-    title: "History",
-    desc: "Track your resilience over time",
+    title: "Progress",
+    desc: "Exposure over time — not a wellness streak",
   },
 ];
 
@@ -39,7 +39,8 @@ export function SiteNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="text-sm font-semibold tracking-tight text-zinc-50">
+        <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-50">
+          <img src="/icon-192.png" alt="" className="h-7 w-7 rounded-lg" />
           Tiltshield
         </Link>
 
@@ -76,9 +77,6 @@ export function SiteNav() {
               </div>
             )}
           </div>
-          <a href="#what-if" className="rounded-lg px-3 py-2 hover:text-zinc-100">
-            What If?
-          </a>
           <a href="#how" className="rounded-lg px-3 py-2 hover:text-zinc-100">
             How it works
           </a>
@@ -102,7 +100,7 @@ export function SiteNav() {
             Log in
           </Link>
           <Button asChild size="sm" className="shadow-lg shadow-emerald-900/20">
-            <Link href="/assessment">Get my score →</Link>
+            <Link href="/assessment">Measure exposure →</Link>
           </Button>
         </div>
       </div>
@@ -123,7 +121,6 @@ export function SiteNav() {
             </Link>
           ))}
           <div className="mt-2 space-y-1 border-t border-zinc-800 pt-2">
-            <a href="#what-if" className="block py-2 text-sm text-zinc-300">What If?</a>
             <a href="#how" className="block py-2 text-sm text-zinc-300">How it works</a>
             <a href="#pricing" className="block py-2 text-sm text-zinc-300">Pricing</a>
             <Link href="/login" className="block py-2 text-sm text-zinc-300">Log in</Link>
