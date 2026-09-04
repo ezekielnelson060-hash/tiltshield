@@ -81,7 +81,6 @@ function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 
-/** Map user/chip language → OSM-friendly queries (multi-try). */
 export const SEARCH_ALIASES: Record<string, string[]> = {
   "free water": ["drinking water", "water fountain", "bottled water", "water"],
   water: ["bottled water", "water", "supermarket"],
@@ -185,18 +184,30 @@ async function nominatimOnce(
 export async function searchNearbyPlaces(
   query: string,
   coords?: { lat: number; lng: number } | null,
-  opts?: { national?: boolean; limit?: number }
+  opts?: {
+    scope?: "city" | "nation" | "global";
+    national?: boolean;
+    limit?: number;
+  }
 ): Promise<NearbyPlace[]> {
   const q0 = query.trim();
   if (!q0) return [];
   const limit = opts?.limit ?? 12;
   const queries = expandQueries(q0);
-  // Local-first only when we have coords — never national dump of distant places
-  const modes: Array<"local" | "wide" | "national"> = opts?.national
-    ? ["wide", "national"]
-    : coords
-      ? ["local", "wide"]
-      : ["local"];
+
+  let scope: "city" | "nation" | "global" = opts?.scope || "city";
+  if (!opts?.scope && opts?.national) scope = "nation";
+
+  const modes: Array<"local" | "wide" | "national"> =
+    scope === "global"
+      ? ["national"]
+      : scope === "nation"
+        ? coords
+          ? ["local", "wide", "national"]
+          : ["national", "wide"]
+        : coords
+          ? ["local", "wide"]
+          : ["local"];
 
   const seen = new Set<string>();
   const out: NearbyPlace[] = [];
@@ -204,7 +215,13 @@ export async function searchNearbyPlaces(
   for (const mode of modes) {
     for (const q of queries) {
       try {
-        const batch = await nominatimOnce(q, coords, mode, limit);
+        // Global: free-text worldwide (no viewbox). City/nation: bias to user.
+        const batch = await nominatimOnce(
+          q,
+          scope === "global" ? null : coords,
+          scope === "global" ? "national" : mode,
+          limit
+        );
         for (const p of batch) {
           if (seen.has(p.id)) continue;
           seen.add(p.id);
@@ -219,18 +236,41 @@ export async function searchNearbyPlaces(
     if (out.length >= 3) break;
   }
 
+  // Distance from user when known (esp. global search without coords bias)
   if (coords) {
+    for (const p of out) {
+      if (p.distanceKm == null) {
+        p.distanceKm =
+          Math.round(
+            haversineKm(
+              { lat: coords.lat, lon: coords.lng },
+              { lat: p.lat, lon: p.lon }
+            ) * 10
+          ) / 10;
+      }
+    }
     out.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
   }
-  // Prefer truly local results when we know the user location
+
+  if (scope === "global") {
+    return out.slice(0, limit);
+  }
   if (coords) {
-    const local = out.filter((p) => p.distanceKm == null || p.distanceKm <= 40);
-    if (local.length) return local.slice(0, limit);
-    const regional = out.filter((p) => p.distanceKm == null || p.distanceKm <= 80);
-    if (regional.length) return regional.slice(0, limit);
-    const far = out.filter((p) => p.distanceKm == null || p.distanceKm <= 150);
-    if (far.length) return far.slice(0, limit);
-    return [];
+    if (scope === "city") {
+      const local = out.filter((p) => p.distanceKm == null || p.distanceKm <= 40);
+      if (local.length) return local.slice(0, limit);
+      const regional = out.filter(
+        (p) => p.distanceKm == null || p.distanceKm <= 120
+      );
+      if (regional.length) return regional.slice(0, limit);
+      const far = out.filter((p) => p.distanceKm == null || p.distanceKm <= 250);
+      if (far.length) return far.slice(0, limit);
+      return [];
+    }
+    // nation ~ country scale
+    const nation = out.filter((p) => p.distanceKm == null || p.distanceKm <= 900);
+    if (nation.length) return nation.slice(0, limit);
+    return out.slice(0, limit);
   }
   return out.slice(0, limit);
 }
