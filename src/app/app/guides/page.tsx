@@ -4,115 +4,123 @@ import { useState } from "react";
 import Link from "next/link";
 import { GUIDES, type Guide } from "@/lib/guides";
 import { PageHeader } from "@/components/app/page-header";
-import { GlassCard } from "@/components/app/glass-card";
 import { Button } from "@/components/ui/button";
 
 export default function GuidesPage() {
   const [active, setActive] = useState<Guide | null>(null);
-  const [section, setSection] = useState(0);
+  const [step, setStep] = useState(0);
 
   if (active) {
-    const s = active.sections[section];
-    const last = section >= active.sections.length - 1;
+    const paragraphs = active.body || [];
+    const last = step >= paragraphs.length - 1;
+    const current = paragraphs[step] || paragraphs[0] || "";
+
     return (
-      <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
+      <article className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
         <button
           type="button"
           onClick={() => {
             setActive(null);
-            setSection(0);
+            setStep(0);
           }}
           className="text-xs font-medium text-emerald-400"
         >
           ← All guides
         </button>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Course · {section + 1} of {active.sections.length} · {active.minutes} min
-        </p>
-        <h1 className="text-2xl font-semibold text-zinc-50">{active.title}</h1>
-        <p className="text-sm text-emerald-300/90">{active.reframe}</p>
 
-        <GlassCard>
-          <h2 className="text-lg font-semibold text-zinc-50">{s.heading}</h2>
-          <div className="mt-3 space-y-3">
-            {s.paragraphs.map((p) => (
-              <p key={p.slice(0, 24)} className="text-sm leading-relaxed text-zinc-300">
-                {p}
-              </p>
-            ))}
-          </div>
-        </GlassCard>
+        <header className="space-y-3 border-b border-white/[0.06] pb-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-400/90">
+            Field guide · {active.horizon} · {active.minutes} min read
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">
+            {active.title}
+          </h1>
+          {active.reframe && (
+            <p className="text-lg leading-relaxed text-zinc-400">{active.reframe}</p>
+          )}
+        </header>
 
-        <div className="flex gap-2">
+        <div className="space-y-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Part {step + 1} of {paragraphs.length}
+          </p>
+          <p className="text-[15px] leading-[1.8] text-zinc-300">{current}</p>
+        </div>
+
+        <div className="flex gap-2 border-t border-white/[0.06] pt-4">
           <Button
             variant="outline"
             className="flex-1"
-            disabled={section === 0}
-            onClick={() => setSection((x) => Math.max(0, x - 1))}
+            disabled={step === 0}
+            onClick={() => setStep((x) => Math.max(0, x - 1))}
           >
-            Back
+            Previous
           </Button>
           <Button
             className="flex-1"
             onClick={() => {
               if (last) {
                 setActive(null);
-                setSection(0);
+                setStep(0);
               } else {
-                setSection((x) => x + 1);
+                setStep((x) => x + 1);
               }
             }}
           >
-            {last ? "Finish" : "Next"}
+            {last ? "Done" : "Continue reading"}
           </Button>
         </div>
 
-        {last && (
-          <div className="space-y-2">
-            <p className="text-xs text-zinc-500">Put it into action</p>
-            {active.placeLinks.map((l) => (
+        {last && (active.placeLinks?.length ?? 0) > 0 && (
+          <div className="space-y-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400/90">
+              Put it into action
+            </p>
+            {(active.placeLinks || []).map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
-                className="block rounded-xl border border-white/10 px-4 py-3 text-sm text-emerald-400"
+                className="block text-sm font-medium text-zinc-100 underline-offset-4 hover:underline"
               >
                 {l.label} →
               </Link>
             ))}
           </div>
         )}
-      </div>
+      </article>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Guides"
-        subtitle="Short courses. Read a section, do the week actions, then open the map or checklist."
+        subtitle="Clear field notes — read like a post, act when you are ready."
         backHref="/app/more"
         showBack
       />
-      <p className="text-xs text-zinc-500">
-        What you should do: pick one guide, finish every section, then use the
-        action links at the end.
-      </p>
-      <div className="space-y-2">
+
+      <div className="space-y-4">
         {GUIDES.map((g) => (
           <button
             key={g.slug}
             type="button"
             onClick={() => {
               setActive(g);
-              setSection(0);
+              setStep(0);
             }}
-            className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4 text-left transition hover:border-emerald-500/25"
+            className="w-full rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-transparent p-5 text-left transition hover:border-emerald-500/30"
           >
-            <p className="text-sm font-medium text-zinc-100">{g.title}</p>
-            <p className="mt-1 text-xs text-zinc-500">{g.blurb}</p>
-            <p className="mt-2 text-[10px] uppercase tracking-wide text-zinc-600">
-              {g.horizon} · {g.minutes} min · {g.sections.length} sections
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400/80">
+              {g.horizon} · {g.minutes} min
             </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-zinc-50">
+              {g.title}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+              {g.reframe || g.blurb}
+            </p>
+            <p className="mt-4 text-xs font-semibold text-emerald-400">Read guide →</p>
           </button>
         ))}
       </div>
