@@ -99,6 +99,11 @@ export function setMemberCloudId(localId: string, cloudId: string) {
   saveFamilyMembers(members);
 }
 
+/** Alias used by persist cloud sync */
+export function patchMemberCloudId(localId: string, cloudId: string) {
+  return setMemberCloudId(localId, cloudId);
+}
+
 /**
  * Household seats unlock only with family purchase (or explicit family flag).
  * Individual lifetime does NOT include multi-member profiles.
