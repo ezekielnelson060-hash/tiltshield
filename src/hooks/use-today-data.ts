@@ -16,6 +16,21 @@ export type TodayIntel = {
   relevanceKeys?: string[];
 };
 
+function cleanTitle(s: string): string {
+  if (!s) return "";
+  return s
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, " ")
+    .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ")
+    .replace(/<a\b[^>]*/gi, " ")
+    .replace(/<\/?[a-zA-Z][^>]*>/g, " ")
+    .replace(/<[^>]*/g, " ")
+    .replace(/\bhref\s*=\s*["'][^"']*/gi, " ")
+    .replace(/\bhref\s*=/gi, " ")
+    .replace(/[<>]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function useTodayData() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
@@ -31,17 +46,40 @@ export function useTodayData() {
         (pos) => {
           const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setCoords(c);
-          void searchNearbyPlaces("pharmacy", c, { limit: 6 }).then(setPlaces).catch(() => setPlaces([]));
+          // Mix of essentials — not pharmacy-only
+          void (async () => {
+            try {
+              const batches = await Promise.all([
+                searchNearbyPlaces("pharmacy", c, { limit: 4 }),
+                searchNearbyPlaces("supermarket", c, { limit: 3 }),
+                searchNearbyPlaces("ATM", c, { limit: 2 }),
+              ]);
+              const seen = new Set<string>();
+              const merged: NearbyPlace[] = [];
+              for (const batch of batches) {
+                for (const p of batch) {
+                  if (seen.has(p.id)) continue;
+                  seen.add(p.id);
+                  merged.push(p);
+                }
+              }
+              merged.sort(
+                (a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999)
+              );
+              setPlaces(merged.slice(0, 8));
+            } catch {
+              setPlaces([]);
+            }
+          })();
           void reverseGeocode(c.lat, c.lng).then((p) => {
             if (p) setPlaceLabel(p.label);
           });
         },
         () => {
-          void searchNearbyPlaces("pharmacy", null, { national: true, limit: 6 })
-            .then(setPlaces)
-            .catch(() => setPlaces([]));
+          // No location — do not dump national/world places
+          setPlaces([]);
         },
-        { timeout: 8000 }
+        { timeout: 10000, enableHighAccuracy: false, maximumAge: 60000 }
       );
     }
     void (async () => {
@@ -49,18 +87,19 @@ export function useTodayData() {
         const res = await fetch("/api/intel/live");
         if (!res.ok) return;
         const data = await res.json();
-        const list: TodayIntel[] = (data.headlines || data.items || []).slice(0, 6).map(
-          (h: Record<string, unknown>, i: number) => ({
+        const list: TodayIntel[] = (data.headlines || data.items || [])
+          .slice(0, 6)
+          .map((h: Record<string, unknown>, i: number) => ({
             id: String(h.id || `live-${i}`),
-            title: String(h.title || "Update").slice(0, 120),
+            title: cleanTitle(String(h.title || "Update")).slice(0, 120),
             category: h.category ? String(h.category) : undefined,
             url: h.url || h.link ? String(h.url || h.link) : undefined,
             impact: h.impact ? String(h.impact) : undefined,
             relevanceKeys: Array.isArray(h.relevanceKeys)
               ? (h.relevanceKeys as string[])
               : [],
-          })
-        );
+          }))
+          .filter((h: TodayIntel) => h.title && h.title.length > 3);
         setIntel(list);
         const s = loadSession();
         if (s && list.length) {
@@ -88,5 +127,13 @@ export function useTodayData() {
     })();
   }, []);
 
-  return { coords, places, intel, placeLabel, daysSince, pipeline, assessedLabel };
+  return {
+    coords,
+    places,
+    intel,
+    placeLabel,
+    daysSince,
+    pipeline,
+    assessedLabel,
+  };
 }
