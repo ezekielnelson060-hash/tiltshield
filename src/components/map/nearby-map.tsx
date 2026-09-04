@@ -11,6 +11,9 @@ type Props = {
   className?: string;
 };
 
+/**
+ * Multi-pin map (Leaflet). Loaded client-only to keep SSR clean.
+ */
 export function NearbyMap({
   places,
   selected,
@@ -26,6 +29,7 @@ export function NearbyMap({
 
     async function boot() {
       const L = (await import("leaflet")).default;
+      // CSS once
       if (!document.getElementById("leaflet-css")) {
         const link = document.createElement("link");
         link.id = "leaflet-css";
@@ -36,25 +40,38 @@ export function NearbyMap({
 
       const el = document.getElementById("tiltshield-nearby-map");
       if (!el || cancelled) return;
-      el.innerHTML = "";
 
-      const center: [number, number] = selected
-        ? [selected.lat, selected.lon]
-        : user
-          ? [user.lat, user.lng]
-          : places[0]
-            ? [places[0].lat, places[0].lon]
-            : [0, 0];
+      // Reset container if remounting
+      el.innerHTML = "";
+      // Always prefer a city-scale view when we know the user — never world dump
+      const localPlaces = user
+        ? places.filter((p) => {
+            if (p.distanceKm == null) return true;
+            return p.distanceKm <= 50;
+          })
+        : places.filter((p) => p.distanceKm == null || p.distanceKm <= 50);
+      const focus =
+        selected && localPlaces.some((p) => p.id === selected.id)
+          ? selected
+          : localPlaces[0] || null;
+      const center: [number, number] = user
+        ? [user.lat, user.lng]
+        : focus
+          ? [focus.lat, focus.lon]
+          : [6.45, 3.4]; // safe city default — never world [0,0]
+      // City zoom when user known; never world view
+      const zoom = user ? 13 : focus ? 13 : 11;
 
       map = L.map(el, {
         zoomControl: true,
         attributionControl: true,
-      }).setView(center, selected || places.length ? 14 : 12);
+      }).setView(center, zoom);
 
       const streets = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         { attribution: "&copy; OpenStreetMap", maxZoom: 19 }
       );
+      // Esri World Imagery — free for light use, no key
       const satellite = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         { attribution: "Esri", maxZoom: 19 }
@@ -93,7 +110,9 @@ export function NearbyMap({
           .bindTooltip("You");
       }
 
-      places.forEach((p) => {
+      // Only local pins — never scatter intercontinental markers
+      const pins = localPlaces.length ? localPlaces : focus ? [focus] : [];
+      pins.forEach((p) => {
         const m = L.marker([p.lat, p.lon], {
           icon: selected?.id === p.id ? selectedIcon : icon,
         }).addTo(map!);
@@ -101,15 +120,20 @@ export function NearbyMap({
         m.on("click", () => onSelect?.(p));
       });
 
-      if (places.length > 1) {
+      // Stay city-scale: fit only local pins, clamp min zoom
+      if (pins.length > 1) {
         const bounds = L.latLngBounds(
-          places.map((p) => [p.lat, p.lon] as [number, number])
+          pins.map((p) => [p.lat, p.lon] as [number, number])
         );
         if (user) bounds.extend([user.lat, user.lng]);
-        map.fitBounds(bounds.pad(0.15));
-      } else if (selected) {
-        map.setView([selected.lat, selected.lon], 15);
+        map.fitBounds(bounds.pad(0.2), { maxZoom: 14 });
+      } else if (pins.length === 1) {
+        map.setView([pins[0].lat, pins[0].lon], 14);
+      } else if (user) {
+        map.setView([user.lat, user.lng], 13);
       }
+      // Hard floor — never allow world view
+      if (map.getZoom() < 10) map.setZoom(11);
 
       setReady(true);
       setTimeout(() => map?.invalidateSize(), 100);
@@ -128,8 +152,7 @@ export function NearbyMap({
   return (
     <div
       className={
-        className ||
-        "relative h-56 w-full overflow-hidden rounded-2xl border border-white/[0.08] sm:h-72"
+        className || "tilt-map-chrome relative h-56 w-full sm:h-72"
       }
     >
       <div id="tiltshield-nearby-map" className="h-full w-full bg-[#0a1018]" />
