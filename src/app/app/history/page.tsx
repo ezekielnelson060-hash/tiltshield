@@ -16,6 +16,7 @@ import {
   setActiveMemberId,
   type FamilyMember,
 } from "@/lib/family";
+import { formatLongDate } from "@/lib/locale";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/app/glass-card";
@@ -60,12 +61,13 @@ export default function HistoryPage() {
   const activeName =
     members.find((m) => m.id === memberId)?.name ||
     (memberId === "self" ? "You" : "Member");
+  const latestDate = history[0]?.date || null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Progress"
-        subtitle="Scores over time — pick a household member."
+        subtitle="Your resilience score over time — how ready your household is."
         backHref="/app/more"
         showBack
       />
@@ -90,18 +92,26 @@ export default function HistoryPage() {
         </div>
       )}
 
-      <GlassCard tone="accent">
+      <GlassCard>
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          {activeName} · now
+          Resilience score · {activeName}
         </p>
-        <p className="mt-2 text-4xl font-bold tabular-nums text-zinc-50">
+        <p className="mt-1 text-xs text-zinc-500">
+          0–100 readiness across money, food, digital, home, and emergency.
+        </p>
+        <p className="mt-3 text-4xl font-bold tabular-nums text-zinc-50">
           {latest}{" "}
-          <span className="text-sm font-normal text-zinc-500">/ 100</span>
+          <span className="text-sm font-normal text-zinc-500">out of 100</span>
         </p>
+        {latestDate && (
+          <p className="mt-1 text-sm text-zinc-400">
+            As of {formatLongDate(latestDate)}
+          </p>
+        )}
         {delta != null && (
           <p
             className={cn(
-              "mt-1 text-sm font-medium",
+              "mt-2 text-sm font-medium",
               delta > 0
                 ? "text-emerald-400"
                 : delta < 0
@@ -110,12 +120,12 @@ export default function HistoryPage() {
             )}
           >
             {delta > 0 ? `↑ ${delta}` : delta < 0 ? `↓ ${Math.abs(delta)}` : "—"}{" "}
-            vs last check
+            vs previous check
           </p>
         )}
         {daysSince != null && (
           <p className="mt-1 text-xs text-zinc-500">
-            Last assessment {daysSince === 0 ? "today" : `${daysSince}d ago`}
+            Last assessment {daysSince === 0 ? "today" : `${daysSince} day${daysSince === 1 ? "" : "s"} ago`}
           </p>
         )}
       </GlassCard>
@@ -134,7 +144,7 @@ export default function HistoryPage() {
 
       <section className="space-y-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          History · {activeName}
+          Assessment history · {activeName}
         </p>
         {history.length === 0 && (
           <p className="text-sm text-zinc-500">
@@ -143,15 +153,15 @@ export default function HistoryPage() {
         )}
         {history.map((h, i) => (
           <div
-            key={`${h.at}-${i}`}
+            key={`${h.date}-${i}`}
             className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
           >
             <div>
               <p className="text-sm font-medium text-zinc-100">
-                {h.overall} / 100
+                Resilience score {h.overall} / 100
               </p>
               <p className="text-[11px] text-zinc-500">
-                {h.at ? new Date(h.at).toLocaleDateString() : "—"}
+                {formatLongDate(h.date)}
               </p>
             </div>
             {i === 0 && (
