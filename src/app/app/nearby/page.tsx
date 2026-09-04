@@ -9,11 +9,11 @@ import {
   mapsSearchUrl,
   type NearbyPlace,
 } from "@/lib/nearby";
-import { formatDistance } from "@/lib/locale";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
+import { PlaceRow } from "@/components/app/place-row";
 import {
   loadTrustedPlaces,
   saveTrustedPlace,
@@ -61,18 +61,12 @@ export default function NearbyPage() {
       setLoading(true);
       setError(null);
       try {
-        let results = await searchNearbyPlaces(q, coords, { limit: 12 });
-        if (!results.length) {
-          results = await searchNearbyPlaces(q, coords, {
-            national: true,
-            limit: 15,
-          });
-        }
+        const results = await searchNearbyPlaces(q, coords, { limit: 15 });
         setPlaces(results);
         setSelected(results[0] ?? null);
         if (!results.length) {
           setError(
-            "No venues found. Try pharmacy, bank, or market — or open Google Maps below."
+            "No venues found nearby. Try pharmacy, bank, or market — or open Google Maps."
           );
         }
       } catch {
@@ -177,65 +171,32 @@ export default function NearbyPage() {
         {places.map((pl) => {
           const saved = trustedIds.has(pl.id);
           return (
-            <div
+            <PlaceRow
               key={pl.id}
-              className={cn(
-                "flex items-center gap-2 rounded-2xl border px-4 py-3 transition",
-                selected?.id === pl.id
-                  ? "border-emerald-500/35 bg-emerald-500/10"
-                  : "border-white/[0.08] bg-white/[0.03]"
-              )}
-            >
-              <button
-                type="button"
-                className="min-w-0 flex-1 text-left"
-                onClick={() => setSelected(pl)}
-              >
-                <p className="text-sm font-medium text-zinc-100">{pl.name}</p>
-                {pl.distanceM != null && (
-                  <p className="text-[11px] text-zinc-500">
-                    {formatDistance(pl.distanceM)}
-                  </p>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (saved) {
-                    setTrustedIds(
-                      new Set(removeTrustedPlace(pl.id).map((p) => p.id))
-                    );
-                  } else {
-                    saveTrustedPlace({
-                      id: pl.id,
-                      name: pl.name,
-                      lat: pl.lat,
-                      lon: pl.lon,
-                      query: query || cat?.query,
-                    });
-                    setTrustedIds(
-                      new Set(loadTrustedPlaces().map((p) => p.id))
-                    );
-                  }
-                }}
-                className={cn(
-                  "shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold",
-                  saved
-                    ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-white/[0.06] text-zinc-300 hover:bg-emerald-500/15 hover:text-emerald-300"
-                )}
-              >
-                {saved ? "Saved" : "Save"}
-              </button>
-              <a
-                href={mapsSearchUrl(pl.name, pl.lat, pl.lon)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 text-xs text-emerald-400"
-              >
-                Map ↗
-              </a>
-            </div>
+              place={pl}
+              selected={selected?.id === pl.id}
+              onSelect={() => setSelected(pl)}
+              saved={saved}
+              showSave
+              onToggleSave={() => {
+                if (saved) {
+                  setTrustedIds(
+                    new Set(removeTrustedPlace(pl.id).map((p) => p.id))
+                  );
+                } else {
+                  saveTrustedPlace({
+                    id: pl.id,
+                    name: pl.name,
+                    lat: pl.lat,
+                    lon: pl.lon,
+                    query: query || cat?.query,
+                  });
+                  setTrustedIds(
+                    new Set(loadTrustedPlaces().map((p) => p.id))
+                  );
+                }
+              }}
+            />
           );
         })}
       </div>
