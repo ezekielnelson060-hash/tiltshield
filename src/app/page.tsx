@@ -8,103 +8,270 @@ export default function HomePage() {
       <SiteNav />
 
       <section className="relative overflow-hidden border-b border-zinc-900">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/12 via-transparent to-transparent" />
-        <div className="relative mx-auto max-w-4xl px-4 pb-20 pt-14 text-center sm:pt-20">
-          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-400">
-            Personal Resilience Intelligence
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-500/10 via-transparent to-transparent" />
+        <div className="relative mx-auto max-w-3xl px-4 pb-16 pt-12 text-center sm:pt-16">
+          <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-red-400/90">
+            Personal exposure intelligence
           </p>
-          <h1 className="text-4xl font-bold tracking-tight text-zinc-50 sm:text-5xl sm:leading-[1.1] lg:text-[3.15rem]">
-            Protect yourself & family from economic, medical & social
-            disruptions{" "}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              before your neighbors
+          <h1 className="text-[2.1rem] font-bold leading-[1.12] tracking-tight text-zinc-50 sm:text-5xl sm:leading-[1.08]">
+            The world is less stable than you think.
+            <span className="mt-3 block bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              How exposed are you?
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
-            Tiltshield starts from your real income, maps what could break, and
-            helps you prepare — buffers, kits, local resources, and clear What
-            If plans — before you need them.
+          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
+            You might have a salary, a bank app, and a full fridge. That does not
+            tell you how many days you last when one of them fails.
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" className="min-w-[200px] shadow-lg shadow-emerald-900/30">
-              <Link href="/assessment">Get my readiness score</Link>
+          <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
+            Tiltshield measures the number you cannot unsee — your{" "}
+            <span className="text-zinc-200">break point</span> — then maps what
+            to fix first.
+          </p>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              asChild
+              size="lg"
+              className="min-w-[220px] shadow-lg shadow-emerald-900/30"
+            >
+              <Link href="/assessment">Measure my exposure</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <a href="#how">See how it works</a>
+              <a href="#break-point">What is a break point?</a>
             </Button>
           </div>
           <p className="mt-5 text-sm text-zinc-500">
-            Built on your income · Free assessment · Add to home screen
+            Free assessment · Nine questions · No motivational speech
           </p>
         </div>
       </section>
 
-      <section id="product" className="border-b border-zinc-900">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-            The network around you
-          </p>
-          <h2 className="mt-3 text-center text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
-            Know a place for everything that keeps life steady
+      <section className="border-b border-zinc-900">
+        <div className="mx-auto max-w-3xl px-4 py-20">
+          <h2 className="text-center text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
+            Balances don&apos;t RSVP.
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-base text-zinc-400">
-            Not a panic list — a calm map of pharmacies, markets, cash access,
-            hardware, and people you can still reach when apps go quiet.
+          <p className="mx-auto mt-4 max-w-xl text-center text-base text-zinc-400">
+            You can have money in an account, a credit score, and a grocery app —
+            and still have no idea what happens if income pauses for 31 days.
           </p>
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <p className="mx-auto mt-3 max-w-xl text-center text-base text-zinc-400">
+            Attention is not the same thing as readiness.
+          </p>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                What you see
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-zinc-400">
+                <li>Salary in the account</li>
+                <li>Bank balance</li>
+                <li>Followers, likes, news</li>
+                <li>A full fridge this week</li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400/90">
+                What you need to know
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-zinc-200">
+                <li>Days until cash hits zero</li>
+                <li>How many payment rails you actually have</li>
+                <li>Whether ID and accounts survive a dead phone</li>
+                <li>How long food lasts if shelves thin</li>
+              </ul>
+            </div>
+          </div>
+          <p className="mt-8 text-center text-sm text-zinc-500">
+            Tiltshield measures the second column.
+          </p>
+        </div>
+      </section>
+
+      <section id="break-point" className="border-b border-zinc-900 bg-zinc-900/30">
+        <div className="mx-auto max-w-3xl px-4 py-20">
+          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            Example profile · not live data
+          </p>
+          <h2 className="mt-3 text-center text-3xl font-semibold text-zinc-50 sm:text-4xl">
+            You think you are fine.
+          </h2>
+          <p className="mt-2 text-center text-lg text-zinc-400">
+            Your break points might disagree.
+          </p>
+
+          <div className="mx-auto mt-12 max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-400/90">
+              Exposure
+            </p>
+            <p className="mt-2 text-5xl font-bold tabular-nums tracking-tight text-zinc-50">
+              67 <span className="text-2xl font-medium text-zinc-500">/ 100</span>
+            </p>
+            <p className="mt-3 text-sm text-zinc-400">
+              You have 4 significant dependencies.
+            </p>
+            <div className="mt-6 border-t border-zinc-800 pt-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400/90">
+                Your weakest point
+              </p>
+              <p className="mt-2 text-xl font-semibold text-zinc-50">
+                🔴 Financial · 31 days
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                Your current reserves cover approximately 31 days of essential
+                expenses if primary income stops and spend stays the same.
+              </p>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  Digital break point
+                </p>
+                <p className="mt-1 text-lg font-bold text-red-400">0 days</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  No offline path to critical accounts
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  Payment break point
+                </p>
+                <p className="mt-1 text-lg font-bold text-amber-400">24 hours</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Single payment method on file
+                </p>
+              </div>
+            </div>
+            <p className="mt-6 text-sm text-zinc-500">What happens next?</p>
+            <Button asChild className="mt-3 w-full sm:w-auto">
+              <Link href="/assessment">Run the scenario →</Link>
+            </Button>
+          </div>
+
+          <p className="mx-auto mt-8 max-w-lg text-center text-sm leading-relaxed text-zinc-500">
+            That number is the point. Not a badge. Not a wellness score. A clock.
+            Once you see 31 days, you cannot pretend the fridge and the salary
+            are the same thing as a plan.
+          </p>
+        </div>
+      </section>
+
+      <section className="border-b border-zinc-900">
+        <div className="mx-auto max-w-3xl px-4 py-20">
+          <h2 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
+            Break point is not a metaphor.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-zinc-400">
+            Your financial break point is the day cash reserves hit zero if
+            primary income disappears and expenses stay unchanged. Your digital
+            break point is how long you keep operating when the phone is gone.
+            Your payment break point is how long everyday purchases survive if
+            one rail fails.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-zinc-400">
+            Most people have never run the math. They feel busy, employed, and
+            online — and confuse that with being hard to break.
+          </p>
+          <div className="mt-10 space-y-4">
             {[
-              ["Money & cash", "Buffers, second payment rails, and where cash still works when cards lag."],
-              ["Food & water", "Meals you already eat, layered toward a year — plus places to restock locally."],
-              ["Health & meds", "Kits, critical refills, and clinics you can name before a shortage story hits."],
-              ["Power & home", "Light, charge, and hardware when the grid or delivery network slows."],
-              ["Documents", "IDs and proofs offline — so systems arguing with each other is not your crisis."],
-              ["People", "Paper contacts, household roles, and community spaces that still open doors."],
+              [
+                "Financial break point",
+                "If income stops and spend stays the same, reserves reach zero in N days.",
+              ],
+              [
+                "Digital break point",
+                "Hours or days until critical accounts are unreachable without the primary device.",
+              ],
+              [
+                "Payment break point",
+                "How long you can still buy food and fuel if one payment method dies.",
+              ],
+              [
+                "Food break point",
+                "Days of meals you already eat, not fantasy stockpiles you will never touch.",
+              ],
             ].map(([t, d]) => (
               <div
                 key={t}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 transition hover:border-emerald-500/30"
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/30 px-5 py-4"
               >
-                <p className="text-base font-semibold text-zinc-50">{t}</p>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{d}</p>
+                <p className="text-sm font-semibold text-zinc-100">{t}</p>
+                <p className="mt-1 text-sm leading-relaxed text-zinc-500">{d}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="what-if" className="border-b border-zinc-900 bg-zinc-900/25">
-        <div className="mx-auto max-w-5xl px-4 py-20">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">What If?</p>
-          <h2 className="mt-3 text-center text-3xl font-semibold text-zinc-50">
-            Stress-test life before reality does
+      <section className="border-b border-zinc-900 bg-zinc-900/25">
+        <div className="mx-auto max-w-3xl px-4 py-20">
+          <h2 className="text-center text-3xl font-semibold text-zinc-50">
+            Measure first. Spend second.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-sm text-zinc-400">
-            Income pause. Payment rails. Power. Food prices. Phone gone. Each scenario becomes a short list you can act on.
+          <div className="mt-12 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-red-400/80">
+                Don&apos;t
+              </p>
+              <ul className="mt-4 space-y-2.5 text-sm text-zinc-400">
+                <li>Buy a year of gear before you know your gap</li>
+                <li>Trust a single bank app as your plan</li>
+                <li>Wait for the headline to start counting days</li>
+                <li>Confuse a full fridge with a food break point</li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
+                Do
+              </p>
+              <ul className="mt-4 space-y-2.5 text-sm text-zinc-200">
+                <li>Run the nine-question exposure map</li>
+                <li>Read your break points out loud</li>
+                <li>Fix the shortest clock first</li>
+                <li>Know one place for cash, meds, food, and power</li>
+              </ul>
+            </div>
+          </div>
+          <p className="mt-8 text-center text-sm text-zinc-500">
+            Don&apos;t pay to discover your weakness in a crisis. Use an afternoon
+            to measure it now.
           </p>
-          <div className="mx-auto mt-12 grid max-w-3xl gap-3 sm:grid-cols-2">
-            {["Income stops", "Primary bank unavailable", "Phone lost", "Food prices jump", "Power outage", "Medical expense"].map((s) => (
-              <div key={s} className="rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-4 text-sm font-medium text-zinc-200">{s}</div>
-            ))}
-          </div>
-          <div className="mt-10 text-center">
-            <Button asChild size="lg"><Link href="/assessment">Run your simulation →</Link></Button>
-          </div>
         </div>
       </section>
 
       <section id="how" className="border-b border-zinc-900">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">How it works</p>
-          <h2 className="mt-3 text-center text-3xl font-semibold text-zinc-50">Score · Map · Stock · Act</h2>
-          <div className="mt-14 grid gap-6 md:grid-cols-4">
+        <div className="mx-auto max-w-5xl px-4 py-20">
+          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            How it works
+          </p>
+          <h2 className="mt-3 text-center text-3xl font-semibold text-zinc-50">
+            Three steps. That&apos;s it.
+          </h2>
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
             {[
-              ["1. Assess", "Nine questions from take-home income to kits and vendors."],
-              ["2. See exposure", "A clear resilience score and the one gap to fix first."],
-              ["3. Find places", "Local map for pharmacies, food, cash, hardware, solar."],
-              ["4. Build the year", "Layer stock and plans so a hard month is survivable."],
-            ].map(([t, d]) => (
-              <div key={t} className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5">
-                <p className="text-sm font-semibold text-emerald-400">{t}</p>
+              [
+                "01",
+                "Map your exposure",
+                "Nine questions from take-home income to offline docs. No theatre. Just the inputs that set your clocks.",
+              ],
+              [
+                "02",
+                "See the break points",
+                "Financial. Digital. Payment. Food. The shortest number is your first problem — not a score to brag about.",
+              ],
+              [
+                "03",
+                "Close the shortest clock",
+                "Places near you, year stock, intel tied to your gaps. Fix what fails first. Then the next one.",
+              ],
+            ].map(([n, t, d]) => (
+              <div
+                key={n}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6"
+              >
+                <p className="text-xs font-bold text-emerald-400">{n}</p>
+                <p className="mt-3 text-lg font-semibold text-zinc-50">{t}</p>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">{d}</p>
               </div>
             ))}
@@ -112,105 +279,109 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-b border-zinc-900">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Agency over anxiety</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-zinc-400">
-            Systems change. Households that already know their buffer, their pharmacy, and their second way to pay do not scramble.
-            Tiltshield is the quiet advantage: preparation without theatrics — and a map of real places behind every checklist.
+      <section id="product" className="border-b border-zinc-900">
+        <div className="mx-auto max-w-5xl px-4 py-20">
+          <h2 className="text-center text-3xl font-semibold text-zinc-50">
+            What you get after the number
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-zinc-400">
+            Exposure without a map is just anxiety. Tiltshield turns the score
+            into places, stock, and scenarios you can act on.
+          </p>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              [
+                "Exposure profile",
+                "One number and the dependencies behind it — not a wellness badge.",
+              ],
+              [
+                "Break points",
+                "Financial, digital, payment, food — clocks you can actually move.",
+              ],
+              [
+                "City & nation map",
+                "Pharmacies, cash, markets, hardware — places that still work when apps lag.",
+              ],
+              [
+                "Global places",
+                "Suppliers and brands when local is not enough.",
+              ],
+              [
+                "Year stock",
+                "Food, cash, meds, power, docs — ticked only when true in real life.",
+              ],
+              [
+                "Live intel strip",
+                "World → your exposure → the action that matters for your gaps.",
+              ],
+            ].map(([t, d]) => (
+              <div
+                key={t}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
+              >
+                <p className="text-sm font-semibold text-zinc-50">{t}</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-zinc-900 bg-zinc-900/25">
+        <div className="mx-auto max-w-3xl px-4 py-20">
+          <h2 className="text-3xl font-semibold text-zinc-50">
+            “But I already know where the risks are.”
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-zinc-400">
+            Maybe. Do you know how many days of essentials you actually hold? How
+            many payment rails survive a single outage? Whether your household
+            can prove identity offline? Which city-scale places still open if
+            delivery stops?
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-zinc-400">
+            That is the difference between sensing risk and measuring exposure.
           </p>
         </div>
       </section>
 
-      <section id="pricing" className="border-b border-zinc-900">
-        <div className="mx-auto max-w-5xl px-4 py-20">
-          <h2 className="text-center text-3xl font-semibold text-zinc-50">Start free. Go deeper when ready.</h2>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Free</p>
-              <p className="mt-3 text-4xl font-bold text-zinc-50">$0</p>
-              <ul className="mt-8 space-y-3 text-sm text-zinc-400">
-                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Income-based assessment</li>
-                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Resilience score</li>
-                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Biggest exposure</li>
-                <li className="flex gap-2"><span className="text-emerald-500">✓</span> Prepare + Finder basics</li>
-              </ul>
-              <Button asChild variant="outline" className="mt-10 w-full" size="lg"><Link href="/assessment">Start free</Link></Button>
-            </div>
-            <div className="relative rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-8 shadow-lg shadow-emerald-950/20">
-              <p className="absolute -top-3 right-6 rounded-full bg-emerald-500 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-950">Popular</p>
-              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Lifetime</p>
-              <p className="mt-3 text-4xl font-bold text-zinc-50">$29 <span className="text-base font-normal text-zinc-500">one-time</span></p>
-              <ul className="mt-8 space-y-3 text-sm text-zinc-300">
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Everything in Free</li>
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> All What If scenarios</li>
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Vault + history</li>
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Live intel + calculators</li>
-              </ul>
-              <Button asChild className="mt-10 w-full" size="lg"><Link href="/assessment">Get Lifetime · $29</Link></Button>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-zinc-950 p-8">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Household</p>
-              <p className="mt-3 text-4xl font-bold text-zinc-50">$49 <span className="text-base font-normal text-zinc-500">one-time</span></p>
-              <ul className="mt-8 space-y-3 text-sm text-zinc-300">
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Everything in Lifetime</li>
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Up to 6 profiles</li>
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Shared dependencies</li>
-                <li className="flex gap-2"><span className="text-emerald-400">✓</span> Household readiness</li>
-              </ul>
-              <Button asChild variant="outline" className="mt-10 w-full" size="lg"><Link href="/assessment">Get Household · $49</Link></Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="border-b border-zinc-900">
-        <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+        <div className="mx-auto max-w-3xl px-4 py-20 text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
-            You cannot control every system.<br />
-            <span className="text-zinc-400">You can prepare your household.</span>
+            Find out how exposed you are.
           </h2>
-          <p className="mt-6 text-base font-medium text-emerald-400">That is Tiltshield.</p>
-          <div className="mt-10">
-            <Button asChild size="lg" className="min-w-[260px] shadow-lg shadow-emerald-900/25">
-              <Link href="/assessment">Get my readiness score</Link>
-            </Button>
-          </div>
+          <p className="mx-auto mt-4 max-w-xl text-base text-zinc-400">
+            Nine questions. A break point you will remember. A map of what to fix
+            before the world tests it for you.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            className="mt-8 min-w-[220px] shadow-lg shadow-emerald-900/30"
+          >
+            <Link href="/assessment">Measure my exposure</Link>
+          </Button>
+          <p className="mt-5 text-sm text-zinc-500">
+            Free to start. No credit card. No soft speech.
+          </p>
+          <p className="mt-10 text-xs text-zinc-600">
+            Tiltshield · Measure exposure. Close the shortest clock.
+          </p>
         </div>
       </section>
 
-      <footer className="bg-zinc-950">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <p className="text-sm font-semibold text-zinc-50">Tiltshield</p>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-500">Prepare for what might come next — without the noise.</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Product</p>
-              <ul className="mt-4 space-y-2.5 text-sm text-zinc-400">
-                <li><a href="#product" className="hover:text-zinc-200">Overview</a></li>
-                <li><a href="#what-if" className="hover:text-zinc-200">What If?</a></li>
-                <li><a href="#how" className="hover:text-zinc-200">How it works</a></li>
-                <li><a href="#pricing" className="hover:text-zinc-200">Pricing</a></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Account</p>
-              <ul className="mt-4 space-y-2.5 text-sm text-zinc-400">
-                <li><Link href="/login" className="hover:text-zinc-200">Log in</Link></li>
-                <li><Link href="/signup" className="hover:text-zinc-200">Sign up</Link></li>
-                <li><Link href="/assessment" className="hover:text-zinc-200">Assessment</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Note</p>
-              <p className="mt-4 text-sm leading-relaxed text-zinc-500">Not financial, medical, or legal advice. Practical household preparation.</p>
-            </div>
-          </div>
-          <div className="mt-12 flex flex-col gap-2 border-t border-zinc-900 pt-8 text-xs text-zinc-600 sm:flex-row sm:justify-between">
-            <p>© {new Date().getFullYear()} Tiltshield. All rights reserved.</p>
-            <p>Built for people who prefer agency over anxiety.</p>
+      <footer className="border-t border-zinc-900 py-10">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-4 text-xs text-zinc-600 sm:flex-row">
+          <p>© {new Date().getFullYear()} Tiltshield</p>
+          <div className="flex gap-4">
+            <Link href="/app/overview" className="hover:text-zinc-400">
+              App
+            </Link>
+            <Link href="/assessment" className="hover:text-zinc-400">
+              Assessment
+            </Link>
+            <a href="#how" className="hover:text-zinc-400">
+              How it works
+            </a>
           </div>
         </div>
       </footer>
