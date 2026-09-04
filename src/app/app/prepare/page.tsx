@@ -93,7 +93,10 @@ export default function PreparePage() {
   async function search(q: string) {
     setLoading(true);
     try {
-      const r = await searchNearbyPlaces(q, coords, { limit: 15 });
+      const r = await searchNearbyPlaces(q, coords, {
+        scope: "global",
+        limit: 20,
+      });
       setPlaces(r);
       setSelected(r[0] ?? null);
     } finally {
@@ -244,7 +247,7 @@ export default function PreparePage() {
       {tab === "finder" && (
         <div className="space-y-4">
           <p className="text-sm text-zinc-400">
-            Search like Google Maps — any place you would trust on a hard day. Results stay near you.
+            Search anywhere in the world — suppliers, brands, and places you would trust on a hard day.
           </p>
           <div className="flex gap-2">
             <input
@@ -253,7 +256,7 @@ export default function PreparePage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void search(query || "pharmacy");
               }}
-              placeholder="e.g. pharmacy near me, market, ATM, hardware…"
+              placeholder="e.g. solar supplier, outdoor gear brand, pharmacy chain…"
               className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-2.5 text-sm text-zinc-100"
             />
             <Button
@@ -281,7 +284,7 @@ export default function PreparePage() {
           </div>
           {!coords && (
             <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-200/90">
-              Allow location so the map stays on your city — without it, results can be far away.
+              Optional: allow location to sort global results by distance from you.
             </p>
           )}
           <NearbyMap
@@ -289,14 +292,15 @@ export default function PreparePage() {
             selected={selected}
             user={coords}
             onSelect={setSelected}
+            scope="global"
             className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
           />
           {loading && (
-            <p className="text-center text-xs text-zinc-500">Searching near you…</p>
+            <p className="text-center text-xs text-zinc-500">Searching worldwide…</p>
           )}
           {!loading && places.length === 0 && (
             <p className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-xs text-zinc-500">
-              No places found nearby yet. Try a different word (e.g. &quot;pharmacy&quot;, &quot;market&quot;, &quot;ATM&quot;) or allow location.
+              No places found. Try a different word (e.g. brand name, city + type, or &quot;pharmacy Lagos&quot;).
             </p>
           )}
           <div className="space-y-2">
@@ -314,7 +318,7 @@ export default function PreparePage() {
             href="/app/nearby"
             className="block text-center text-sm font-medium text-emerald-400"
           >
-            Open full map →
+            Open city / nation map →
           </Link>
         </div>
       )}

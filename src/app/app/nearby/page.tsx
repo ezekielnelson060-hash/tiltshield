@@ -61,12 +61,21 @@ export default function NearbyPage() {
       setLoading(true);
       setError(null);
       try {
-        const results = await searchNearbyPlaces(q, coords, { limit: 15 });
+        let results = await searchNearbyPlaces(q, coords, {
+          scope: "city",
+          limit: 15,
+        });
+        if (!results.length) {
+          results = await searchNearbyPlaces(q, coords, {
+            scope: "nation",
+            limit: 18,
+          });
+        }
         setPlaces(results);
         setSelected(results[0] ?? null);
         if (!results.length) {
           setError(
-            "No venues found nearby. Try pharmacy, bank, or market — or open Google Maps."
+            "No venues found in your city or country. Try another word or open Google Maps."
           );
         }
       } catch {
@@ -95,7 +104,7 @@ export default function NearbyPage() {
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Nearby"
-        subtitle="What do you need? Search, then save the places you would trust on a hard day."
+        subtitle="City and nation map — places near you, then wider in your country."
         backHref="/app/overview"
         showBack
       />
@@ -146,6 +155,7 @@ export default function NearbyPage() {
         selected={selected}
         user={coords}
         onSelect={setSelected}
+        scope="nation"
         className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
       />
 
