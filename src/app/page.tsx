@@ -80,52 +80,15 @@ export default function HomePage() {
             </video>
           </div>
 
-          <div className="mx-auto mt-6 max-w-lg rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-zinc-900 to-zinc-950 p-5 sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-400/90">
-              Exposure
-            </p>
-            <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-zinc-50">
-              67 <span className="text-xl font-medium text-zinc-500">/ 100</span>
-            </p>
-            <p className="mt-2 text-sm text-zinc-400">
-              You have 4 significant dependencies.
-            </p>
-            <div className="mt-5 border-t border-emerald-500/10 pt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400/90">
-                Your weakest point
-              </p>
-              <p className="mt-1.5 text-lg font-semibold text-zinc-50">
-                🔴 Financial · 31 days
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
-                Reserves cover ~31 days of essentials if primary income stops and
-                spend stays the same.
-              </p>
-            </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2.5">
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                  Digital break point
-                </p>
-                <p className="mt-0.5 text-base font-bold text-red-400">0 days</p>
-                <p className="text-xs text-zinc-500">No offline path to accounts</p>
-              </div>
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2.5">
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                  Payment break point
-                </p>
-                <p className="mt-0.5 text-base font-bold text-amber-400">24 hours</p>
-                <p className="text-xs text-zinc-500">Single payment method</p>
-              </div>
-            </div>
-            <Button asChild className="mt-5 w-full shadow-md shadow-emerald-900/30">
-              <Link href="/assessment">Run the scenario →</Link>
-            </Button>
-          </div>
           <p className="mx-auto mt-5 max-w-lg text-center text-sm text-zinc-500">
             Once you see your break point you cannot pretend everything is fine —
             that's when preparation gets real.
           </p>
+          <div className="mt-6 flex justify-center">
+            <Button asChild size="lg" className="min-w-[220px] shadow-lg shadow-emerald-900/40">
+              <Link href="/assessment">Run the scenario →</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
