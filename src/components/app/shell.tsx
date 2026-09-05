@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { loadSession, type TiltSession } from "@/lib/session";
 import { getActiveMember } from "@/lib/family";
 import type { CategoryScores } from "@/types";
+import { BrandLogo } from "@/components/brand-logo";
 
 const NAV = [
   { href: "/app/overview", label: "Today", icon: "home" },
@@ -134,15 +135,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden w-[240px] shrink-0 flex-col border-r border-white/[0.06] bg-[#080d16] lg:flex">
         <div className="px-5 py-5">
           <Link href="/app/overview" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400/20 to-teal-500/10 ring-1 ring-emerald-500/30">
-              <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 4 6v5c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-3z" />
-              </svg>
-            </span>
+            <BrandLogo className="h-9 w-9 rounded-xl object-cover ring-1 ring-emerald-500/30" />
             <div>
               <p className="text-[13px] font-bold tracking-wide text-zinc-50">TILTSHIELD</p>
               <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-zinc-500">
-                Personal Resilience Intelligence
+                Personal exposure intelligence
               </p>
             </div>
           </Link>
@@ -200,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mt-auto space-y-3 border-t border-white/[0.06] p-4">
           <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-transparent p-3.5">
             <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-              Resilience Score
+              Exposure
             </p>
             <div className="mt-1 flex items-end gap-1">
               <span className="text-2xl font-bold tabular-nums text-zinc-50">
