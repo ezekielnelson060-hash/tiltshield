@@ -18,16 +18,20 @@ import {
   MEMBER_PULSE_QUESTIONS,
   ANSWER_DEFAULTS,
 } from "@/lib/questions";
+import {
+  buildExposureSnapshot,
+  shareBreakPoint,
+} from "@/lib/break-point";
+import { topThreeActions } from "@/lib/plan-from-assessment";
 import Link from "next/link";
 
 function AssessmentInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const mode = params.get("mode") || "core"; // core | deep | member
-  const [phase, setPhase] = useState<"quiz" | "offer_deep">("quiz");
-  const [coreAnswers, setCoreAnswers] = useState<AssessmentAnswers | null>(
-    null
-  );
+  const mode = params.get("mode") || "core";
+  const [phase, setPhase] = useState<"quiz" | "shock">("quiz");
+  const [coreAnswers, setCoreAnswers] = useState<AssessmentAnswers | null>(null);
+  const [shareNote, setShareNote] = useState<string | null>(null);
 
   const questions =
     mode === "member"
@@ -47,19 +51,14 @@ function AssessmentInner() {
     const scores = calculateCategoryScores(answers);
     const vulnerabilities = calculateVulnerabilities(answers, scores);
     const memberId = getActiveMemberId();
-    const session = {
-      answers,
-      scores,
-      vulnerabilities,
-      memberId,
-    };
+    const session = { answers, scores, vulnerabilities, memberId };
     saveSession(session);
     updateMemberScore(memberId, scores.overall);
     void persistAssessmentToCloud(session);
 
     if (mode === "core") {
       setCoreAnswers(answers);
-      setPhase("offer_deep");
+      setPhase("shock");
       return;
     }
     router.push("/app/overview");
@@ -78,38 +77,126 @@ function AssessmentInner() {
     void finish(merged).then(() => router.push("/app/overview"));
   }
 
-  if (phase === "offer_deep" && mode === "core") {
+  if (phase === "shock" && mode === "core" && coreAnswers) {
+    const scores = calculateCategoryScores(coreAnswers);
+    const snap = buildExposureSnapshot(coreAnswers, scores);
+    const actions = topThreeActions(coreAnswers);
+    const shortest = snap?.primary;
+
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-950 px-4 text-center">
-        <p className="text-lg font-semibold text-zinc-50">Score ready</p>
-        <p className="max-w-sm text-sm text-zinc-400">
-          You answered {CORE_QUESTIONS.length} key questions. Optional: sharpen
-          with {DEEP_QUESTIONS.length} more for a fuller picture (~1 min).
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/app/overview")}
-            className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-zinc-950"
-          >
-            Go to Today →
-          </button>
+      <main className="min-h-screen bg-zinc-950 px-4 py-10">
+        <div className="mx-auto max-w-lg space-y-6">
+          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-400/90">
+            Exposure revealed
+          </p>
+
+          <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] p-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-red-400/90">
+              Your shortest clock
+            </p>
+            <p className="mt-3 text-5xl font-bold tabular-nums tracking-tight text-zinc-50">
+              {shortest?.value || "—"}
+            </p>
+            <p className="mt-2 text-lg font-semibold text-zinc-100">
+              {shortest?.label || "Break point"}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+              {shortest?.meaning}
+            </p>
+            <p className="mt-4 text-xs text-zinc-500">
+              Once you see it, you can&apos;t unsee it. Fix this clock first.
+            </p>
+          </div>
+
+          {snap && (
+            <div className="grid grid-cols-2 gap-2">
+              {snap.clocks.slice(0, 4).map((bp) => (
+                <div
+                  key={bp.id}
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
+                >
+                  <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                    {bp.label.replace(" break point", "")}
+                  </p>
+                  <p
+                    className={
+                      bp.severity === "critical"
+                        ? "mt-0.5 text-lg font-bold tabular-nums text-red-400"
+                        : bp.severity === "high"
+                          ? "mt-0.5 text-lg font-bold tabular-nums text-amber-400"
+                          : "mt-0.5 text-lg font-bold tabular-nums text-zinc-100"
+                    }
+                  >
+                    {bp.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+              What happens next · 3 actions
+            </p>
+            <ol className="mt-3 space-y-3">
+              {actions.map((a, i) => (
+                <li
+                  key={a.id}
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+                >
+                  <div className="flex gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-sm font-bold text-emerald-400">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-50">{a.title}</p>
+                      <p className="mt-1 text-xs text-zinc-500">{a.why}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => router.push("/app/overview")}
+              className="flex-1 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-zinc-950"
+            >
+              Open Today · start action 1 →
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!snap) return;
+                const ok = await shareBreakPoint(snap);
+                setShareNote(ok ? "Shared / copied" : "Could not share");
+              }}
+              className="flex-1 rounded-xl border border-white/15 px-5 py-3 text-sm font-medium text-zinc-200"
+            >
+              Share my break point
+            </button>
+          </div>
+          {shareNote && (
+            <p className="text-center text-xs text-emerald-400">{shareNote}</p>
+          )}
+
           <button
             type="button"
             onClick={() => {
               setPhase("quiz");
               router.replace("/assessment?mode=deep");
             }}
-            className="rounded-xl border border-white/15 px-5 py-2.5 text-sm text-zinc-200"
+            className="w-full text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
           >
-            Sharpen score
+            Optional: sharpen with {DEEP_QUESTIONS.length} more questions
           </button>
         </div>
       </main>
     );
   }
 
-  // deep mode after navigation loses coreAnswers state — merge from session
   const initial =
     mode === "deep"
       ? loadSession()?.answers || coreAnswers || undefined
@@ -121,10 +208,7 @@ function AssessmentInner() {
     <main className="min-h-screen bg-zinc-950">
       <header className="border-b border-zinc-900 px-4 py-3.5">
         <div className="mx-auto flex max-w-lg items-center justify-between">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-tight text-zinc-50"
-          >
+          <Link href="/" className="text-sm font-semibold tracking-tight text-zinc-50">
             Tiltshield
           </Link>
           <span className="text-xs text-zinc-500">
