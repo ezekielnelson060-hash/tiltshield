@@ -10,6 +10,13 @@ import {
   foodStory,
   runwayStory,
 } from "@/lib/plan-from-assessment";
+import {
+  addJournalEntry,
+  deleteJournalEntry,
+  loadJournal,
+  type JournalEntry,
+} from "@/lib/journal";
+import { formatLongDate } from "@/lib/locale";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,7 +32,7 @@ const NearbyMap = dynamic(
   { ssr: false }
 );
 
-type Tab = "plan" | "stock" | "finder";
+type Tab = "plan" | "stock" | "journal" | "finder";
 
 type StockItem = {
   id: string;
@@ -35,17 +42,60 @@ type StockItem = {
 };
 
 const YEAR_STOCK: StockItem[] = [
-  { id: "water_plan", label: "Water you can reach at home", group: "Year foundation", hint: "Store + a simple purify method" },
-  { id: "food_90", label: "90 days of food you already eat", group: "Year foundation", hint: "Same meals, deeper shelves" },
-  { id: "food_rotate", label: "Dates on every package", group: "Year foundation", hint: "Oldest first so nothing is wasted" },
-  { id: "cash_float", label: "Cash for 2 to 4 weeks of essentials", group: "Money & access" },
-  { id: "alt_pay", label: "A second way to pay (tested)", group: "Money & access" },
-  { id: "meds_30", label: "Extra critical meds (if safe)", group: "Health" },
+  {
+    id: "water_plan",
+    label: "Water you can reach at home",
+    group: "Year foundation",
+    hint: "Store + a simple purify method",
+  },
+  {
+    id: "food_90",
+    label: "90 days on the way to a full year of food you already eat",
+    group: "Year foundation",
+    hint: "Same meals, deeper shelves — then layer toward 365",
+  },
+  {
+    id: "food_rotate",
+    label: "Dates on every package",
+    group: "Year foundation",
+    hint: "Oldest first so nothing is wasted",
+  },
+  {
+    id: "cash_float",
+    label: "Cash for 2 to 4 weeks of essentials",
+    group: "Money & access",
+  },
+  {
+    id: "alt_pay",
+    label: "A second way to pay (tested)",
+    group: "Money & access",
+  },
+  {
+    id: "meds_30",
+    label: "Extra critical meds (if safe)",
+    group: "Health",
+  },
   { id: "first_aid", label: "First-aid kit ready", group: "Health" },
-  { id: "light_power", label: "Lights and charged power banks", group: "Home" },
-  { id: "docs_offline", label: "ID copies you can reach offline", group: "Docs & people" },
-  { id: "vendor_3", label: "Three places nearby that work offline", group: "Docs & people" },
-  { id: "family_plan", label: "Household meetup plan", group: "Docs & people" },
+  {
+    id: "light_power",
+    label: "Lights and charged power banks",
+    group: "Home",
+  },
+  {
+    id: "docs_offline",
+    label: "ID copies you can reach offline",
+    group: "Docs & people",
+  },
+  {
+    id: "vendor_3",
+    label: "Three places nearby that work offline",
+    group: "Docs & people",
+  },
+  {
+    id: "family_plan",
+    label: "Household meetup plan",
+    group: "Docs & people",
+  },
 ];
 
 const STOCK_KEY = "tiltshield_year_stock";
@@ -54,14 +104,19 @@ export default function PreparePage() {
   const [session, setSession] = useState<TiltSession | null>(null);
   const [tab, setTab] = useState<Tab>("plan");
   const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [selected, setSelected] = useState<NearbyPlace | null>(null);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setSession(loadSession());
+    setJournal(loadJournal());
     try {
       const raw = localStorage.getItem(STOCK_KEY);
       if (raw) setChecks(JSON.parse(raw));
@@ -90,10 +145,22 @@ export default function PreparePage() {
     });
   }
 
+  function submitJournal() {
+    const t = draft.trim();
+    if (!t) return;
+    addJournalEntry(t);
+    setJournal(loadJournal());
+    setDraft("");
+  }
+
+  function removeEntry(id: string) {
+    deleteJournalEntry(id);
+    setJournal(loadJournal());
+  }
+
   async function search(q: string) {
     setLoading(true);
     try {
-      // Global search for suppliers worldwide
       const r = await searchNearbyPlaces(q, coords, {
         scope: "global",
         limit: 20,
@@ -115,7 +182,7 @@ export default function PreparePage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Prepare"
-        subtitle="Your year plan, built from what you told us. One honest step at a time."
+        subtitle="One-year plan from your exposure map. Stock, journal, places — your everyday prep log."
         backHref="/app/overview"
         showBack
       />
@@ -123,8 +190,9 @@ export default function PreparePage() {
       <div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
         {(
           [
-            ["plan", "Your plan"],
-            ["stock", "Year stock"],
+            ["plan", "Plan"],
+            ["stock", "Stock"],
+            ["journal", "Journal"],
             ["finder", "Places"],
           ] as const
         ).map(([id, label]) => (
@@ -182,7 +250,8 @@ export default function PreparePage() {
             </Link>
           ))}
           <p className="text-center text-xs text-zinc-600">
-            Year checklist {done}/{YEAR_STOCK.length} complete
+            Year checklist {done}/{YEAR_STOCK.length} · Journal{" "}
+            {journal.length} entries
           </p>
         </div>
       )}
@@ -190,7 +259,8 @@ export default function PreparePage() {
       {tab === "stock" && (
         <div className="space-y-4">
           <p className="text-xs text-zinc-500">
-            Tick only when it is true in real life. Use Places or a Guide when you need a supplier or how-to.
+            Tick only when it is true in real life. Log the detail in Journal so
+            Progress knows what moved.
           </p>
           {groups.map((g) => (
             <div key={g}>
@@ -240,10 +310,76 @@ export default function PreparePage() {
         </div>
       )}
 
+      {tab === "journal" && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
+            <p className="text-sm font-medium text-zinc-100">Prep journal</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+              Write what you bought, stored, tested, or fixed. These entries feed
+              Progress — so the app knows where you are on the year plan, not just
+              a score.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={4}
+              placeholder="e.g. Bought 20kg rice + 10L water. Tested offline map of 3 pharmacies. Moved cash into labeled float."
+              className="w-full resize-y rounded-2xl border border-white/[0.08] bg-[#080d16] px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600"
+            />
+            <Button
+              className="w-full"
+              disabled={!draft.trim()}
+              onClick={submitJournal}
+            >
+              Log entry
+            </Button>
+          </div>
+
+          {journal.length === 0 ? (
+            <p className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-xs text-zinc-500">
+              No entries yet. Log the first real move toward your year stack —
+              Progress will use it.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                Recent · {journal.length}
+              </p>
+              {journal.map((e) => (
+                <div
+                  key={e.id}
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[11px] text-zinc-500">
+                      {formatLongDate(e.at)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => removeEntry(e.id)}
+                      className="text-[11px] text-zinc-600 hover:text-red-400"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+                    {e.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === "finder" && (
         <div className="space-y-4">
           <p className="text-sm text-zinc-400">
-            Search anywhere in the world — suppliers, brands, and places you would trust on a hard day.
+            Search anywhere in the world — suppliers, brands, and places you
+            would trust on a hard day.
           </p>
           <div className="flex gap-2">
             <input
@@ -280,7 +416,8 @@ export default function PreparePage() {
           </div>
           {!coords && (
             <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-200/90">
-              Optional: allow location to sort global results by distance from you.
+              Optional: allow location to sort global results by distance from
+              you.
             </p>
           )}
           <NearbyMap
@@ -292,11 +429,14 @@ export default function PreparePage() {
             className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
           />
           {loading && (
-            <p className="text-center text-xs text-zinc-500">Searching worldwide…</p>
+            <p className="text-center text-xs text-zinc-500">
+              Searching worldwide…
+            </p>
           )}
           {!loading && places.length === 0 && (
             <p className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-xs text-zinc-500">
-              No places found. Try a different word (e.g. brand name, city + type, or &quot;pharmacy Lagos&quot;).
+              No places found. Try a different word (e.g. brand name, city +
+              type, or &quot;pharmacy Lagos&quot;).
             </p>
           )}
           <div className="space-y-2">
