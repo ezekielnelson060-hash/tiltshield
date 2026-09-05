@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 const PRODUCT_ITEMS = [
   {
@@ -83,25 +82,20 @@ export function SiteNav() {
           <a href="#pricing" className="rounded-lg px-3 py-2 hover:text-zinc-100">
             Pricing
           </a>
-        </nav>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            className="rounded-lg px-2 py-1.5 text-sm text-zinc-400 hover:text-zinc-100 lg:hidden"
-            onClick={() => setMobile((v) => !v)}
-          >
-            Menu
-          </button>
-          <Link
-            href="/login"
-            className="hidden text-sm text-zinc-400 hover:text-zinc-100 sm:inline"
-          >
+          <Link href="/login" className="rounded-lg px-3 py-2 hover:text-zinc-100">
             Log in
           </Link>
-          <Button asChild size="sm" className="shadow-lg shadow-emerald-900/20">
-            <Link href="/assessment">Measure exposure →</Link>
-          </Button>
+        </nav>
+
+        <div className="flex items-center gap-2 lg:hidden">
+          <button
+            type="button"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-200 hover:text-zinc-50"
+            onClick={() => setMobile((v) => !v)}
+          >
+            Product
+            <span className="ml-1 text-[10px] opacity-70">▾</span>
+          </button>
         </div>
       </div>
 
@@ -121,9 +115,9 @@ export function SiteNav() {
             </Link>
           ))}
           <div className="mt-2 space-y-1 border-t border-zinc-800 pt-2">
-            <a href="#how" className="block py-2 text-sm text-zinc-300">How it works</a>
-            <a href="#pricing" className="block py-2 text-sm text-zinc-300">Pricing</a>
-            <Link href="/login" className="block py-2 text-sm text-zinc-300">Log in</Link>
+            <a href="#how" className="block py-2 text-sm text-zinc-300" onClick={() => setMobile(false)}>How it works</a>
+            <a href="#pricing" className="block py-2 text-sm text-zinc-300" onClick={() => setMobile(false)}>Pricing</a>
+            <Link href="/login" className="block py-2 text-sm text-zinc-300" onClick={() => setMobile(false)}>Log in</Link>
           </div>
         </div>
       )}
