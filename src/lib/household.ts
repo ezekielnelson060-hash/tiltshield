@@ -1,5 +1,13 @@
+/**
+ * Household shared-dependency detection + household break points.
+ */
 import type { AssessmentAnswers } from "@/types";
 import type { FamilyMember } from "@/lib/family";
+import {
+  buildBreakPoints,
+  orderByShortestClock,
+  type BreakPoint,
+} from "@/lib/break-point";
 
 export type HouseholdDependency = {
   id: string;
@@ -30,7 +38,7 @@ export function detectHouseholdDependencies(input: {
     });
   }
 
-  if (!answers.alt_payment_method) {
+  if (!answers.alt_payment_method && n >= 1) {
     deps.push({
       id: "single-payment",
       severity: answers.digital_payment_dependency >= 4 ? "high" : "medium",
@@ -111,4 +119,43 @@ export function detectHouseholdDependencies(input: {
 
   const order = { high: 0, medium: 1, low: 2 };
   return deps.sort((a, b) => order[a.severity] - order[b.severity]);
+}
+
+export function householdBreakPoints(input: {
+  members: FamilyMember[];
+  answers: AssessmentAnswers;
+}): BreakPoint[] {
+  const n = Math.max(1, input.members.length);
+  const points = buildBreakPoints(input.answers).map((bp) => {
+    if (bp.id === "food" && n > 1 && bp.days < 30) {
+      const adjusted = Math.max(0, Math.round(bp.days / Math.min(n, 4)));
+      return {
+        ...bp,
+        days: adjusted,
+        value: adjusted <= 0 ? "0 days" : `${adjusted} days`,
+        meaning: `${n} people share ~${bp.days} food days on file → effective ~${adjusted} days if demand stacks. ${bp.meaning}`,
+        severity:
+          adjusted <= 3
+            ? ("critical" as const)
+            : adjusted <= 14
+              ? ("high" as const)
+              : bp.severity,
+      };
+    }
+    if (bp.id === "financial" && n > 1 && bp.days < 60) {
+      return {
+        ...bp,
+        meaning: `${n} people on this runway. ${bp.meaning}`,
+      };
+    }
+    return bp;
+  });
+  return orderByShortestClock(points);
+}
+
+export function householdShortestClock(input: {
+  members: FamilyMember[];
+  answers: AssessmentAnswers;
+}): BreakPoint | null {
+  return householdBreakPoints(input)[0] || null;
 }
