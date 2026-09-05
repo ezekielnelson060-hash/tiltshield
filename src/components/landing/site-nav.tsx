@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 const PRODUCT_ITEMS = [
   {
@@ -31,31 +32,6 @@ const PRODUCT_ITEMS = [
   },
 ];
 
-function LogoMark() {
-  return (
-    <span
-      className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-500/40"
-      aria-hidden
-    >
-      <svg viewBox="0 0 32 32" className="h-5 w-5" fill="none">
-        <path
-          d="M16 4L6 8v8c0 6.5 4.2 12.2 10 14 5.8-1.8 10-7.5 10-14V8L16 4z"
-          stroke="#34d399"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M12 16.5l2.5 2.5L20.5 13"
-          stroke="#34d399"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}
-
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const [mobile, setMobile] = useState(false);
@@ -67,7 +43,7 @@ export function SiteNav() {
           href="/"
           className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-50"
         >
-          <LogoMark />
+          <BrandLogo className="h-8 w-8 rounded-lg object-cover" />
           Tiltshield
         </Link>
 
