@@ -68,7 +68,7 @@ export default function HomePage() {
 
           <div className="mx-auto mt-6 max-w-sm overflow-hidden rounded-[1.75rem] border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-950/50 ring-1 ring-emerald-500/20">
             <video
-              className="aspect-[9/16] w-full bg-black object-cover object-top"
+              className="aspect-[9/16] w-full scale-105 bg-black object-cover object-[center_80%]"
               controls
               playsInline
               preload="metadata"
