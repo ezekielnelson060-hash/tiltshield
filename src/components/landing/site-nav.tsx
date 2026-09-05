@@ -40,7 +40,7 @@ export function SiteNav() {
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
         <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-50">
-          <img src="/icon-192.png" alt="" className="h-7 w-7 rounded-lg" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/30">T</span>
           Tiltshield
         </Link>
 
