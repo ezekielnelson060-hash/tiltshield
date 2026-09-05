@@ -1,8 +1,9 @@
 /**
- * Turn assessment answers into a short, ordered 1-year plan for this household.
- * Copy is written to the user — plain, calm, specific.
+ * Turn assessment answers into ordered moves.
+ * Top 3 always fix the shortest clocks first.
  */
 import type { AssessmentAnswers } from "@/types";
+import { buildBreakPoints, orderByShortestClock } from "@/lib/break-point";
 
 export type PlanMove = {
   id: string;
@@ -12,128 +13,124 @@ export type PlanMove = {
   href: string;
   priority: number;
   layer: "now" | "90d" | "1yr";
+  clockId?: string;
 };
 
-export function planMovesFromAssessment(a: AssessmentAnswers): PlanMove[] {
-  const food = a.food_buffer_days || 0;
-  const fund = a.emergency_fund_months || 0;
-  const digi = a.digital_payment_dependency || 3;
-  const income = a.monthly_income || 0;
-  const expense = a.monthly_expenses || 0;
-  const sources = a.income_sources || 1;
-  const moves: PlanMove[] = [];
-
-  if (fund < 1 || (expense > 0 && fund * 30 < 14)) {
-    moves.push({
+const CLOCK_ACTIONS: Record<
+  string,
+  (a: AssessmentAnswers) => PlanMove
+> = {
+  financial: (a) => {
+    const days = Math.round((a.emergency_fund_months || 0) * 30);
+    return {
       id: "buffer",
-      title: "Open a dedicated emergency buffer this week",
+      title:
+        days < 14
+          ? "Open a dedicated emergency buffer this week"
+          : "Grow your buffer toward 90 days of essentials",
       why:
-        income > 0
-          ? "Your take-home is on file. Even 3–7 days of essentials set aside turns panic into a plan."
-          : "A short pause in income hits hard without a labeled buffer. Start small this week.",
+        days <= 0
+          ? "Your financial clock is at zero. Even 3–7 days of labeled cash turns panic into a plan."
+          : `Financial break point is about ${days} days. Stretch the runway before the next shock tests it.`,
       minutes: "15 min",
       href: "/app/calculators",
       priority: 100,
       layer: "now",
-    });
-  } else if (fund < 3) {
-    moves.push({
-      id: "buffer-grow",
-      title: "Grow your buffer toward 90 days of calm",
-      why: `You have about ${Math.round(fund * 30)} days on file. Keep adding until three months of essentials feel boring.`,
-      minutes: "10 min",
-      href: "/app/calculators",
-      priority: 88,
-      layer: "90d",
-    });
-  }
-
-  if (!a.alt_payment_method || digi >= 4) {
-    moves.push({
-      id: "pay",
-      title: "Test a second way to pay",
-      why: "If cards or one app go quiet, food and fuel still need a path. Cash, a second rail, or a trusted vendor.",
-      minutes: "20 min",
-      href: "/app/focus/money",
-      priority: 95,
-      layer: "now",
-    });
-  }
-
-  if (sources <= 1) {
-    moves.push({
-      id: "income-diversity",
-      title: "Note one backup income path",
-      why: "One income stream is a single point of failure. Write down a skill, side offer, or network you could activate.",
-      minutes: "12 min",
-      href: "/app/focus/skills",
-      priority: 86,
-      layer: "90d",
-    });
-  }
-
-  if (food < 14) {
-    moves.push({
-      id: "food",
-      title: "Grow the food you already eat toward 90 days",
-      why:
-        food <= 3
-          ? "You only have a few days of food noted. Build with meals your household already likes."
-          : `You have about ${food} food days noted. Stretch toward 90, then a full year with rotation.`,
-      minutes: "30 min",
-      href: "/app/prepare",
-      priority: 90,
-      layer: "now",
-    });
-  } else if (food < 90) {
-    moves.push({
-      id: "food-year",
-      title: "Layer toward a full year of normal meals",
-      why: `About ${food} food days on file. Add what you already cook; date everything; rotate.`,
-      minutes: "25 min",
-      href: "/app/prepare",
-      priority: 72,
-      layer: "1yr",
-    });
-  }
-
-  if (!a.has_offline_docs) {
-    moves.push({
-      id: "docs",
-      title: "Put ID copies where you can reach them offline",
-      why: "When accounts lag, paper and a locked Vault are how you still prove who you are.",
-      minutes: "12 min",
-      href: "/app/vault",
-      priority: 85,
-      layer: "now",
-    });
-  }
-
-  if (!a.phone_backup_plan) {
-    moves.push({
+      clockId: "financial",
+    };
+  },
+  payment: () => ({
+    id: "pay",
+    title: "Test a second way to pay",
+    why: "Payment is often the shortest clock. If the primary rail fails, food and fuel still need a path.",
+    minutes: "20 min",
+    href: "/app/focus/money",
+    priority: 98,
+    layer: "now",
+    clockId: "payment",
+  }),
+  digital: (a) => {
+    if (!a.has_offline_docs) {
+      return {
+        id: "docs",
+        title: "Put ID copies where you can reach them offline",
+        why: "Digital break point is near zero. Offline ID and critical account recovery close that clock.",
+        minutes: "12 min",
+        href: "/app/vault",
+        priority: 97,
+        layer: "now",
+        clockId: "digital",
+      };
+    }
+    return {
       id: "phone",
       title: "Write a plan for if your phone is gone",
       why: "Banking, codes, and family often live in one device. A backup path protects all three.",
       minutes: "10 min",
       href: "/app/focus/digital",
-      priority: 82,
+      priority: 96,
       layer: "now",
-    });
+      clockId: "digital",
+    };
+  },
+  food: (a) => {
+    const food = a.food_buffer_days || 0;
+    return {
+      id: "food",
+      title:
+        food < 14
+          ? "Grow the food you already eat toward 90 days"
+          : "Layer toward a full year of normal meals",
+      why:
+        food <= 3
+          ? "Food break point is a few days. Build with meals your household already likes."
+          : `About ${food} food days on file. Stretch toward 90, then a year with rotation.`,
+      minutes: "30 min",
+      href: "/app/prepare",
+      priority: 94,
+      layer: food < 90 ? "now" : "1yr",
+      clockId: "food",
+    };
+  },
+  income: () => ({
+    id: "income-diversity",
+    title: "Note one backup income path",
+    why: "One income stream is a single point of failure. Write down a skill, side offer, or network you could activate.",
+    minutes: "12 min",
+    href: "/app/focus/skills",
+    priority: 86,
+    layer: "90d",
+    clockId: "income",
+  }),
+};
+
+export function planMovesFromAssessment(a: AssessmentAnswers): PlanMove[] {
+  const clocks = orderByShortestClock(buildBreakPoints(a));
+  const moves: PlanMove[] = [];
+  const seen = new Set<string>();
+
+  for (const bp of clocks) {
+    if (bp.severity === "ok") continue;
+    const factory = CLOCK_ACTIONS[bp.id];
+    if (!factory) continue;
+    const move = factory(a);
+    if (seen.has(move.id)) continue;
+    seen.add(move.id);
+    moves.push({ ...move, priority: 100 - moves.length });
   }
 
-  if (!a.has_med_kit) {
+  if (!a.has_med_kit && !seen.has("med")) {
     moves.push({
       id: "med",
       title: "Check your first-aid and critical meds",
       why: "Small injuries and missed refills become big problems when travel is hard.",
       minutes: "15 min",
       href: "/app/focus/skills",
-      priority: 78,
+      priority: 70,
       layer: "90d",
     });
   }
-
-  if (!a.offline_contacts) {
+  if (!a.offline_contacts && !seen.has("people")) {
     moves.push({
       id: "people",
       title: "Write three contacts on paper",
@@ -144,22 +141,23 @@ export function planMovesFromAssessment(a: AssessmentAnswers): PlanMove[] {
       layer: "now",
     });
   }
+  if (!seen.has("offline-value")) {
+    moves.push({
+      id: "offline-value",
+      title: "Know one offline-value option near you",
+      why: "If cards fail for a long stretch, physical options matter — metals, local vendors, hardware wallets.",
+      minutes: "15 min",
+      href: "/app/offline-value",
+      priority: 55,
+      layer: "1yr",
+    });
+  }
 
-  moves.push({
-    id: "offline-value",
-    title: "Know one offline-value option near you",
-    why: "If cards fail for a long stretch, physical options matter — metals, local vendors, hardware wallets.",
-    minutes: "15 min",
-    href: "/app/offline-value",
-    priority: fund < 1 ? 70 : 55,
-    layer: "1yr",
-  });
-
-  if (moves.filter((m) => m.id !== "offline-value").length === 0) {
+  if (moves.length === 0) {
     moves.push({
       id: "maintain",
       title: "Deepen your year layers",
-      why: "Your baseline is solid. Add rotation, power, and a household meetup so it lasts.",
+      why: "Your shortest clocks are solid. Add rotation, power, and a household meetup so it lasts.",
       minutes: "20 min",
       href: "/app/prepare",
       priority: 40,
@@ -167,20 +165,18 @@ export function planMovesFromAssessment(a: AssessmentAnswers): PlanMove[] {
     });
   }
 
-  return moves.sort((x, y) => y.priority - x.priority).slice(0, 6);
+  return moves.sort((x, y) => y.priority - x.priority);
+}
+
+export function topThreeActions(a: AssessmentAnswers): PlanMove[] {
+  return planMovesFromAssessment(a).slice(0, 3);
 }
 
 export function runwayStory(a: AssessmentAnswers): string {
   const days = Math.round((a.emergency_fund_months || 0) * 30);
-  if (days <= 0) {
-    return "You have almost no cash runway on file yet. We'll build that first.";
-  }
-  if (days < 14) {
-    return `About ${days} days of essentials if income paused. Let's stretch that.`;
-  }
-  if (days < 90) {
-    return `About ${days} days of runway. The goal is closer to 90 days of calm.`;
-  }
+  if (days <= 0) return "You have almost no cash runway on file yet. Build that first.";
+  if (days < 14) return `About ${days} days of essentials if income paused. Stretch that.`;
+  if (days < 90) return `About ${days} days of runway. The goal is closer to 90 days — then a full year.`;
   return `About ${days} days of runway — strong. Keep it labeled and untouched.`;
 }
 
@@ -193,15 +189,15 @@ export function foodStory(a: AssessmentAnswers): string {
 }
 
 export function yearPlanSummary(a: AssessmentAnswers): string {
-  const food = a.food_buffer_days || 0;
-  const days = Math.round((a.emergency_fund_months || 0) * 30);
+  const clocks = orderByShortestClock(buildBreakPoints(a));
+  const shortest = clocks[0];
   const gaps: string[] = [];
-  if (days < 90) gaps.push("cash runway");
-  if (food < 90) gaps.push("food stock");
+  if ((a.emergency_fund_months || 0) * 30 < 90) gaps.push("cash runway");
+  if ((a.food_buffer_days || 0) < 90) gaps.push("food stock");
   if (!a.alt_payment_method) gaps.push("a second way to pay");
-  if (!a.has_med_kit) gaps.push("med kit");
+  if (!a.has_offline_docs) gaps.push("offline ID");
   if (gaps.length === 0) {
     return "Your year plan is about keeping what works — rotate stock, test payments, meet offline.";
   }
-  return `Your year plan focuses first on ${gaps.slice(0, 3).join(", ")}.`;
+  return `Shortest clock: ${shortest.label} (${shortest.value}). Year plan focuses first on ${gaps.slice(0, 3).join(", ")}.`;
 }
