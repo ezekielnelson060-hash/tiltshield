@@ -11,7 +11,6 @@ export type BreakPoint = {
 };
 
 export type ExposureSnapshot = {
-  /** Same 0–100 metric, framed as exposure profile */
   exposure: number;
   significantDependencies: number;
   weakest: {
@@ -19,8 +18,11 @@ export type ExposureSnapshot = {
     label: string;
     score: number;
   } | null;
+  /** Shortest clock — the break point that fails first */
   primary: BreakPoint;
   points: BreakPoint[];
+  /** Ordered shortest → longest */
+  clocks: BreakPoint[];
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -73,13 +75,13 @@ function severityFromDays(
 
 function formatDays(days: number): string {
   if (days <= 0) return "0 days";
+  if (days < 1) return "hours";
   if (days === 1) return "1 day";
-  if (days < 60) return `${days} days`;
+  if (days < 60) return `${Math.round(days)} days`;
   const months = Math.round(days / 30);
   return months === 1 ? "1 month" : `${months} months`;
 }
 
-/** Signature metric: when primary income stops and spend stays the same. */
 export function financialBreakPoint(a: AssessmentAnswers): BreakPoint {
   const days = fundDays(a);
   return {
@@ -154,6 +156,11 @@ export function buildBreakPoints(a: AssessmentAnswers): BreakPoint[] {
   return [financial, payment, digital, food, income];
 }
 
+/** Shortest clock first — the number people cannot stop thinking about. */
+export function orderByShortestClock(points: BreakPoint[]): BreakPoint[] {
+  return [...points].sort((a, b) => a.days - b.days);
+}
+
 export function countSignificantDependencies(
   a: AssessmentAnswers,
   scores?: CategoryScores | null
@@ -199,7 +206,8 @@ export function buildExposureSnapshot(
 ): ExposureSnapshot | null {
   if (!a) return null;
   const points = buildBreakPoints(a);
-  const primary = points[0];
+  const clocks = orderByShortestClock(points);
+  const primary = clocks[0];
   const exposure = scores?.overall ?? 0;
   return {
     exposure,
@@ -207,5 +215,32 @@ export function buildExposureSnapshot(
     weakest: weakestCategory(scores),
     primary,
     points,
+    clocks,
   };
+}
+
+export function breakPointShareText(snap: ExposureSnapshot): string {
+  const c = snap.primary;
+  return `My shortest clock on Tiltshield: ${c.label} — ${c.value}.\n\n"${c.meaning}"\n\nHow exposed are you? https://tiltshield.xyz/assessment`;
+}
+
+export async function shareBreakPoint(snap: ExposureSnapshot): Promise<boolean> {
+  const text = breakPointShareText(snap);
+  try {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      await navigator.share({
+        title: "My Tiltshield break point",
+        text,
+        url: "https://tiltshield.xyz/assessment",
+      });
+      return true;
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* cancelled */
+  }
+  return false;
 }
