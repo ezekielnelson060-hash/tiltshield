@@ -22,14 +22,39 @@ const PRODUCT_ITEMS = [
   {
     href: "/app/prepare",
     title: "1-year plan",
-    desc: "Stock, places, and moves for a full year",
+    desc: "Stock, places, journal, and moves for a full year",
   },
   {
     href: "/app/history",
     title: "Progress",
-    desc: "Exposure over time — not a wellness streak",
+    desc: "Where you are, where you need to be, why",
   },
 ];
+
+function LogoMark() {
+  return (
+    <span
+      className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 ring-1 ring-emerald-500/40"
+      aria-hidden
+    >
+      <svg viewBox="0 0 32 32" className="h-5 w-5" fill="none">
+        <path
+          d="M16 4L6 8v8c0 6.5 4.2 12.2 10 14 5.8-1.8 10-7.5 10-14V8L16 4z"
+          stroke="#34d399"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 16.5l2.5 2.5L20.5 13"
+          stroke="#34d399"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
@@ -38,8 +63,11 @@ export function SiteNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-50">
-          <img src="/icon-192.png" alt="Tiltshield" className="h-8 w-8 rounded-lg object-cover" />
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-50"
+        >
+          <LogoMark />
           Tiltshield
         </Link>
 
@@ -115,9 +143,27 @@ export function SiteNav() {
             </Link>
           ))}
           <div className="mt-2 space-y-1 border-t border-zinc-800 pt-2">
-            <a href="#how" className="block py-2 text-sm text-zinc-300" onClick={() => setMobile(false)}>How it works</a>
-            <a href="#pricing" className="block py-2 text-sm text-zinc-300" onClick={() => setMobile(false)}>Pricing</a>
-            <Link href="/login" className="block py-2 text-sm text-zinc-300" onClick={() => setMobile(false)}>Log in</Link>
+            <a
+              href="#how"
+              className="block py-2 text-sm text-zinc-300"
+              onClick={() => setMobile(false)}
+            >
+              How it works
+            </a>
+            <a
+              href="#pricing"
+              className="block py-2 text-sm text-zinc-300"
+              onClick={() => setMobile(false)}
+            >
+              Pricing
+            </a>
+            <Link
+              href="/login"
+              className="block py-2 text-sm text-zinc-300"
+              onClick={() => setMobile(false)}
+            >
+              Log in
+            </Link>
           </div>
         </div>
       )}
