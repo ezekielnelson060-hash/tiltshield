@@ -5,10 +5,21 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/assessment", "/pricing", "/break-point", "/what-if", "/guides", "/about", "/privacy", "/terms"],
+        allow: [
+          "/",
+          "/assessment",
+          "/pricing",
+          "/break-point",
+          "/what-if",
+          "/guides",
+          "/about",
+          "/privacy",
+          "/terms",
+        ],
         disallow: ["/app/", "/api/", "/results", "/dashboard"],
       },
     ],
-    sitemap: "https://tiltshield.xyz/sitemap.xml",
+    sitemap: "https://www.tiltshield.xyz/sitemap.xml",
+    host: "https://www.tiltshield.xyz",
   };
 }
