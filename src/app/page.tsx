@@ -164,7 +164,7 @@ export default function HomePage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Free</p>
               <p className="mt-1 text-3xl font-bold text-zinc-50">$0</p>
               <p className="mt-1 text-xs text-zinc-500">Know your number</p>
-              <ul className="mt-4 space-y-1.5 text-sm text-zinc-400">
+              <ul className="mt-4 list-disc space-y-1.5 pl-4 text-sm text-zinc-400">
                 <li>10-question resilience assessment</li>
                 <li>Your overall exposure score (0–100)</li>
                 <li>One break point revealed: Financial dependency</li>
@@ -184,7 +184,7 @@ export default function HomePage() {
                 $15 <span className="text-sm font-medium text-zinc-500">/ month</span>
               </p>
               <p className="mt-1 text-xs text-zinc-400">Close the gaps · cancel anytime</p>
-              <ul className="mt-4 space-y-1.5 text-sm text-zinc-300">
+              <ul className="mt-4 list-disc space-y-1.5 pl-4 text-sm text-zinc-300">
                 <li>Everything in Free</li>
                 <li>All four break points unlocked (financial, digital, food, payment)</li>
                 <li>What If? simulator — test 8 scenarios before they happen</li>
@@ -195,7 +195,9 @@ export default function HomePage() {
                 <li>Secure vault — encrypted document & asset backup</li>
                 <li>12-month preparedness tracker with progress history</li>
                 <li>Physical asset & cash inventory tools</li>
-                <li><span className="text-emerald-300">Or $79/year</span></li>
+                <li>
+                  <span className="text-emerald-300">Or $79/year</span>
+                </li>
               </ul>
               <Button asChild className="mt-5 w-full">
                 <Link href="/assessment?plan=pro_monthly">Start Pro · $15/mo</Link>
@@ -213,7 +215,7 @@ export default function HomePage() {
                 $29 <span className="text-sm font-medium text-zinc-500">/ month</span>
               </p>
               <p className="mt-1 text-xs text-zinc-400">Protect the household · up to 6 profiles</p>
-              <ul className="mt-4 space-y-1.5 text-sm text-zinc-300">
+              <ul className="mt-4 list-disc space-y-1.5 pl-4 text-sm text-zinc-300">
                 <li>Everything in Pro</li>
                 <li>Up to 6 household profiles</li>
                 <li>Shared emergency plan & contact tree</li>
