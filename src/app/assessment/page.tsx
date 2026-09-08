@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AssessmentWizard } from "@/components/assessment/wizard";
 import type { AssessmentAnswers } from "@/types";
@@ -24,14 +24,34 @@ import {
 import { topThreeActions } from "@/lib/plan-from-assessment";
 import Link from "next/link";
 import { UpgradeGate } from "@/components/app/upgrade-gate";
+import {
+  trackAssessmentStart,
+  trackAssessmentComplete,
+  trackShockView,
+} from "@/lib/analytics";
 
 function AssessmentInner() {
   const router = useRouter();
   const params = useSearchParams();
   const mode = params.get("mode") || "core";
+  const planParam = params.get("plan");
   const [phase, setPhase] = useState<"quiz" | "shock">("quiz");
   const [coreAnswers, setCoreAnswers] = useState<AssessmentAnswers | null>(null);
   const [shareNote, setShareNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (phase === "quiz") {
+      trackAssessmentStart(planParam || mode || "core");
+    }
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (phase !== "shock" || !coreAnswers) return;
+    const scores = calculateCategoryScores(coreAnswers);
+    const snap = buildExposureSnapshot(coreAnswers, scores);
+    const financial = snap?.clocks.find((c) => c.id === "financial");
+    trackShockView(scores.overall, financial?.days);
+  }, [phase, coreAnswers]);
 
   const questions =
     mode === "member"
@@ -59,12 +79,20 @@ function AssessmentInner() {
     if (mode === "core") {
       setCoreAnswers(answers);
       setPhase("shock");
+      trackAssessmentComplete(scores.overall);
       return;
     }
     router.push("/app/overview");
   }
 
   function onCoreComplete(partial: AssessmentAnswers) {
+    if (planParam) {
+      try {
+        localStorage.setItem("tiltshield_intended_plan", planParam);
+      } catch {
+        /* */
+      }
+    }
     void finish(partial);
   }
 
@@ -119,7 +147,7 @@ function AssessmentInner() {
             </p>
             <p className="mt-4 text-xs text-zinc-500">
               {pro
-                ? "Once you see it, you can\u2019t unsee it. Fix this clock first."
+                ? "Once you see it, you cannot unsee it. Fix this clock first."
                 : "Free shows your financial dependency. Pro unlocks digital, payment, and food clocks."}
             </p>
           </div>
