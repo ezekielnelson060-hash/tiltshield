@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tiltshield — Prepare for what might come next",
+  title: "TiltShield — Personal Exposure Intelligence & Resilience Planning",
   description:
-    "Income-based readiness. What If planning, home kits, local vendors, and daily actions when systems change.",
+    "TiltShield measures your financial, digital, food, and payment vulnerabilities—then shows you exactly what to fix first.",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Tiltshield",
+    title: "TiltShield",
   },
 };
 
