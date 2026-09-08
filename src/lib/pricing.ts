@@ -9,7 +9,8 @@ export type ProductId =
   | "pro_annual"
   | "lifetime"
   | "family_monthly"
-  | "family";
+  | "family"
+  | "family_annual";
 
 export type BillingKind = "free" | "recurring" | "one_time";
 
@@ -32,36 +33,37 @@ export const PRODUCTS: Record<ProductId, Product> = {
   free: {
     id: "free",
     name: "Free",
-    tagline: "See the number. Feel the gap.",
+    tagline: "Know your number",
     priceLabel: "$0",
     amountUsd: 0,
     interval: "none",
     billing: "free",
     features: [
-      "Nine-question exposure map",
-      "All four break points",
-      "City / nation map",
-      "Core 1-year plan outline",
+      "10-question resilience assessment",
+      "Your overall exposure score (0–100)",
+      "One break point revealed: Financial dependency",
+      "See where you stand—no account required",
     ],
     cta: "Measure my exposure",
   },
   pro_monthly: {
     id: "pro_monthly",
     name: "Pro",
-    tagline: "Live clocks + intel that stays on",
+    tagline: "Close the gaps · cancel anytime",
     priceLabel: "$15",
     amountUsd: 15,
     interval: "month",
     billing: "recurring",
     popular: true,
-    badge: "Best value for most people",
+    badge: "Recommended",
     features: [
       "Everything in Free",
+      "All four break points unlocked",
+      "What If? simulator — 8 scenarios",
       "Live intel matched to your gaps",
-      "Full What If scenarios",
-      "Document vault + offline value",
-      "Progress history + journal",
-      "Year stock tracking",
+      "Secure vault",
+      "12-month preparedness tracker",
+      "Physical asset & cash inventory",
       "Cancel anytime",
     ],
     cta: "Start Pro · $15/mo",
@@ -84,25 +86,25 @@ export const PRODUCTS: Record<ProductId, Product> = {
   },
   lifetime: {
     id: "lifetime",
-    name: "Founding Lifetime",
-    tagline: "One payment. Locked in early.",
-    priceLabel: "$49",
-    amountUsd: 49,
+    name: "Founding Member",
+    tagline: "Lifetime Pro. No renewals. Only 100 seats.",
+    priceLabel: "$149",
+    amountUsd: 149,
     interval: "once",
     billing: "one_time",
-    badge: "Limited founding",
+    badge: "Only 100 seats",
     features: [
-      "Individual Pro tools forever",
-      "No renewals",
+      "Lifetime Pro access forever",
+      "No renewals. No price increases",
+      "Full feature stack including future releases",
       "Founding supporter status",
-      "Does not include household seats",
     ],
-    cta: "Lock founding · $49",
+    cta: "Claim founding access →",
   },
   family_monthly: {
     id: "family_monthly",
     name: "Family",
-    tagline: "Household clocks under one plan",
+    tagline: "Protect the household · up to 6 profiles",
     priceLabel: "$29",
     amountUsd: 29,
     interval: "month",
@@ -111,11 +113,28 @@ export const PRODUCTS: Record<ProductId, Product> = {
     features: [
       "Everything in Pro",
       "Up to 6 household profiles",
-      "Shared emergency plan",
-      "Family shortest-clock view",
+      "Shared emergency plan & contact tree",
+      "Family-wide shortest-clock view",
       "Cancel anytime",
     ],
     cta: "Start Family · $29/mo",
+  },
+  family_annual: {
+    id: "family_annual",
+    name: "Family Annual",
+    tagline: "Household plan, billed yearly",
+    priceLabel: "$179",
+    amountUsd: 179,
+    interval: "year",
+    billing: "recurring",
+    household: true,
+    badge: "Save vs monthly",
+    features: [
+      "Everything in Family Monthly",
+      "Billed once a year",
+      "Up to 6 household profiles",
+    ],
+    cta: "Family annual · $179/yr",
   },
   family: {
     id: "family",
@@ -149,21 +168,23 @@ export function productAmount(id: ProductId): number {
 }
 
 export function isHouseholdProduct(id: string): boolean {
-  return id === "family" || id === "family_monthly";
+  return id === "family" || id === "family_monthly" || id === "family_annual";
 }
 
 export function isRecurringProduct(id: string): boolean {
   return (
     id === "pro_monthly" ||
     id === "pro_annual" ||
-    id === "family_monthly"
+    id === "family_monthly" ||
+    id === "family_annual"
   );
 }
 
 export function premiumTierFromProduct(
   id: string
 ): "none" | "pro" | "family" {
-  if (id === "family" || id === "family_monthly") return "family";
+  if (id === "family" || id === "family_monthly" || id === "family_annual")
+    return "family";
   if (
     id === "lifetime" ||
     id === "pro_monthly" ||
