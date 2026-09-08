@@ -20,10 +20,10 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-            Tiltshield starts from your real income, maps what could break, and
-            helps you prepare — buffers, kits, local resources, and clear{" "}
-            <span className="text-zinc-200">what if</span> plans — before you
-            even need them.
+            Built for people with income, dependents, and something to lose.
+            Tiltshield maps what breaks first — financial, digital, payment,
+            food — then gives you a year plan to close the shortest clock
+            before the world tests it.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="min-w-[220px] shadow-lg shadow-emerald-900/40">
@@ -34,9 +34,29 @@ export default function HomePage() {
             </Button>
           </div>
           <p className="mt-4 text-sm text-zinc-500">
-            The assessment reveals vulnerabilities. Once you see yours, you
-            can't unsee it.
+            Free assessment. You get your shortest clock and three actions.
+            Once you see it, you can't unsee it.
           </p>
+          <div className="mx-auto mt-6 flex max-w-lg flex-wrap items-center justify-center gap-2 text-xs text-zinc-400">
+            <a
+              href="#pricing"
+              className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 hover:border-emerald-500/30 hover:text-zinc-200"
+            >
+              Free · $0
+            </a>
+            <a
+              href="#pricing"
+              className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/15"
+            >
+              Lifetime · $29
+            </a>
+            <a
+              href="#pricing"
+              className="rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-teal-300 hover:bg-teal-500/15"
+            >
+              Family · $49
+            </a>
+          </div>
         </div>
       </section>
 
@@ -365,11 +385,11 @@ export default function HomePage() {
             Test. A break point you will remember. A map of what to fix before the
             world tests it for you.
           </p>
-          <Button asChild size="lg" className="mt-6 min-w-[220px] shadow-lg shadow-emerald-900/40">
+          <Button asChild size="lg" className="mt-6 min-w-[220px] shadow--lg shadow-emerald-900/40">
             <Link href="/assessment">Measure my exposure</Link>
           </Button>
           <p className="mt-4 text-sm text-zinc-500">
-            Free to start. No credit card. No soft speech.
+            Free · $0 · Lifetime $29 · Family $49. No soft speech.
           </p>
         </div>
       </section>
@@ -387,36 +407,54 @@ export default function HomePage() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-500/70">
                 Product
               </p>
-              <ul className="mt-2 space-y-1.5 text-sm text-zinc-400">
-                <li><Link href="/assessment" className="hover:text-emerald-300">Assessment</Link></li>
-                <li><Link href="/app/overview" className="hover:text-emerald-300">App</Link></li>
-                <li><a href="#pricing" className="hover:text-emerald-300">Pricing</a></li>
-                <li><a href="#how" className="hover:text-emerald-300">How it works</a></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-500/70">
-                Account
-              </p>
-              <ul className="mt-2 space-y-1.5 text-sm text-zinc-400">
-                <li><Link href="/login" className="hover:text-emerald-300">Log in</Link></li>
-                <li><Link href="/signup" className="hover:text-emerald-300">Sign up</Link></li>
-                <li><Link href="/assessment" className="hover:text-emerald-300">Start free</Link></li>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-400">
+                <li>
+                  <Link href="/assessment" className="hover:text-emerald-300">
+                    Assessment
+                  </Link>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-emerald-300">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <Link href="/app/overview" className="hover:text-emerald-300">
+                    Open app
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-500/70">
                 Legal
               </p>
-              <ul className="mt-2 space-y-1.5 text-sm text-zinc-400">
-                <li><Link href="/privacy" className="hover:text-emerald-300">Privacy</Link></li>
-                <li><Link href="/terms" className="hover:text-emerald-300">Terms</Link></li>
-                <li><a href="mailto:hello@tiltshield.app" className="hover:text-emerald-300">Contact</a></li>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-400">
+                <li>
+                  <Link href="/privacy" className="hover:text-emerald-300">
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-emerald-300">
+                    Terms
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-500/70">
+                Pricing
+              </p>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-400">
+                <li>Free · $0</li>
+                <li>Lifetime · $29 one-time</li>
+                <li>Family · $49 one-time</li>
               </ul>
             </div>
           </div>
-          <p className="mt-8 border-t border-zinc-900 pt-5 text-center text-xs text-zinc-600">
-            © {new Date().getFullYear()} Tiltshield. Measure exposure. Prepare for a year.
+          <p className="mt-10 text-center text-[11px] text-zinc-600">
+            © {new Date().getFullYear()} Tiltshield. Personal exposure intelligence.
           </p>
         </div>
       </footer>
