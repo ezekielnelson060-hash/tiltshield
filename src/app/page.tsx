@@ -225,7 +225,7 @@ export default function HomePage() {
               </Button>
               <p className="mt-2 text-center text-[11px] text-zinc-500">
                 <Link href="/assessment?plan=family_annual" className="text-teal-300/90 hover:text-teal-200">
-                  Prefer annual · $179/yr →
+                  Prefer annual · $99/yr →
                 </Link>
               </p>
             </div>
