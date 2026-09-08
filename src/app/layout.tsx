@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TiltShield — Personal Exposure Intelligence & Resilience Planning",
+  title: "TiltShield — Know What Could Break Before It Does",
   description:
-    "TiltShield measures your financial, digital, food, and payment vulnerabilities—then shows you exactly what to fix first.",
+    "TiltShield measures your personal exposure to financial, digital, household and infrastructure disruptions—and tells you what to fix first.",
   manifest: "/manifest.json",
   icons: {
     icon: [
