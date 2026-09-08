@@ -8,6 +8,7 @@ import { loadSession, type TiltSession } from "@/lib/session";
 import { getActiveMember } from "@/lib/family";
 import type { CategoryScores } from "@/types";
 import { BrandLogo } from "@/components/brand-logo";
+import { IntelTopBanner } from "@/components/app/intel-top-banner";
 
 const NAV = [
   { href: "/app/overview", label: "Today", icon: "home" },
@@ -131,145 +132,148 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const scores = session.scores;
 
   return (
-    <div className="flex min-h-screen bg-[#060a12] text-zinc-100">
-      <aside className="hidden w-[240px] shrink-0 flex-col border-r border-white/[0.06] bg-[#080d16] lg:flex">
-        <div className="px-5 py-5">
-          <Link href="/app/overview" className="flex items-center gap-2.5">
-            <BrandLogo className="h-9 w-9 rounded-xl object-cover ring-1 ring-emerald-500/30" />
-            <div>
-              <p className="text-[13px] font-bold tracking-wide text-zinc-50">TILTSHIELD</p>
-              <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-zinc-500">
-                Personal exposure intelligence
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        <nav className="flex-1 space-y-1 px-3">
-          {NAV.map((item) => {
-            const active =
-              pathname === item.href || pathname?.startsWith(item.href + "/");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition",
-                  active
-                    ? "bg-emerald-500/15 font-semibold text-emerald-400 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)]"
-                    : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200"
-                )}
-              >
-                <NavIcon
-                  name={item.icon}
-                  className={active ? "text-emerald-400" : "text-zinc-500"}
-                />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="mt-2 px-4 pb-2">
-          <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
-            My Resilience
-          </p>
-          <div className="space-y-0.5">
-            {RESILIENCE_META.map((m) => {
-              const val = Number(scores[m.key] ?? 0);
-              return (
-                <Link
-                  key={m.key}
-                  href={`/app/risk?cat=${m.key}`}
-                  className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition hover:bg-white/[0.04]"
-                >
-                  <span className="flex items-center gap-2 text-zinc-400">
-                    <span className={cn("h-1.5 w-1.5 rounded-full", m.color)} />
-                    {m.label}
-                  </span>
-                  <span className="tabular-nums text-zinc-300">{val}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-auto space-y-3 border-t border-white/[0.06] p-4">
-          <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-transparent p-3.5">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-              Exposure
-            </p>
-            <div className="mt-1 flex items-end gap-1">
-              <span className="text-2xl font-bold tabular-nums text-zinc-50">
-                {scores.overall}
-              </span>
-              <span className="mb-0.5 text-sm text-zinc-600">/ 100</span>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
-                style={{ width: `${Math.min(100, scores.overall)}%` }}
-              />
-            </div>
-          </div>
-
-          <Link
-            href="/app/settings"
-            className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2.5 hover:bg-white/[0.05]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/30 to-teal-600/20 text-xs font-bold text-emerald-300 ring-1 ring-emerald-500/20">
-              {memberName.slice(0, 1).toUpperCase()}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-zinc-200">{memberName}</p>
-              <p className="text-[10px] text-emerald-500/90">Settings & plan →</p>
-            </div>
-          </Link>
-          <div className="flex gap-3 px-1">
-            <Link href="/app/settings" className="text-[11px] text-zinc-500 hover:text-zinc-300">
-              Settings
-            </Link>
-            <Link href="/app/settings" className="text-[11px] text-zinc-600 hover:text-zinc-400">
-              Help & Support
+    <>
+      <IntelTopBanner />
+      <div className="flex min-h-screen bg-[#060a12] text-zinc-100">
+        <aside className="hidden w-[240px] shrink-0 flex-col border-r border-white/[0.06] bg-[#080d16] lg:flex">
+          <div className="px-5 py-5">
+            <Link href="/app/overview" className="flex items-center gap-2.5">
+              <BrandLogo className="h-9 w-9 rounded-xl object-cover ring-1 ring-emerald-500/30" />
+              <div>
+                <p className="text-[13px] font-bold tracking-wide text-zinc-50">TILTSHIELD</p>
+                <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-zinc-500">
+                  Personal exposure intelligence
+                </p>
+              </div>
             </Link>
           </div>
-        </div>
-      </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <main className="flex-1 overflow-y-auto pb-24 lg:pb-10">{children}</main>
-
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] bg-[#080d16]/95 backdrop-blur-xl lg:hidden">
-          <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)]">
-            {MOBILE_NAV.map((item) => {
+          <nav className="flex-1 space-y-1 px-3">
+            {NAV.map((item) => {
               const active =
-                item.href === "/app/more"
-                  ? pathname === "/app/more" ||
-                    pathname?.startsWith("/app/nearby") ||
-                    pathname?.startsWith("/app/settings") ||
-                    pathname?.startsWith("/app/family") ||
-                    pathname?.startsWith("/app/history") ||
-                    pathname?.startsWith("/app/vault") ||
-                    pathname?.startsWith("/app/calculators")
-                  : pathname === item.href ||
-                    pathname?.startsWith(item.href + "/");
+                pathname === item.href || pathname?.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
-                    active ? "text-emerald-400" : "text-zinc-500"
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition",
+                    active
+                      ? "bg-emerald-500/15 font-semibold text-emerald-400 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)]"
+                      : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200"
                   )}
                 >
-                  <NavIcon name={item.icon} className="h-[18px] w-[18px]" />
+                  <NavIcon
+                    name={item.icon}
+                    className={active ? "text-emerald-400" : "text-zinc-500"}
+                  />
                   {item.label}
                 </Link>
               );
             })}
+          </nav>
+
+          <div className="mt-2 px-4 pb-2">
+            <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
+              My Resilience
+            </p>
+            <div className="space-y-0.5">
+              {RESILIENCE_META.map((m) => {
+                const val = Number(scores[m.key] ?? 0);
+                return (
+                  <Link
+                    key={m.key}
+                    href={`/app/risk?cat=${m.key}`}
+                    className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition hover:bg-white/[0.04]"
+                  >
+                    <span className="flex items-center gap-2 text-zinc-400">
+                      <span className={cn("h-1.5 w-1.5 rounded-full", m.color)} />
+                      {m.label}
+                    </span>
+                    <span className="tabular-nums text-zinc-300">{val}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </nav>
+
+          <div className="mt-auto space-y-3 border-t border-white/[0.06] p-4">
+            <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-transparent p-3.5">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                Exposure
+              </p>
+              <div className="mt-1 flex items-end gap-1">
+                <span className="text-2xl font-bold tabular-nums text-zinc-50">
+                  {scores.overall}
+                </span>
+                <span className="mb-0.5 text-sm text-zinc-600">/ 100</span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
+                  style={{ width: `${Math.min(100, scores.overall)}%` }}
+                />
+              </div>
+            </div>
+
+            <Link
+              href="/app/settings"
+              className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2.5 hover:bg-white/[0.05]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/30 to-teal-600/20 text-xs font-bold text-emerald-300 ring-1 ring-emerald-500/20">
+                {memberName.slice(0, 1).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-zinc-200">{memberName}</p>
+                <p className="text-[10px] text-emerald-500/90">Settings & plan →</p>
+              </div>
+            </Link>
+            <div className="flex gap-3 px-1">
+              <Link href="/app/settings" className="text-[11px] text-zinc-500 hover:text-zinc-300">
+                Settings
+              </Link>
+              <Link href="/app/settings" className="text-[11px] text-zinc-600 hover:text-zinc-400">
+                Help & Support
+              </Link>
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main className="flex-1 overflow-y-auto pb-24 lg:pb-10">{children}</main>
+
+          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] bg-[#080d16]/95 backdrop-blur-xl lg:hidden">
+            <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)]">
+              {MOBILE_NAV.map((item) => {
+                const active =
+                  item.href === "/app/more"
+                    ? pathname === "/app/more" ||
+                      pathname?.startsWith("/app/nearby") ||
+                      pathname?.startsWith("/app/settings") ||
+                      pathname?.startsWith("/app/family") ||
+                      pathname?.startsWith("/app/history") ||
+                      pathname?.startsWith("/app/vault") ||
+                      pathname?.startsWith("/app/calculators")
+                    : pathname === item.href ||
+                      pathname?.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
+                      active ? "text-emerald-400" : "text-zinc-500"
+                    )}
+                  >
+                    <NavIcon name={item.icon} className="h-[18px] w-[18px]" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
