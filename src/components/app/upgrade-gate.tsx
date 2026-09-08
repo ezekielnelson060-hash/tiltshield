@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { trackUpgradeClick } from "@/lib/analytics";
 
 type Props = {
   title?: string;
@@ -20,6 +21,7 @@ export function UpgradeGate({
   const [busy, setBusy] = useState(false);
 
   async function startPro() {
+    trackUpgradeClick("pro_monthly", "upgrade_gate");
     setBusy(true);
     try {
       const res = await fetch("/api/flutterwave/initialize", {
@@ -113,7 +115,7 @@ export function UpgradeGate({
           {busy ? "Opening…" : "Unlock Pro · $15/mo"}
         </button>
         <Link
-          href="/#pricing"
+          href="/pricing"
           className="rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-zinc-300"
         >
           See plans
