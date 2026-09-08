@@ -33,17 +33,17 @@ export default function HomePage() {
             </Button>
           </div>
           <p className="mt-4 text-sm text-zinc-500">
-            Free to measure. Pro from $9/mo when you want the year stack on.
+            Free to measure. Pro from $15/mo when you want the year stack on.
           </p>
           <div className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-2 text-xs text-zinc-400">
             <a href="#pricing" className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 hover:border-emerald-500/30 hover:text-zinc-200">
               Free · $0
             </a>
             <a href="#pricing" className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/15">
-              Pro · $9/mo
+              Pro · $15/mo
             </a>
             <a href="#pricing" className="rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-teal-300 hover:bg-teal-500/15">
-              Family · $19/mo
+              Family · $29/mo
             </a>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function HomePage() {
               </p>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-400">Pro</p>
               <p className="mt-1 text-3xl font-bold text-zinc-50">
-                $9 <span className="text-sm font-medium text-zinc-500">/ month</span>
+                $15 <span className="text-sm font-medium text-zinc-500">/ month</span>
               </p>
               <p className="mt-1 text-xs text-zinc-400">Live clocks · cancel anytime</p>
               <ul className="mt-4 space-y-1.5 text-sm text-zinc-300">
@@ -142,10 +142,10 @@ export default function HomePage() {
                 <li>Full What If + vault</li>
                 <li>Progress, journal, year stock</li>
                 <li>Offline value tracking</li>
-                <li><span className="text-emerald-300">Or $79/year</span> (save ~27%)</li>
+                <li><span className="text-emerald-300">Or $79/year</span></li>
               </ul>
               <Button asChild className="mt-5 w-full">
-                <Link href="/assessment?plan=pro_monthly">Start Pro · $9/mo</Link>
+                <Link href="/assessment?plan=pro_monthly">Start Pro · $15/mo</Link>
               </Button>
               <p className="mt-2 text-center text-[11px] text-zinc-500">
                 <Link href="/assessment?plan=pro_annual" className="text-emerald-400/90 hover:text-emerald-300">
@@ -157,7 +157,7 @@ export default function HomePage() {
             <div className="rounded-2xl border border-teal-500/30 bg-teal-500/[0.06] p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-400">Family</p>
               <p className="mt-1 text-3xl font-bold text-zinc-50">
-                $19 <span className="text-sm font-medium text-zinc-500">/ month</span>
+                $29 <span className="text-sm font-medium text-zinc-500">/ month</span>
               </p>
               <p className="mt-1 text-xs text-zinc-400">Household · up to 6 profiles</p>
               <ul className="mt-4 space-y-1.5 text-sm text-zinc-300">
@@ -168,7 +168,7 @@ export default function HomePage() {
                 <li>Cancel anytime</li>
               </ul>
               <Button asChild className="mt-5 w-full" variant="outline">
-                <Link href="/assessment?plan=family_monthly">Start Family · $19/mo</Link>
+                <Link href="/assessment?plan=family_monthly">Start Family · $29/mo</Link>
               </Button>
             </div>
           </div>
@@ -189,13 +189,13 @@ export default function HomePage() {
                   href="/assessment?plan=lifetime"
                   className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
                 >
-                  Individual · $29 once
+                  Individual · $49 once
                 </Link>
                 <Link
                   href="/assessment?plan=family"
                   className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
                 >
-                  Household · $49 once
+                  Household · $99 once
                 </Link>
               </div>
             </div>
@@ -233,20 +233,20 @@ export default function HomePage() {
             Find out how exposed you are.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-zinc-400 sm:text-base">
-            Free assessment. Then Pro from $9/mo if you want the stack kept live.
+            Free assessment. Then Pro from $15/mo if you want the stack kept live.
           </p>
           <Button asChild size="lg" className="mt-6 min-w-[220px] shadow-lg shadow-emerald-900/40">
             <Link href="/assessment">Measure my exposure</Link>
           </Button>
           <p className="mt-4 text-sm text-zinc-500">
-            Free · $0 · Pro $9/mo · Family $19/mo · Founding from $29
+            Free to start. Cancel anytime on paid plans.
           </p>
         </div>
       </section>
 
       <footer className="border-t border-emerald-500/10 bg-zinc-950 py-10">
         <div className="mx-auto max-w-5xl px-4">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <span className="text-sm font-semibold text-zinc-100">Tiltshield</span>
               <p className="mt-2 text-xs leading-relaxed text-zinc-500">
@@ -266,15 +266,6 @@ export default function HomePage() {
               <ul className="mt-3 space-y-2 text-sm text-zinc-400">
                 <li><Link href="/privacy" className="hover:text-emerald-300">Privacy</Link></li>
                 <li><Link href="/terms" className="hover:text-emerald-300">Terms</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-500/70">Pricing</p>
-              <ul className="mt-3 space-y-2 text-sm text-zinc-400">
-                <li>Free · $0</li>
-                <li>Pro · $9/mo or $79/yr</li>
-                <li>Family · $19/mo</li>
-                <li>Founding lifetime · $29 / $49</li>
               </ul>
             </div>
           </div>
