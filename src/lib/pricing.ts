@@ -122,9 +122,9 @@ export const PRODUCTS: Record<ProductId, Product> = {
   family_annual: {
     id: "family_annual",
     name: "Family Annual",
-    tagline: "Household plan, billed yearly",
-    priceLabel: "$179",
-    amountUsd: 179,
+    tagline: "Household plan · billed yearly",
+    priceLabel: "$99",
+    amountUsd: 99,
     interval: "year",
     billing: "recurring",
     household: true,
@@ -134,7 +134,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
       "Billed once a year",
       "Up to 6 household profiles",
     ],
-    cta: "Family annual · $179/yr",
+    cta: "Family annual · $99/yr",
   },
   family: {
     id: "family",
