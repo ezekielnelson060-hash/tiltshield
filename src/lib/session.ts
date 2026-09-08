@@ -33,6 +33,8 @@ const SESSION_KEY = "tiltshield_session";
 const HISTORY_KEY = "tiltshield_history";
 const PREMIUM_KEY = "tiltshield_lifetime";
 const FAMILY_KEY = "tiltshield_family";
+const PREMIUM_TIER_KEY = "tiltshield_tier";
+const PRODUCT_KEY = "tiltshield_product";
 
 function sessionKey(memberId?: string) {
   const mid =
@@ -100,19 +102,50 @@ function appendHistory(entry: HistoryEntry) {
   }
 }
 
-/** Lifetime OR Household both unlock full tools. */
+/** Pro, Family, or legacy lifetime unlocks full tools. */
 export function isPremium(): boolean {
   if (typeof window === "undefined") return false;
-  return (
-    localStorage.getItem(PREMIUM_KEY) === "1" ||
-    localStorage.getItem(FAMILY_KEY) === "1"
-  );
+  if (localStorage.getItem(PREMIUM_KEY) === "1") return true;
+  if (localStorage.getItem(FAMILY_KEY) === "1") return true;
+  const tier = localStorage.getItem(PREMIUM_TIER_KEY);
+  return tier === "pro" || tier === "family";
+}
+
+export function getPremiumTier(): "none" | "pro" | "family" {
+  if (typeof window === "undefined") return "none";
+  if (localStorage.getItem(FAMILY_KEY) === "1") return "family";
+  const tier = localStorage.getItem(PREMIUM_TIER_KEY);
+  if (tier === "family") return "family";
+  if (tier === "pro" || localStorage.getItem(PREMIUM_KEY) === "1") return "pro";
+  return "none";
 }
 
 export function setPremium(v: boolean) {
   if (typeof window === "undefined") return;
-  if (v) localStorage.setItem(PREMIUM_KEY, "1");
-  else localStorage.removeItem(PREMIUM_KEY);
+  if (v) {
+    localStorage.setItem(PREMIUM_KEY, "1");
+    if (!localStorage.getItem(PREMIUM_TIER_KEY)) {
+      localStorage.setItem(PREMIUM_TIER_KEY, "pro");
+    }
+  } else {
+    localStorage.removeItem(PREMIUM_KEY);
+    localStorage.removeItem(FAMILY_KEY);
+    localStorage.removeItem(PREMIUM_TIER_KEY);
+    localStorage.removeItem(PRODUCT_KEY);
+  }
+}
+
+/** Unlock from paid product id (pro_monthly, lifetime, family_monthly, …). */
+export function unlockFromProduct(product: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PREMIUM_KEY, "1");
+  localStorage.setItem(PRODUCT_KEY, product);
+  if (product.includes("family")) {
+    localStorage.setItem(FAMILY_KEY, "1");
+    localStorage.setItem(PREMIUM_TIER_KEY, "family");
+  } else {
+    localStorage.setItem(PREMIUM_TIER_KEY, "pro");
+  }
 }
 
 export function loadHistory(memberId?: string): HistoryEntry[] {
