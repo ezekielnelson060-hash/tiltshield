@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { AssessmentWizard } from "@/components/assessment/wizard";
 import type { AssessmentAnswers } from "@/types";
 import {
   calculateCategoryScores,
   calculateVulnerabilities,
 } from "@/lib/scoring";
-import { saveSession, loadSession } from "@/lib/session";
+import { saveSession, loadSession, isPremium } from "@/lib/session";
 import { getActiveMemberId, updateMemberScore } from "@/lib/family";
 import { persistAssessmentToCloud } from "@/lib/persist";
 import {
@@ -24,6 +23,7 @@ import {
 } from "@/lib/break-point";
 import { topThreeActions } from "@/lib/plan-from-assessment";
 import Link from "next/link";
+import { UpgradeGate } from "@/components/app/upgrade-gate";
 
 function AssessmentInner() {
   const router = useRouter();
@@ -81,7 +81,11 @@ function AssessmentInner() {
     const scores = calculateCategoryScores(coreAnswers);
     const snap = buildExposureSnapshot(coreAnswers, scores);
     const actions = topThreeActions(coreAnswers);
-    const shortest = snap?.primary;
+    const pro = isPremium();
+    const financial =
+      snap?.clocks.find((c) => c.id === "financial") || snap?.primary;
+    const hero = pro ? snap?.primary : financial;
+    const lockedClocks = (snap?.clocks || []).filter((c) => c.id !== "financial");
 
     return (
       <main className="min-h-screen bg-zinc-950 px-4 py-10">
@@ -90,73 +94,127 @@ function AssessmentInner() {
             Exposure revealed
           </p>
 
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-400/90">
+              Exposure score
+            </p>
+            <p className="mt-2 text-4xl font-bold tabular-nums text-zinc-50">
+              {scores.overall ?? 0}
+              <span className="text-base font-medium text-zinc-500"> / 100</span>
+            </p>
+          </div>
+
           <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.06] p-6 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-red-400/90">
-              Your shortest clock
+              {pro ? "Your shortest clock" : "Financial break point"}
             </p>
             <p className="mt-3 text-5xl font-bold tabular-nums tracking-tight text-zinc-50">
-              {shortest?.value || "—"}
+              {hero?.value || "—"}
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-100">
-              {shortest?.label || "Break point"}
+              {hero?.label || "Financial break point"}
             </p>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              {shortest?.meaning}
+              {hero?.meaning}
             </p>
             <p className="mt-4 text-xs text-zinc-500">
-              Once you see it, you can&apos;t unsee it. Fix this clock first.
+              {pro
+                ? "Once you see it, you can\u2019t unsee it. Fix this clock first."
+                : "Free shows your financial dependency. Pro unlocks digital, payment, and food clocks."}
             </p>
           </div>
 
           {snap && (
             <div className="grid grid-cols-2 gap-2">
-              {snap.clocks.slice(0, 4).map((bp) => (
-                <div
-                  key={bp.id}
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
-                >
-                  <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                    {bp.label.replace(" break point", "")}
-                  </p>
-                  <p
-                    className={
-                      bp.severity === "critical"
-                        ? "mt-0.5 text-lg font-bold tabular-nums text-red-400"
-                        : bp.severity === "high"
-                          ? "mt-0.5 text-lg font-bold tabular-nums text-amber-400"
-                          : "mt-0.5 text-lg font-bold tabular-nums text-zinc-100"
-                    }
+              {(pro
+                ? snap.clocks.slice(0, 4)
+                : [financial, ...lockedClocks.slice(0, 3)].filter(Boolean)
+              ).map((bp) => {
+                if (!bp) return null;
+                const locked = !pro && bp.id !== "financial";
+                return (
+                  <div
+                    key={bp.id}
+                    className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
                   >
-                    {bp.value}
-                  </p>
-                </div>
-              ))}
+                    <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                      {bp.label.replace(" break point", "")}
+                    </p>
+                    {locked ? (
+                      <>
+                        <p className="mt-0.5 select-none text-lg font-bold tabular-nums text-zinc-600 blur-[2px]">
+                          ••
+                        </p>
+                        <span className="absolute right-2 top-2 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-400">
+                          Pro
+                        </span>
+                      </>
+                    ) : (
+                      <p
+                        className={
+                          bp.severity === "critical"
+                            ? "mt-0.5 text-lg font-bold tabular-nums text-red-400"
+                            : bp.severity === "high"
+                              ? "mt-0.5 text-lg font-bold tabular-nums text-amber-400"
+                              : "mt-0.5 text-lg font-bold tabular-nums text-zinc-100"
+                        }
+                      >
+                        {bp.value}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-              What happens next · 3 actions
-            </p>
-            <ol className="mt-3 space-y-3">
-              {actions.map((a, i) => (
-                <li
-                  key={a.id}
-                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
-                >
-                  <div className="flex gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-sm font-bold text-emerald-400">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-50">{a.title}</p>
-                      <p className="mt-1 text-xs text-zinc-500">{a.why}</p>
+          {!pro && (
+            <UpgradeGate
+              title="See all four break points"
+              body="Digital, payment, and food clocks stay locked on Free. Pro also unlocks What If?, live intel, vault, and the 12-month tracker."
+            />
+          )}
+
+          {pro ? (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                What happens next · 3 actions
+              </p>
+              <ol className="mt-3 space-y-3">
+                {actions.map((a, i) => (
+                  <li
+                    key={a.id}
+                    className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+                  >
+                    <div className="flex gap-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-sm font-bold text-emerald-400">
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-zinc-50">{a.title}</p>
+                        <p className="mt-1 text-xs text-zinc-500">{a.why}</p>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                One free next step
+              </p>
+              {actions[0] && (
+                <div className="mt-2">
+                  <p className="text-sm font-semibold text-zinc-50">{actions[0].title}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{actions[0].why}</p>
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-zinc-600">
+                Full 3-action plan unlocks with Pro.
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
@@ -164,7 +222,7 @@ function AssessmentInner() {
               onClick={() => router.push("/app/overview")}
               className="flex-1 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-zinc-950"
             >
-              Open Today · start action 1 →
+              {pro ? "Open Today · start action 1 →" : "Open Today →"}
             </button>
             <button
               type="button"
