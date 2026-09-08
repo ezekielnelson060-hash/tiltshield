@@ -6,29 +6,34 @@ import { BrandLogo } from "@/components/brand-logo";
 
 const PRODUCT_ITEMS = [
   {
-    href: "/app/overview",
-    title: "Today",
-    desc: "Exposure, break points, intel — command center",
+    href: "/assessment",
+    title: "Find your exposure",
+    desc: "Free score + financial break point",
   },
   {
-    href: "/app/risk",
-    title: "Exposure",
-    desc: "Where you are weak and what depends on what",
+    href: "/break-point",
+    title: "Break Point",
+    desc: "Savings measured in days, not dollars",
   },
   {
-    href: "/app/what-if",
+    href: "/what-if",
     title: "What If?",
-    desc: "Stress-test income, rails, power, food",
+    desc: "Stress-test income, bank, phone, food",
   },
   {
-    href: "/app/prepare",
-    title: "1-year plan",
-    desc: "Stock, places, journal, and moves for a full year",
+    href: "/guides",
+    title: "Guides",
+    desc: "Calculators and scenario checklists",
   },
   {
-    href: "/app/history",
-    title: "Progress",
-    desc: "Where you are, where you need to be, why",
+    href: "/pricing",
+    title: "Pricing",
+    desc: "Free · Pro · Family · Founding",
+  },
+  {
+    href: "/app/overview",
+    title: "Open app",
+    desc: "Today, Prepare, Intel — after assessment",
   },
 ];
 
@@ -80,24 +85,30 @@ export function SiteNav() {
               </div>
             )}
           </div>
-          <a href="#how" className="rounded-lg px-3 py-2 hover:text-zinc-100">
-            How it works
-          </a>
-          <a href="#pricing" className="rounded-lg px-3 py-2 hover:text-zinc-100">
+          <Link href="/guides" className="rounded-lg px-3 py-2 hover:text-zinc-100">
+            Guides
+          </Link>
+          <Link href="/pricing" className="rounded-lg px-3 py-2 hover:text-zinc-100">
             Pricing
-          </a>
+          </Link>
           <Link href="/login" className="rounded-lg px-3 py-2 hover:text-zinc-100">
             Log in
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/assessment"
+            className="hidden rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-zinc-950 sm:inline-flex"
+          >
+            Find your exposure
+          </Link>
           <button
             type="button"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-200 hover:text-zinc-50"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-200 hover:text-zinc-50 lg:hidden"
             onClick={() => setMobile((v) => !v)}
           >
-            Product
+            Menu
             <span className="ml-1 text-[10px] opacity-70">▾</span>
           </button>
         </div>
@@ -119,20 +130,13 @@ export function SiteNav() {
             </Link>
           ))}
           <div className="mt-2 space-y-1 border-t border-zinc-800 pt-2">
-            <a
-              href="#how"
-              className="block py-2 text-sm text-zinc-300"
+            <Link
+              href="/assessment"
+              className="block py-2 text-sm font-semibold text-emerald-400"
               onClick={() => setMobile(false)}
             >
-              How it works
-            </a>
-            <a
-              href="#pricing"
-              className="block py-2 text-sm text-zinc-300"
-              onClick={() => setMobile(false)}
-            >
-              Pricing
-            </a>
+              Find your exposure →
+            </Link>
             <Link
               href="/login"
               className="block py-2 text-sm text-zinc-300"
