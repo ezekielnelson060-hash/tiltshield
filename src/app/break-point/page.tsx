@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/landing/site-nav";
 
 export const metadata: Metadata = {
-  title: "Break Point — TiltShield",
+  title: "Break Point — Know How Long You Can Function | TiltShield",
   description:
-    "Your savings aren't a balance. They're a number of days. Find your financial, digital, payment, and food break points.",
+    "A break point is the amount of time, access, or flexibility you have before a disruption materially changes your ability to function.",
 };
 
 export default function BreakPointPage() {
@@ -15,34 +15,42 @@ export default function BreakPointPage() {
       <SiteNav />
       <article className="mx-auto max-w-2xl px-4 py-12">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-400">
-          Break point
+          Core concept
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">
-          Your savings aren&apos;t $20,000.
-          <span className="mt-2 block text-emerald-300">They&apos;re a number of days.</span>
+          What is a break point?
         </h1>
-        <p className="mt-5 text-base leading-relaxed text-zinc-400">
-          A break point is how long you can function if a dependency fails and nothing else changes.
-          Income stops. Phone is gone. Bank is offline. Food shelves thin out.
+        <p className="mt-5 text-lg leading-relaxed text-zinc-300">
+          A break point is the amount of time, access, or flexibility you have before a disruption
+          materially changes your ability to function.
+        </p>
+        <p className="mt-4 text-base leading-relaxed text-zinc-400">
+          Your savings aren&apos;t $20,000. They&apos;re a number of days. Your phone isn&apos;t
+          just a device — it can be the single key to banking, identity, and communication. Your
+          bank balance isn&apos;t the same as usable access when the app is down.
         </p>
 
-        <div className="mt-8 space-y-3">
+        <h2 className="mt-10 text-xl font-semibold text-zinc-50">Four clocks that matter</h2>
+        <div className="mt-4 space-y-3">
           {[
-            ["Financial", "Days of essential spend if primary income stops."],
-            ["Digital", "How long critical accounts stay reachable offline or via backup."],
-            ["Payment", "Hours or days if your primary payment rail fails."],
-            ["Food", "Days of food you already eat, without a supply run."],
-          ].map(([t, d]) => (
+            ["Financial", "Days of essential spend if primary income stops.", "/guides/emergency-fund-breakpoint"],
+            ["Digital", "How long critical accounts stay reachable without your primary device.", "/guides/phone-lost"],
+            ["Payment", "Hours or days if your primary bank or rail fails.", "/guides/bank-outage"],
+            ["Food / household", "Room in the budget when prices or supply shift.", "/guides/food-price-increase"],
+          ].map(([t, d, href]) => (
             <div key={t} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <p className="text-sm font-semibold text-zinc-100">{t}</p>
               <p className="mt-1 text-sm text-zinc-500">{d}</p>
+              <Link href={href} className="mt-2 inline-block text-xs font-medium text-emerald-400">
+                Read the guide →
+              </Link>
             </div>
           ))}
         </div>
 
-        <p className="mt-8 text-sm leading-relaxed text-zinc-400">
-          Most people have never measured any of these. They have assumptions. Assumptions are not
-          a plan.
+        <p className="mt-8 text-base leading-relaxed text-zinc-400">
+          Don&apos;t scare people. Don&apos;t reassure people. Measure the dependency. Then fix
+          the shortest clock first.
         </p>
 
         <Button asChild size="lg" className="mt-8">
