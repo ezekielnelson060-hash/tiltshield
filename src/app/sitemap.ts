@@ -13,7 +13,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/guides",
     "/guides/emergency-fund-breakpoint",
     "/guides/bank-outage",
+    "/guides/income-loss",
     "/guides/phone-lost",
+    "/guides/food-price-increase",
     "/about",
     "/privacy",
     "/terms",
@@ -21,7 +23,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return staticPaths.map((path) => ({
     url: `${BASE}${path}`,
     lastModified: now,
-    changeFrequency: path === "" || path === "/assessment" ? "weekly" : "monthly",
-    priority: path === "" ? 1 : path === "/assessment" ? 0.95 : 0.7,
+    changeFrequency:
+      path === "" || path === "/assessment" || path.startsWith("/guides")
+        ? "weekly"
+        : "monthly",
+    priority:
+      path === ""
+        ? 1
+        : path === "/assessment" || path === "/break-point"
+          ? 0.95
+          : path.startsWith("/guides")
+            ? 0.85
+            : 0.7,
   }));
 }

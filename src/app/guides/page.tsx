@@ -3,26 +3,41 @@ import type { Metadata } from "next";
 import { SiteNav } from "@/components/landing/site-nav";
 
 export const metadata: Metadata = {
-  title: "Guides — TiltShield",
+  title: "Guides — Personal Exposure & Break Points | TiltShield",
   description:
-    "Break points, bank outages, phone loss, income loss — practical guides that end in action.",
+    "Authoritative guides on emergency funds, bank outages, income loss, phone loss, and food prices — measured as exposure and break points.",
 };
 
 const GUIDES = [
   {
     href: "/guides/emergency-fund-breakpoint",
-    title: "How much emergency savings do you actually need?",
-    blurb: "Convert balance → days. Your financial break point.",
+    title: "How long could your emergency fund actually last?",
+    blurb: "Break point — savings measured in time, not dollars.",
+    concept: "Break Point",
   },
   {
     href: "/guides/bank-outage",
-    title: "What if your bank is unavailable for 72 hours?",
-    blurb: "Cards, transfers, cash, 2FA — would you still function?",
+    title: "What happens if your bank goes down for 72 hours?",
+    blurb: "Financial exposure — money vs access vs alternatives.",
+    concept: "Financial exposure",
+  },
+  {
+    href: "/guides/income-loss",
+    title: "What happens if you lose your income tomorrow?",
+    blurb: "Income dependency — runway when the salary stops.",
+    concept: "Income concentration",
   },
   {
     href: "/guides/phone-lost",
-    title: "What happens if you lose your phone today?",
-    blurb: "Your phone is an access key. Audit the single point of failure.",
+    title: "What happens if you lose your phone?",
+    blurb: "Digital exposure — one device as a single point of failure.",
+    concept: "Digital dependency",
+  },
+  {
+    href: "/guides/food-price-increase",
+    title: "What happens when food prices rise?",
+    blurb: "Household exposure — flexibility when costs move against you.",
+    concept: "Household exposure",
   },
 ];
 
@@ -37,9 +52,13 @@ export default function GuidesIndexPage() {
         <h1 className="mt-3 text-3xl font-semibold text-zinc-50">
           Measure the dependency. Then fix it.
         </h1>
-        <p className="mt-3 text-sm text-zinc-400">
-          Not SEO filler. Each guide ends with a number or a checklist — then the full exposure
-          assessment.
+        <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          Don&apos;t scare people. Don&apos;t reassure people. Measure the dependency. Each guide
+          ends in a number or a checklist — then the full{" "}
+          <Link href="/assessment" className="text-emerald-400 hover:text-emerald-300">
+            exposure assessment
+          </Link>
+          .
         </p>
         <ul className="mt-8 space-y-3">
           {GUIDES.map((g) => (
@@ -48,15 +67,19 @@ export default function GuidesIndexPage() {
                 href={g.href}
                 className="block rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 transition hover:border-emerald-500/30"
               >
-                <p className="text-sm font-semibold text-zinc-100">{g.title}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-500/80">
+                  {g.concept}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-zinc-100">{g.title}</p>
                 <p className="mt-1 text-sm text-zinc-500">{g.blurb}</p>
               </Link>
             </li>
           ))}
         </ul>
-        <p className="mt-10 text-center text-sm">
-          <Link href="/assessment" className="font-semibold text-emerald-400 hover:text-emerald-300">
-            Find your exposure →
+        <p className="mt-8 text-sm text-zinc-500">
+          Flagship concept:{" "}
+          <Link href="/break-point" className="text-emerald-400 hover:text-emerald-300">
+            What is a break point?
           </Link>
         </p>
       </div>
