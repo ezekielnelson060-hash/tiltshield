@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { hydrateSubscriptionFromProfile } from "@/lib/subscription";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function LoginPage() {
         setError(err.message);
         return;
       }
+      await hydrateSubscriptionFromProfile();
       router.push("/app/overview");
       router.refresh();
     } catch {
@@ -45,7 +47,7 @@ export default function LoginPage() {
           </Link>
           <h1 className="mt-4 text-2xl font-semibold text-zinc-50">Log in</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Access your resilience score and history
+            Restore Pro on any device. Access score history when synced.
           </p>
         </div>
 
