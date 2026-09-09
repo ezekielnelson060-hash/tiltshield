@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { loadSession } from "@/lib/session";
+import { loadSession, isPremium } from "@/lib/session";
 import { meaningForYou } from "@/lib/intel-meaning";
 import type { AssessmentAnswers, CategoryScores } from "@/types";
 import { PageHeader } from "@/components/app/page-header";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
+import { UpgradeGate } from "@/components/app/upgrade-gate";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -58,7 +59,6 @@ const FALLBACK: Card[] = [
   },
 ];
 
-/** Never render RSS/HTML residue in the UI. */
 function cleanText(s: string): string {
   if (!s) return "";
   let t = String(s)
@@ -78,22 +78,30 @@ function cleanText(s: string): string {
     /\b(href|target|rel|class|style|color|font|src|id|onclick)\s*=\s*("[^"]*"|'[^']*'|\S*)/gi,
     " "
   );
-  t = t.replace(/\b(href|target|rel|class|style|color|font)\s*=/gi, " ");
-  t = t.replace(/\/[a-z]{1,12}\b/gi, " ");
-  t = t.replace(/https?:\/\/\S+/gi, " ");
-  t = t.replace(/[<>"`]/g, " ");
-  t = t.replace(/#[0-9a-fA-F]{3,8}\b/g, " ");
   t = t.replace(/\s+/g, " ").trim();
-  if (!t || t.length < 16) return "";
-  if (/href|javascript:|target\s*=|<\/?[a-z]|\bfont\b|\bcolor\b/i.test(t))
-    return "";
+  if (!t || t.length < 12) return "";
   return t;
+}
+
+/** Lower score = more vulnerable → higher rank for matching intel */
+function gapRank(item: Card, scores: CategoryScores | null): number {
+  if (!scores) return 50;
+  const blob = ((item.category || "") + " " + (item.title || "")).toLowerCase();
+  let score = 50;
+  if (/financial|bank|payment|cash|currency|money/.test(blob)) score = scores.money ?? 50;
+  else if (/food|grocery|essential|supply|price/.test(blob)) score = scores.food ?? 50;
+  else if (/health|pharma|medicine|medical/.test(blob)) score = scores.skills ?? 50;
+  else if (/digital|phone|cyber|outage|internet|auth/.test(blob)) score = scores.digital ?? 50;
+  else if (/energy|grid|power|blackout/.test(blob)) score = scores.home ?? 50;
+  const impactBoost = item.impact === "high" ? -8 : item.impact === "medium" ? -3 : 0;
+  return score + impactBoost;
 }
 
 export default function IntelPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
   const [answers, setAnswers] = useState<AssessmentAnswers | null>(null);
   const [scores, setScores] = useState<CategoryScores | null>(null);
+  const [premium, setPremium] = useState(false);
   const [cards, setCards] = useState<Card[]>(FALLBACK);
   const [liveAt, setLiveAt] = useState<string | null>(null);
   const [liveOk, setLiveOk] = useState(false);
@@ -101,6 +109,7 @@ export default function IntelPage() {
   useEffect(() => {
     try {
       const s = loadSession();
+      setPremium(isPremium());
       if (s) {
         setAnswers(s.answers);
         setScores(s.scores);
@@ -161,17 +170,19 @@ export default function IntelPage() {
     tab === "all"
       ? cards
       : cards.filter((c) => {
-          const cat = c.category.toLowerCase();
-          const blob = cat + c.title.toLowerCase();
+          const blob = c.category.toLowerCase() + c.title.toLowerCase();
           if (tab === "money") return /financ|bank|payment|money/.test(blob);
           if (tab === "food") return /essential|food|grocery/.test(blob);
           if (tab === "health") return /health|pharma|medic/.test(blob);
-          if (tab === "digital") return /digital|cyber|tech/.test(blob);
+          if (tab === "digital") return /digital|cyber|tech|phone/.test(blob);
           if (tab === "energy") return /energy|grid|power|outage/.test(blob);
           return true;
         });
 
-  const show = filtered.length ? filtered : cards;
+  const ranked = [...(filtered.length ? filtered : cards)].sort(
+    (a, b) => gapRank(a, scores) - gapRank(b, scores)
+  );
+  const show = premium ? ranked : ranked.slice(0, 3);
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
@@ -200,7 +211,18 @@ export default function IntelPage() {
         ))}
       </div>
 
-      <p className="text-[11px] text-zinc-600">
+      {!premium && (
+        <UpgradeGate
+          variant="inline"
+          title="Full intel board + all categories need Pro"
+        />
+      )}
+      <p className="text-[11px] text-zinc-500">
+        {premium
+          ? "Sorted by your weakest areas first."
+          : "Top 3 items matched to your gaps. Pro unlocks the full board."}
+      </p>
+      <p className="text-xs text-zinc-600">
         {liveOk
           ? `Live feed · updated ${liveAt ? new Date(liveAt).toLocaleString() : "recently"}`
           : "Baseline watch list · live feed connects when available"}
@@ -264,21 +286,7 @@ export default function IntelPage() {
               )}
 
               {item.summary ? (
-                <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-                  {item.summary}
-                </p>
-              ) : null}
-
-              {item.url ? (
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-zinc-200"
-                >
-                  Read the full story
-                  <span className="text-emerald-400">↗</span>
-                </a>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-500">{item.summary}</p>
               ) : null}
 
               {meaning ? (
@@ -286,9 +294,7 @@ export default function IntelPage() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/90">
                     What this means for you
                   </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
-                    {meaning}
-                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">{meaning}</p>
                 </div>
               ) : null}
 
