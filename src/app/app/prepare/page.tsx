@@ -1,1 +1,365 @@
-see-file
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { loadSession, type TiltSession } from "@/lib/session";
+import { sortStockIds } from "@/lib/prepare-rank";
+import {
+  planMovesFromAssessment,
+  foodStory,
+  runwayStory,
+} from "@/lib/plan-from-assessment";
+import {
+  addJournalEntry,
+  deleteJournalEntry,
+  loadJournal,
+  type JournalEntry,
+} from "@/lib/journal";
+import { formatLongDate } from "@/lib/locale";
+import { PageHeader } from "@/components/app/page-header";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { PlaceRow } from "@/components/app/place-row";
+import {
+  NEARBY_CATEGORIES,
+  searchNearbyPlaces,
+  type NearbyPlace,
+} from "@/lib/nearby";
+
+const NearbyMap = dynamic(
+  () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
+  { ssr: false }
+);
+
+type Tab = "plan" | "stock" | "journal" | "finder";
+type StockItem = { id: string; label: string; group: string; hint?: string };
+
+const YEAR_STOCK: StockItem[] = [
+  { id: "water_plan", label: "Water you can reach at home", group: "Year foundation", hint: "Store + purify method" },
+  { id: "food_90", label: "90 days toward a year of food you already eat", group: "Year foundation" },
+  { id: "food_rotate", label: "Dates on every package", group: "Year foundation" },
+  { id: "cash_float", label: "Cash for 2–4 weeks of essentials", group: "Money & access" },
+  { id: "alt_pay", label: "A second way to pay (tested)", group: "Money & access" },
+  { id: "meds_30", label: "Extra critical meds (if safe)", group: "Health" },
+  { id: "first_aid", label: "First-aid kit ready", group: "Health" },
+  { id: "light_power", label: "Lights and charged power banks", group: "Home" },
+  { id: "docs_offline", label: "ID copies offline", group: "Docs & people" },
+  { id: "vendor_3", label: "Three places nearby that work offline", group: "Docs & people" },
+  { id: "family_plan", label: "Household meetup plan", group: "Docs & people" },
+];
+
+const STOCK_KEY = "tiltshield_year_stock";
+
+export default function PreparePage() {
+  const [session, setSession] = useState<TiltSession | null>(null);
+  const [tab, setTab] = useState<Tab>("plan");
+  const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState("");
+  const [places, setPlaces] = useState<NearbyPlace[]>([]);
+  const [selected, setSelected] = useState<NearbyPlace | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setSession(loadSession());
+    setJournal(loadJournal());
+    try {
+      const raw = localStorage.getItem(STOCK_KEY);
+      if (raw) setChecks(JSON.parse(raw));
+    } catch {
+      /* */
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { timeout: 8000 }
+      );
+    }
+  }, []);
+
+  function toggle(id: string) {
+    setChecks((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem(STOCK_KEY, JSON.stringify(next));
+      } catch {
+        /* */
+      }
+      return next;
+    });
+  }
+
+  function submitJournal() {
+    const text = draft.trim();
+    if (!text) return;
+    addJournalEntry(text);
+    setJournal(loadJournal());
+    setDraft("");
+    const lower = text.toLowerCase();
+    const map: [RegExp, string][] = [
+      [/cash|withdraw|atm|float/, "cash_float"],
+      [/backup pay|second (card|pay)|alt(ernate)? pay|another bank/, "alt_pay"],
+      [/food|pantry|rice|beans|stocked|grocery/, "food_90"],
+      [/water|filter|purify/, "water_plan"],
+      [/med|prescription|pharmacy/, "meds_30"],
+      [/first.?aid|bandage/, "first_aid"],
+      [/power bank|battery|solar|generator|inverter|light/, "light_power"],
+      [/doc(ument)?s?|passport|id card|offline copy/, "docs_offline"],
+      [/family|contact tree|rally point/, "family_plan"],
+    ];
+    setChecks((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const [re, id] of map) {
+        if (re.test(lower) && !next[id]) {
+          next[id] = true;
+          changed = true;
+        }
+      }
+      if (changed) {
+        try {
+          localStorage.setItem(STOCK_KEY, JSON.stringify(next));
+          localStorage.setItem(
+            "tiltshield_progress_pulse",
+            JSON.stringify({ at: Date.now(), source: "journal", text: text.slice(0, 120) })
+          );
+          window.dispatchEvent(new Event("tiltshield:progress"));
+        } catch {
+          /* */
+        }
+      }
+      return next;
+    });
+  }
+
+  function removeEntry(id: string) {
+    deleteJournalEntry(id);
+    setJournal(loadJournal());
+  }
+
+  async function search(q: string) {
+    setLoading(true);
+    try {
+      const r = await searchNearbyPlaces(q, coords, { scope: "global", limit: 20 });
+      setPlaces(r);
+      setSelected(r[0] ?? null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const answers = session?.answers;
+  const moves = answers ? planMovesFromAssessment(answers) : [];
+  const groups = Array.from(new Set(YEAR_STOCK.map((k) => k.group)));
+  const done = YEAR_STOCK.filter((k) => checks[k.id]).length;
+  const stockList = answers ? sortStockIds(YEAR_STOCK, answers) : YEAR_STOCK;
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
+      <PageHeader
+        title="Prepare"
+        subtitle="One-year plan from your exposure map. Stock, journal, places — your everyday prep log."
+        backHref="/app/overview"
+        showBack
+      />
+
+      <div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+        {(
+          [
+            ["plan", "Plan"],
+            ["stock", "Stock"],
+            ["journal", "Journal"],
+            ["finder", "Places"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={cn(
+              "flex-1 rounded-full py-2 text-xs font-semibold transition",
+              tab === id ? "bg-emerald-500 text-zinc-950" : "text-zinc-400 hover:text-zinc-200"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "plan" && (
+        <div className="space-y-3">
+          {answers && (
+            <>
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-zinc-300">
+                {runwayStory(answers)}
+              </div>
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-zinc-300">
+                {foodStory(answers)}
+              </div>
+            </>
+          )}
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Ordered for your gaps
+          </p>
+          {moves.map((a, i) => (
+            <Link
+              key={a.id}
+              href={a.href}
+              className="block rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 hover:border-emerald-500/25"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-zinc-100">{a.title}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{a.why}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+          <p className="text-center text-xs text-zinc-600">
+            Year checklist {done}/{YEAR_STOCK.length} · Journal {journal.length} entries
+          </p>
+        </div>
+      )}
+
+      {tab === "stock" && (
+        <div className="space-y-4">
+          <p className="text-xs text-zinc-500">
+            Tick only when true. Log detail in Journal so Progress knows what moved.
+          </p>
+          {groups.map((g) => (
+            <div key={g}>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{g}</p>
+              <div className="space-y-2">
+                {stockList
+                  .filter((k) => k.group === g)
+                  .map((k) => (
+                    <button
+                      key={k.id}
+                      type="button"
+                      onClick={() => toggle(k.id)}
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left",
+                        checks[k.id]
+                          ? "border-emerald-500/30 bg-emerald-500/10"
+                          : "border-white/[0.08] bg-white/[0.03]"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[10px]",
+                          checks[k.id]
+                            ? "border-emerald-500 bg-emerald-500 text-zinc-950"
+                            : "border-zinc-600"
+                        )}
+                      >
+                        {checks[k.id] ? "✓" : ""}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-medium text-zinc-100">{k.label}</span>
+                        {k.hint && (
+                          <span className="mt-0.5 block text-xs text-zinc-500">{k.hint}</span>
+                        )}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "journal" && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
+            <p className="text-sm font-medium text-zinc-100">Prep journal</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              Keywords like cash, food, meds, power bank auto-tick year-stock items so Progress stays honest.
+            </p>
+          </div>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={4}
+            placeholder="e.g. Bought 20kg rice. Tested offline map. Moved cash into labeled float."
+            className="w-full resize-y rounded-2xl border border-white/[0.08] bg-[#080d16] px-4 py-3 text-sm text-zinc-100"
+          />
+          <Button className="w-full" disabled={!draft.trim()} onClick={submitJournal}>
+            Log entry
+          </Button>
+          {journal.length === 0 ? (
+            <p className="text-xs text-zinc-500">No entries yet. Log the first real move.</p>
+          ) : (
+            <div className="space-y-2">
+              {journal.map((e) => (
+                <div key={e.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
+                  <div className="flex justify-between gap-2">
+                    <p className="text-[11px] text-zinc-500">{formatLongDate(e.at)}</p>
+                    <button
+                      type="button"
+                      onClick={() => removeEntry(e.id)}
+                      className="text-[11px] text-zinc-600 hover:text-red-400"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <p className="mt-1.5 whitespace-pre-wrap text-sm text-zinc-200">{e.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "finder" && (
+        <div className="space-y-4">
+          <p className="text-sm text-zinc-400">
+            Search worldwide — suppliers and places you would trust on a hard day.
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void search(query || "pharmacy");
+              }}
+              placeholder="e.g. solar supplier, pharmacy chain…"
+              className="flex-1 rounded-xl border border-white/[0.08] bg-[#080d16] px-4 py-2.5 text-sm text-zinc-100"
+            />
+            <Button size="sm" disabled={loading} onClick={() => void search(query || "pharmacy")}>
+              Search
+            </Button>
+          </div>
+          <NearbyMap
+            places={places}
+            selected={selected}
+            user={coords}
+            onSelect={setSelected}
+            scope="global"
+            className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
+          />
+          <div className="space-y-2">
+            {places.map((pl) => (
+              <PlaceRow
+                key={pl.id}
+                place={pl}
+                selected={selected?.id === pl.id}
+                onSelect={() => setSelected(pl)}
+                showSave={false}
+              />
+            ))}
+          </div>
+          <Link href="/app/nearby" className="block text-center text-sm font-medium text-emerald-400">
+            Open city / nation map →
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
