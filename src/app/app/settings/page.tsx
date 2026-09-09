@@ -73,7 +73,14 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   }
 
-  async function pay(product: "lifetime" | "family") {
+  async function pay(
+    product:
+      | "pro_monthly"
+      | "pro_annual"
+      | "family_monthly"
+      | "family_annual"
+      | "lifetime"
+  ) {
     setPaying(true);
     try {
       const res = await fetch("/api/flutterwave/initialize", {
@@ -86,7 +93,17 @@ export default function SettingsPage() {
         window.location.href = json.link;
         return;
       }
-      alert(json.error || "Payment not configured.");
+      const s = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product }),
+      });
+      const sj = await s.json();
+      if (sj.url) {
+        window.location.href = sj.url;
+        return;
+      }
+      alert(json.error || sj.error || "Payment not configured.");
     } finally {
       setPaying(false);
     }
@@ -155,32 +172,80 @@ export default function SettingsPage() {
         </p>
         <p className="mt-2 text-sm text-zinc-200">
           {family
-            ? "Household — premium tools + up to 6 profiles"
+            ? "Family — Pro tools + up to 6 household profiles"
             : premium
-              ? "Lifetime — full tools (vault, history, advanced What If). No household seats."
-              : "Free — assessment, Today, Prepare basics, limited What If"}
+              ? "Pro — all four break points, What If?, intel, vault, 12-month tracker"
+              : "Free — assessment, score, Financial break point only"}
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {!premium && (
+        {!premium && (
+          <div className="mt-3 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              Upgrade
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" disabled={paying} onClick={() => void pay("pro_monthly")}>
+                {paying ? "Opening…" : "Pro · $15/mo"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={paying}
+                onClick={() => void pay("pro_annual")}
+              >
+                Pro · $79/yr
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={paying}
+                onClick={() => void pay("lifetime")}
+              >
+                Founding · $149 once
+              </Button>
+            </div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              Household
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={paying}
+                onClick={() => void pay("family_monthly")}
+              >
+                Family · $29/mo
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={paying}
+                onClick={() => void pay("family_annual")}
+              >
+                Family · $99/yr
+              </Button>
+            </div>
+            <p className="text-[11px] text-zinc-500">
+              <Link href="/pricing" className="text-emerald-400 hover:text-emerald-300">
+                Compare plans →
+              </Link>
+            </p>
+          </div>
+        )}
+        {premium && !family && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" disabled={paying} onClick={() => void pay("family_monthly")}>
+              {paying ? "Opening…" : "Add Family · $29/mo"}
+            </Button>
             <Button
               size="sm"
+              variant="outline"
               disabled={paying}
-              onClick={() => void pay("lifetime")}
+              onClick={() => void pay("family_annual")}
             >
-              {paying ? "Opening…" : "Lifetime · $29"}
+              Family · $99/yr
             </Button>
-          )}
-          {!family && (
-            <Button
-              size="sm"
-              variant={premium ? "default" : "outline"}
-              disabled={paying}
-              onClick={() => void pay("family")}
-            >
-              {paying ? "Opening…" : "Household · $49"}
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       <section className="space-y-2">
