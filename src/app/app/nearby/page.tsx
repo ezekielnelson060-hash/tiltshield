@@ -41,6 +41,7 @@ export default function NearbyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trustedIds, setTrustedIds] = useState<Set<string>>(new Set());
+  const [scope, setScope] = useState<"city" | "nation" | "global">("city");
 
   useEffect(() => {
     setTrustedIds(new Set(loadTrustedPlaces().map((p) => p.id)));
@@ -56,16 +57,17 @@ export default function NearbyPage() {
   const cat = NEARBY_CATEGORIES.find((c) => c.id === active);
 
   const runSearch = useCallback(
-    async (q: string) => {
+    async (q: string, scopeOverride?: "city" | "nation" | "global") => {
       if (!q.trim()) return;
+      const s = scopeOverride || scope;
       setLoading(true);
       setError(null);
       try {
         let results = await searchNearbyPlaces(q, coords, {
-          scope: "city",
-          limit: 15,
+          scope: s,
+          limit: s === "global" ? 20 : 15,
         });
-        if (!results.length) {
+        if (!results.length && s === "city") {
           results = await searchNearbyPlaces(q, coords, {
             scope: "nation",
             limit: 18,
@@ -75,7 +77,9 @@ export default function NearbyPage() {
         setSelected(results[0] ?? null);
         if (!results.length) {
           setError(
-            "No venues found in your city or country. Try another word or open Google Maps."
+            s === "global"
+              ? "No places found worldwide. Try a more specific name or city + type."
+              : "No venues found. Switch to Country or Global, or open Google Maps."
           );
         }
       } catch {
@@ -85,7 +89,7 @@ export default function NearbyPage() {
         setLoading(false);
       }
     },
-    [coords]
+    [coords, scope]
   );
 
   useEffect(() => {
@@ -104,7 +108,7 @@ export default function NearbyPage() {
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Nearby"
-        subtitle="City and nation map — places near you, then wider in your country."
+        subtitle="Nearby is city/country. Switch to Global for places anywhere."
         backHref="/app/overview"
         showBack
       />
@@ -126,6 +130,33 @@ export default function NearbyPage() {
         >
           {loading ? "…" : "Search"}
         </Button>
+      </div>
+
+      <div className="flex gap-2">
+        {(
+          [
+            ["city", "City"],
+            ["nation", "Country"],
+            ["global", "Global"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setScope(id);
+              if (query.trim()) void runSearch(query, id);
+            }}
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+              scope === id
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                : "border-white/10 bg-white/[0.04] text-zinc-400"
+            )}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -155,7 +186,7 @@ export default function NearbyPage() {
         selected={selected}
         user={coords}
         onSelect={setSelected}
-        scope="nation"
+        scope={scope === "city" ? "city" : scope === "global" ? "global" : "nation"}
         className="h-56 w-full overflow-hidden rounded-2xl border border-white/10"
       />
 
@@ -201,9 +232,7 @@ export default function NearbyPage() {
                     lon: pl.lon,
                     query: query || cat?.query,
                   });
-                  setTrustedIds(
-                    new Set(loadTrustedPlaces().map((p) => p.id))
-                  );
+                  setTrustedIds(new Set(loadTrustedPlaces().map((p) => p.id)));
                 }
               }}
             />
@@ -213,7 +242,7 @@ export default function NearbyPage() {
 
       {!loading && places.length === 0 && !error && (
         <p className="text-center text-xs text-zinc-600">
-          Pick a need above or type what you&apos;re looking for.
+          Pick a need above or type what you're looking for.
         </p>
       )}
 
