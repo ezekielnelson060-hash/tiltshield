@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { NativeInit } from "@/components/native-init";
 import { InstallPrompt } from "@/components/install-prompt";
+import { AnalyticsScripts } from "@/components/analytics-scripts";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -10,6 +11,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
   title: "TiltShield — Know What Could Break Before It Does",
   description:
     "TiltShield measures your personal exposure to financial, digital, household and infrastructure disruptions—and tells you what to fix first.",
@@ -45,6 +49,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} min-h-screen bg-zinc-950 font-sans text-zinc-100 antialiased`}
       >
+        <AnalyticsScripts />
         <NativeInit />
         <InstallPrompt />
         {children}
