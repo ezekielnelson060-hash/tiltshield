@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { hydrateSubscriptionFromProfile } from "@/lib/subscription";
 
-/** Runs once in the app shell to restore paid plan from Supabase. */
+/** Runs in the app shell to restore paid plan from Supabase on every device. */
 export function SubscriptionHydrator() {
   useEffect(() => {
     void hydrateSubscriptionFromProfile();
