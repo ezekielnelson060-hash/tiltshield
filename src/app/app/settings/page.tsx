@@ -11,6 +11,11 @@ import {
 } from "@/lib/family";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
+import {
+  getAuthUser,
+  signOut,
+  hydrateSubscriptionFromProfile,
+} from "@/lib/subscription";
 
 const NAME_KEY = "tiltshield_display_name";
 const PHOTO_KEY = "tiltshield_profile_photo";
@@ -22,6 +27,8 @@ export default function SettingsPage() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,6 +42,18 @@ export default function SettingsPage() {
     } catch {
       /* */
     }
+    void (async () => {
+      const u = await getAuthUser();
+      setAuthEmail(u?.email || null);
+      if (u) {
+        const status = await hydrateSubscriptionFromProfile();
+        if (status && status !== "free") {
+          setPrem(true);
+          if (status === "family") setFamily(true);
+        }
+      }
+      setAuthLoading(false);
+    })();
   }, []);
 
   function saveName() {
@@ -186,20 +205,10 @@ export default function SettingsPage() {
               <Button size="sm" disabled={paying} onClick={() => void pay("pro_monthly")}>
                 {paying ? "Opening…" : "Pro · $15/mo"}
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={paying}
-                onClick={() => void pay("pro_annual")}
-              >
+              <Button size="sm" variant="outline" disabled={paying} onClick={() => void pay("pro_annual")}>
                 Pro · $79/yr
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={paying}
-                onClick={() => void pay("lifetime")}
-              >
+              <Button size="sm" variant="outline" disabled={paying} onClick={() => void pay("lifetime")}>
                 Founding · $149 once
               </Button>
             </div>
@@ -207,20 +216,10 @@ export default function SettingsPage() {
               Household
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={paying}
-                onClick={() => void pay("family_monthly")}
-              >
+              <Button size="sm" variant="outline" disabled={paying} onClick={() => void pay("family_monthly")}>
                 Family · $29/mo
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={paying}
-                onClick={() => void pay("family_annual")}
-              >
+              <Button size="sm" variant="outline" disabled={paying} onClick={() => void pay("family_annual")}>
                 Family · $99/yr
               </Button>
             </div>
@@ -236,16 +235,50 @@ export default function SettingsPage() {
             <Button size="sm" disabled={paying} onClick={() => void pay("family_monthly")}>
               {paying ? "Opening…" : "Add Family · $29/mo"}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={paying}
-              onClick={() => void pay("family_annual")}
-            >
+            <Button size="sm" variant="outline" disabled={paying} onClick={() => void pay("family_annual")}>
               Family · $99/yr
             </Button>
           </div>
         )}
+      </section>
+
+      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Account
+        </p>
+        <p className="mt-2 text-sm text-zinc-300">
+          {authLoading
+            ? "Checking…"
+            : authEmail
+              ? `Signed in as ${authEmail}`
+              : "Sign in so Pro survives a new phone or browser clear."}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {authEmail ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                await signOut();
+                setAuthEmail(null);
+              }}
+            >
+              Sign out
+            </Button>
+          ) : (
+            <>
+              <Button asChild size="sm">
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/signup">Create account</Link>
+              </Button>
+            </>
+          )}
+        </div>
+        <p className="mt-2 text-[11px] text-zinc-500">
+          Payment unlocks this device immediately. An account restores Pro on your next device after login.
+        </p>
       </section>
 
       <section className="space-y-2">
@@ -270,8 +303,7 @@ export default function SettingsPage() {
       </section>
 
       <p className="text-center text-[11px] text-zinc-600">
-        Assessment & vault data stay on this device unless you sync with your
-        account.
+        Assessment & vault data stay on this device unless you sync with your account.
       </p>
     </div>
   );
