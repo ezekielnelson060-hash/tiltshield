@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import Link from "next/link";
 import { loadSession, isPremium, type TiltSession } from "@/lib/session";
 import { UpgradeGate } from "@/components/app/upgrade-gate";
