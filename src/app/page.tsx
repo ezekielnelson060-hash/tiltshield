@@ -66,7 +66,7 @@ export default function HomePage() {
       </section>
 
       <section id="break-point" className="border-b border-emerald-500/10">
-        <div className="mx-auto max-w-3xl px-4 py-10">
+        <div className="mx-auto max-w-5xl px-4 py-10">
           <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500/80">
             Inside the app
           </p>
@@ -77,32 +77,112 @@ export default function HomePage() {
             Your break point might disagree.
           </p>
 
-          <div className="mx-auto mt-6 max-w-sm overflow-hidden rounded-[1.75rem] border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-950/50 ring-1 ring-emerald-500/20">
-            <video
-              className="aspect-[9/16] w-full scale-105 bg-black object-cover object-[center_80%]"
-              controls
-              playsInline
-              preload="metadata"
-              autoPlay
-              muted
-              loop
-            >
-              <source src="/VID_20260905074244.mp4" type="video/mp4" />
-            </video>
+          <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,280px)_1fr] lg:gap-10">
+            <div className="mx-auto w-full max-w-[260px] overflow-hidden rounded-[1.75rem] border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-950/50 ring-1 ring-emerald-500/20 lg:mx-0">
+              <video
+                className="aspect-[9/16] w-full scale-105 bg-black object-cover object-[center_80%]"
+                controls
+                playsInline
+                preload="metadata"
+                autoPlay
+                muted
+                loop
+              >
+                <source src="/VID_20260905074244.mp4" type="video/mp4" />
+              </video>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="overflow-hidden rounded-xl border border-white/10 bg-[#080d16] shadow-2xl shadow-black/40 ring-1 ring-white/5">
+                <div className="flex items-center gap-2 border-b border-white/10 bg-[#0c1220] px-3 py-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+                  <div className="ml-3 flex-1 rounded-md bg-white/5 px-3 py-1 text-[11px] text-zinc-500">
+                    www.tiltshield.xyz/app
+                  </div>
+                </div>
+                <div className="flex min-h-[340px]">
+                  <div className="w-[160px] shrink-0 border-r border-white/10 bg-[#080d16] p-3">
+                    <p className="text-[11px] font-bold tracking-wide text-zinc-50">TILTSHIELD</p>
+                    <p className="mt-0.5 text-[8px] uppercase tracking-wider text-zinc-600">Exposure intelligence</p>
+                    <div className="mt-4 space-y-1">
+                      {["Today", "Prepare", "Intel", "What If?", "Nearby", "Progress"].map((n, i) => (
+                        <div
+                          key={n}
+                          className={
+                            i === 0
+                              ? "rounded-lg bg-emerald-500/15 px-2 py-1.5 text-[11px] font-semibold text-emerald-400"
+                              : "rounded-lg px-2 py-1.5 text-[11px] text-zinc-500"
+                          }
+                        >
+                          {n}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-6 rounded-lg border border-white/10 p-2">
+                      <p className="text-[9px] uppercase text-zinc-600">Exposure</p>
+                      <p className="text-lg font-bold text-zinc-50">
+                        67<span className="text-xs text-zinc-600">/100</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-3 bg-[#060a12] p-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-amber-400/90">Exposure</p>
+                        <p className="mt-1 text-2xl font-bold text-zinc-50">67</p>
+                        <p className="mt-1 text-[10px] text-zinc-500">4 significant dependencies</p>
+                      </div>
+                      <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-red-400">Shortest clock</p>
+                        <p className="mt-1 text-2xl font-bold text-zinc-50">31 days</p>
+                        <p className="mt-1 text-[10px] text-zinc-500">Financial break point</p>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                      <p className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500">Year plan · where you are</p>
+                      <p className="mt-1 text-xl font-bold text-zinc-50">
+                        4<span className="text-sm text-zinc-600">/11</span>
+                      </p>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                        <div className="h-full w-[36%] rounded-full bg-gradient-to-r from-emerald-500 to-teal-400" />
+                      </div>
+                      <p className="mt-2 text-[10px] text-zinc-500">Next: cash float · second payment rail · offline docs</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <p className="text-[9px] uppercase text-zinc-600">Intel</p>
+                        <p className="mt-1 text-xs text-zinc-200">Regional stress maps to your runway</p>
+                      </div>
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <p className="text-[9px] uppercase text-zinc-600">Nearby</p>
+                        <p className="mt-1 text-xs text-zinc-200">Places that still work offline</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs text-zinc-500 lg:text-left">
+                Desktop: sidebar + full exposure board. Same data as mobile.
+              </p>
+            </div>
           </div>
 
-          <p className="mx-auto mt-5 max-w-lg text-center text-sm text-zinc-500">
+          <p className="mx-auto mt-5 max-w-lg text-center text-sm text-zinc-500 lg:hidden">
             Once you see your break point you cannot pretend everything is fine —
             that's when preparation gets real.
+          </p>
+          <p className="mx-auto mt-5 hidden max-w-2xl text-center text-sm text-zinc-500 lg:block">
+            Once you see your break point you cannot pretend everything is fine —
+            that's when preparation gets real. Phone or desktop — same clocks.
           </p>
         </div>
       </section>
 
       <section id="product" className="border-b border-emerald-500/10 bg-emerald-500/[0.04]">
         <div className="mx-auto max-w-5xl px-4 py-10">
-          <h2 className="text-center text-2xl font-semibold text-zinc-50">
-            What you get
-          </h2>
+          <h2 className="text-center text-2xl font-semibold text-zinc-50">What you get</h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-sm text-zinc-400">
             Built for a full year of preparation—not a 72-hour go-bag fantasy.
           </p>
@@ -115,10 +195,7 @@ export default function HomePage() {
               ["12-month preparedness tracker", "Food, cash, meds, power, documents—ticked only when true."],
               ["Physical asset & cash inventory", "Know what you hold offline when accounts and apps go dark."],
             ].map(([t, d]) => (
-              <div
-                key={t}
-                className="rounded-xl border border-emerald-500/15 bg-zinc-950/60 p-4"
-              >
+              <div key={t} className="rounded-xl border border-emerald-500/15 bg-zinc-950/60 p-4">
                 <p className="text-sm font-semibold text-emerald-300/90">{t}</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{d}</p>
               </div>
@@ -129,22 +206,16 @@ export default function HomePage() {
 
       <section className="border-b border-emerald-500/10">
         <div className="mx-auto max-w-3xl px-4 py-10">
-          <h2 className="text-2xl font-semibold text-zinc-50">
-            What is live intel?
-          </h2>
+          <h2 className="text-2xl font-semibold text-zinc-50">What is live intel?</h2>
           <p className="mt-3 text-sm leading-relaxed text-zinc-400 sm:text-base">
-            We monitor regional disruptions—bank outages, payment network
-            failures, food price spikes, fuel shortages, policy changes—and
-            match them to your specific gaps.
+            We monitor regional disruptions—bank outages, payment network failures, food price spikes,
+            fuel shortages, policy changes—and match them to your specific gaps.
           </p>
           <div className="mt-5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-400">
-              Example
-            </p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-400">Example</p>
             <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-              If a banking restriction is announced in your city and your What
-              If? shows you have no alternative payment method, you get an alert
-              and your break point recalculates automatically.
+              If a banking restriction is announced in your city and your What If? shows you have no
+              alternative payment method, you get an alert and your break point recalculates automatically.
             </p>
           </div>
         </div>
@@ -152,13 +223,10 @@ export default function HomePage() {
 
       <section id="pricing" className="border-b border-emerald-500/10">
         <div className="mx-auto max-w-5xl px-4 py-10">
-          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500/80">
-            Pricing
-          </p>
+          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-500/80">Pricing</p>
           <h2 className="mt-2 text-center text-2xl font-semibold text-zinc-50 sm:text-3xl">
             Measure free. Upgrade when you want the full plan.
           </h2>
-
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Free</p>
@@ -174,7 +242,6 @@ export default function HomePage() {
                 <Link href="/assessment">Measure my exposure</Link>
               </Button>
             </div>
-
             <div className="relative rounded-2xl border border-emerald-500/40 bg-emerald-500/[0.08] p-5 shadow-lg shadow-emerald-900/25">
               <p className="absolute -top-2.5 right-4 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-950">
                 Recommended
@@ -186,18 +253,12 @@ export default function HomePage() {
               <p className="mt-1 text-xs text-zinc-400">Close the gaps · cancel anytime</p>
               <ul className="mt-4 list-disc space-y-1.5 pl-4 text-sm text-zinc-300">
                 <li>Everything in Free</li>
-                <li>All four break points unlocked (financial, digital, food, payment)</li>
-                <li>What If? simulator — test 8 scenarios before they happen</li>
-                <li>
-                  Live intel — regional risk alerts matched to your
-                  vulnerabilities (bank outages, price spikes, supply disruptions)
-                </li>
-                <li>Secure vault — encrypted document & asset backup</li>
-                <li>12-month preparedness tracker with progress history</li>
-                <li>Physical asset & cash inventory tools</li>
-                <li>
-                  <span className="text-emerald-300">Or $79/year</span>
-                </li>
+                <li>All four break points unlocked</li>
+                <li>What If? simulator — 8 scenarios</li>
+                <li>Live intel matched to your gaps</li>
+                <li>Secure vault + 12-month tracker</li>
+                <li>Physical asset & cash inventory</li>
+                <li><span className="text-emerald-300">Or $79/year</span></li>
               </ul>
               <Button asChild className="mt-5 w-full">
                 <Link href="/assessment?plan=pro_monthly">Start Pro · $15/mo</Link>
@@ -208,7 +269,6 @@ export default function HomePage() {
                 </Link>
               </p>
             </div>
-
             <div className="rounded-2xl border border-teal-500/30 bg-teal-500/[0.06] p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-400">Family</p>
               <p className="mt-1 text-3xl font-bold text-zinc-50">
@@ -232,7 +292,6 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-
           <div className="mt-8 rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -241,8 +300,7 @@ export default function HomePage() {
                 </p>
                 <p className="mt-1 text-sm font-medium text-zinc-200">Only 100 seats</p>
                 <p className="mt-1 text-sm text-zinc-400">
-                  Lifetime Pro access. No renewals. No price increases. Full
-                  feature stack forever—including everything we build next.
+                  Lifetime Pro access. No renewals. No price increases.
                 </p>
               </div>
               <Link
@@ -258,39 +316,11 @@ export default function HomePage() {
 
       <section className="border-b border-emerald-500/10 bg-zinc-900/40">
         <div className="mx-auto max-w-3xl px-4 py-10 text-center">
-          <h2 className="text-2xl font-semibold text-zinc-50">
-            Your data never leaves your device.
-          </h2>
+          <h2 className="text-2xl font-semibold text-zinc-50">Your data never leaves your device.</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-            We don't sell it. We can't see it. We don't want it.
-            TiltShield runs on your phone. Your savings, your location, your
-            vulnerabilities—they're yours. We only store what you need to
-            sync across devices, encrypted end-to-end.
+            We don't sell it. We can't see it. We don't want it. TiltShield runs on your
+            phone. Your savings, your location, your vulnerabilities—they're yours.
           </p>
-        </div>
-      </section>
-
-      <section className="border-b border-emerald-500/10">
-        <div className="mx-auto max-w-3xl px-4 py-10">
-          <h2 className="text-center text-2xl font-semibold text-zinc-50">
-            Why subscription — not only lifetime
-          </h2>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-emerald-500/20 bg-zinc-950 p-4">
-              <p className="text-sm font-semibold text-emerald-300">Live product</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                Intel feeds, maps, and break-point math change with the world.
-                Recurring funds the feed that keeps your clocks honest.
-              </p>
-            </div>
-            <div className="rounded-xl border border-emerald-500/20 bg-zinc-950 p-4">
-              <p className="text-sm font-semibold text-emerald-300">Aligned incentives</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                If we stop being useful, you cancel. That pressure is a feature
-                — for you and for the product.
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -300,15 +330,11 @@ export default function HomePage() {
             Find your break point in 90 seconds.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-zinc-400 sm:text-base">
-            10 questions. No account required. See your exposure score and your
-            #1 vulnerability free.
+            10 questions. No account required. See your exposure score and your #1 vulnerability free.
           </p>
           <Button asChild size="lg" className="mt-6 min-w-[260px] shadow-lg shadow-emerald-900/40">
             <Link href="/assessment">Measure my exposure — Free</Link>
           </Button>
-          <p className="mt-4 text-sm text-zinc-500">
-            Then upgrade to Pro to unlock your full resilience plan.
-          </p>
         </div>
       </section>
 
