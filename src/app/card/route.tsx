@@ -10,205 +10,173 @@ export async function GET() {
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           background: "#05070c",
           fontFamily: "system-ui, -apple-system, sans-serif",
+          position: "relative",
         }}
       >
         <div
           style={{
-            flex: 1,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 280,
+            background:
+              "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(16,185,129,0.18), transparent)",
             display: "flex",
-            flexDirection: "column",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 64,
+            display: "flex",
+            alignItems: "center",
             justifyContent: "space-between",
-            padding: "52px 36px 52px 56px",
+            padding: "0 40px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div
               style={{
-                width: 48,
-                height: 48,
-                borderRadius: 14,
+                width: 36,
+                height: 36,
+                borderRadius: 10,
                 background: "linear-gradient(145deg, #34d399, #0d9488)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 20,
+                fontSize: 14,
                 fontWeight: 800,
                 color: "#042f2e",
               }}
             >
               TS
             </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: "#fafafa",
-                  letterSpacing: 0.3,
-                }}
-              >
-                tiltshield
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#34d399",
-                  letterSpacing: 2,
-                }}
-              >
-                EXPOSURE INTELLIGENCE
-              </div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: "#f4f4f5" }}>
+              Tiltshield
             </div>
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                fontSize: 52,
-                fontWeight: 700,
-                color: "#fafafa",
-                lineHeight: 1.1,
-                letterSpacing: -1.2,
-                marginBottom: 18,
-              }}
-            >
-              Know what could break before it does.
-            </div>
-            <div
-              style={{
-                fontSize: 20,
-                color: "#a1a1aa",
-                lineHeight: 1.4,
-                maxWidth: 520,
-              }}
-            >
-              Financial. Digital. Food. Payment. One number you cannot unsee.
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <div
-              style={{
-                background: "#064e3b",
-                color: "#6ee7b7",
-                padding: "9px 16px",
-                borderRadius: 999,
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-              Break points
-            </div>
-            <div
-              style={{
-                background: "#18181b",
-                color: "#d4d4d8",
-                padding: "9px 16px",
-                borderRadius: 999,
-                fontSize: 14,
-              }}
-            >
-              12-month plan
-            </div>
-            <div style={{ color: "#71717a", fontSize: 14, marginLeft: 6 }}>
-              tiltshield.xyz
-            </div>
+          <div
+            style={{
+              background: "#10b981",
+              color: "#042f2e",
+              padding: "10px 18px",
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Find your exposure
           </div>
         </div>
 
         <div
           style={{
-            width: 400,
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(180deg, #071210 0%, #05070c 100%)",
-            borderLeft: "1px solid rgba(52,211,153,0.15)",
+            textAlign: "center",
+            padding: "80px 64px 40px",
+            maxWidth: 980,
           }}
         >
           <div
             style={{
-              width: 300,
-              height: 380,
-              borderRadius: 24,
-              border: "1px solid rgba(52,211,153,0.4)",
-              background: "linear-gradient(160deg, #0c1620 0%, #0a1f1a 100%)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.55)",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: 4,
+              color: "#34d399",
+              textTransform: "uppercase",
+              marginBottom: 28,
             }}
           >
+            Personal exposure intelligence
+          </div>
+
+          <div
+            style={{
+              fontSize: 52,
+              fontWeight: 700,
+              color: "#fafafa",
+              lineHeight: 1.12,
+              letterSpacing: -1.2,
+              marginBottom: 8,
+            }}
+          >
+            The world is less stable than you
+          </div>
+          <div
+            style={{
+              fontSize: 52,
+              fontWeight: 700,
+              color: "#fafafa",
+              lineHeight: 1.12,
+              letterSpacing: -1.2,
+              marginBottom: 12,
+            }}
+          >
+            think.
+          </div>
+          <div
+            style={{
+              fontSize: 48,
+              fontWeight: 700,
+              color: "#34d399",
+              lineHeight: 1.15,
+              letterSpacing: -1,
+              marginBottom: 28,
+            }}
+          >
+            How exposed are you?
+          </div>
+
+          <div
+            style={{
+              fontSize: 18,
+              color: "#a1a1aa",
+              lineHeight: 1.5,
+              maxWidth: 640,
+              marginBottom: 36,
+            }}
+          >
+            You might have a salary, a bank app, and a full fridge. That does not
+            tell you how many days you last when one of them fails.
+          </div>
+
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <div
               style={{
-                fontSize: 12,
+                background: "#10b981",
+                color: "#042f2e",
+                padding: "14px 28px",
+                borderRadius: 10,
+                fontSize: 16,
+                fontWeight: 700,
+              }}
+            >
+              Measure my exposure
+            </div>
+            <div
+              style={{
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "#e4e4e7",
+                padding: "14px 28px",
+                borderRadius: 10,
+                fontSize: 16,
                 fontWeight: 600,
-                letterSpacing: 2.5,
-                color: "#6ee7b7",
-                marginBottom: 16,
               }}
             >
-              SHORTEST CLOCK
-            </div>
-            <div
-              style={{
-                width: 150,
-                height: 150,
-                borderRadius: 999,
-                border: "3px solid rgba(52,211,153,0.55)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 18,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 52,
-                  fontWeight: 800,
-                  color: "#fafafa",
-                  lineHeight: 1,
-                }}
-              >
-                31
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#34d399",
-                  letterSpacing: 3,
-                  marginTop: 6,
-                }}
-              >
-                DAYS
-              </div>
-            </div>
-            <div
-              style={{
-                fontSize: 15,
-                color: "#a1a1aa",
-                textAlign: "center",
-                maxWidth: 220,
-                lineHeight: 1.35,
-              }}
-            >
-              Financial break point if income stops
-            </div>
-            <div
-              style={{
-                marginTop: 22,
-                fontSize: 13,
-                color: "#f87171",
-                fontWeight: 600,
-              }}
-            >
-              ● Weakest point
+              What is a break point?
             </div>
           </div>
         </div>
