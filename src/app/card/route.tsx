@@ -30,7 +30,6 @@ export async function GET() {
             display: "flex",
           }}
         />
-
         <div
           style={{
             position: "absolute",
@@ -79,7 +78,6 @@ export async function GET() {
             Find your exposure
           </div>
         </div>
-
         <div
           style={{
             display: "flex",
@@ -102,7 +100,6 @@ export async function GET() {
           >
             Personal exposure intelligence
           </div>
-
           <div
             style={{
               fontSize: 52,
@@ -139,7 +136,6 @@ export async function GET() {
           >
             How exposed are you?
           </div>
-
           <div
             style={{
               fontSize: 18,
@@ -152,7 +148,6 @@ export async function GET() {
             You might have a salary, a bank app, and a full fridge. That does not
             tell you how many days you last when one of them fails.
           </div>
-
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <div
               style={{
