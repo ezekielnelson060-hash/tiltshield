@@ -52,20 +52,11 @@ export const metadata: Metadata = {
     siteName: "TiltShield",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/icon-512.png",
-        width: 512,
-        height: 512,
-        alt: "TiltShield — personal exposure intelligence",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/icon-512.png"],
   },
   alternates: {
     canonical: SITE_URL,
