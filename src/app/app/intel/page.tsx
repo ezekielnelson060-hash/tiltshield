@@ -61,7 +61,8 @@ const FALLBACK: Card[] = [
 
 function cleanText(s: string): string {
   if (!s) return "";
-  let t = String(s)
+  let t = String(s);
+  t = t
     .replace(/&nbsp;/gi, " ")
     .replace(/&/gi, "&")
     .replace(/</gi, "<")
@@ -71,29 +72,40 @@ function cleanText(s: string): string {
     .replace(/&#x27;/gi, "'")
     .replace(/&#\d+;/g, " ");
   t = t.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1");
-  t = t.replace(/<a\b[\s\S]*?<\/a>/gi, " ");
+  t = t.replace(/<script[\s\S]*?<\/script>/gi, " ");
+  t = t.replace(/<style[\s\S]*?<\/style>/gi, " ");
+  t = t.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, " ");
   t = t.replace(/<\/?[a-zA-Z][^>]*>/g, " ");
   t = t.replace(/<[^>]*/g, " ");
   t = t.replace(
     /\b(href|target|rel|class|style|color|font|src|id|onclick)\s*=\s*("[^"]*"|'[^']*'|\S*)/gi,
     " "
   );
+  t = t.replace(/\/(a|font|span|div|p|b|i|em|strong|br)\b/gi, " ");
+  t = t.replace(/https?:\/\/\S+/gi, " ");
+  t = t.replace(/[<>"`]/g, " ");
   t = t.replace(/\s+/g, " ").trim();
   if (!t || t.length < 12) return "";
+  if (/\b(href|font|target|class)\s*=/i.test(t)) return "";
+  if (/\/(a|font)\b/i.test(t)) return "";
   return t;
 }
 
-/** Lower score = more vulnerable → higher rank for matching intel */
 function gapRank(item: Card, scores: CategoryScores | null): number {
   if (!scores) return 50;
   const blob = ((item.category || "") + " " + (item.title || "")).toLowerCase();
   let score = 50;
-  if (/financial|bank|payment|cash|currency|money/.test(blob)) score = scores.money ?? 50;
-  else if (/food|grocery|essential|supply|price/.test(blob)) score = scores.food ?? 50;
-  else if (/health|pharma|medicine|medical/.test(blob)) score = scores.skills ?? 50;
-  else if (/digital|phone|cyber|outage|internet|auth/.test(blob)) score = scores.digital ?? 50;
+  if (/financial|bank|payment|cash|currency|money/.test(blob))
+    score = scores.money ?? 50;
+  else if (/food|grocery|essential|supply|price/.test(blob))
+    score = scores.food ?? 50;
+  else if (/health|pharma|medicine|medical/.test(blob))
+    score = scores.skills ?? 50;
+  else if (/digital|phone|cyber|outage|internet|auth/.test(blob))
+    score = scores.digital ?? 50;
   else if (/energy|grid|power|blackout/.test(blob)) score = scores.home ?? 50;
-  const impactBoost = item.impact === "high" ? -8 : item.impact === "medium" ? -3 : 0;
+  const impactBoost =
+    item.impact === "high" ? -8 : item.impact === "medium" ? -3 : 0;
   return score + impactBoost;
 }
 
@@ -185,7 +197,7 @@ export default function IntelPage() {
   const show = premium ? ranked : ranked.slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:max-w-none lg:px-8 lg:py-8">
       <PageHeader
         title="Intel"
         subtitle="World signals translated into what it means for your plan."
@@ -211,16 +223,10 @@ export default function IntelPage() {
         ))}
       </div>
 
-      {!premium && (
-        <UpgradeGate
-          variant="inline"
-          title="Full intel board + all categories need Pro"
-        />
-      )}
       <p className="text-[11px] text-zinc-500">
         {premium
           ? "Sorted by your weakest areas first."
-          : "Top 3 items matched to your gaps. Pro unlocks the full board."}
+          : "Top 3 items matched to your gaps. Full board is Pro."}
       </p>
       <p className="text-xs text-zinc-600">
         {liveOk
@@ -286,7 +292,9 @@ export default function IntelPage() {
               )}
 
               {item.summary ? (
-                <p className="mt-2 text-xs leading-relaxed text-zinc-500">{item.summary}</p>
+                <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+                  {item.summary}
+                </p>
               ) : null}
 
               {meaning ? (
@@ -294,7 +302,9 @@ export default function IntelPage() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/90">
                     What this means for you
                   </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">{meaning}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-zinc-300">
+                    {meaning}
+                  </p>
                 </div>
               ) : null}
 
@@ -307,6 +317,13 @@ export default function IntelPage() {
           );
         })}
       </div>
+
+      {!premium && (
+        <UpgradeGate
+          title="See every category and the full intel board"
+          body="Free shows the top 3 matched to your gaps. Pro unlocks Money, Food, Health, Digital, Energy — full board."
+        />
+      )}
     </div>
   );
 }
