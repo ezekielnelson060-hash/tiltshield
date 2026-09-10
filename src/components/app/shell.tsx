@@ -17,6 +17,8 @@ const NAV = [
   { href: "/app/what-if", label: "What If?", icon: "pulse" },
   { href: "/app/nearby", label: "Nearby", icon: "pin" },
   { href: "/app/family", label: "Family", icon: "users" },
+  { href: "/app/history", label: "Progress", icon: "pulse" },
+  { href: "/app/settings", label: "Settings", icon: "more" },
 ];
 
 const MOBILE_NAV = [
@@ -135,7 +137,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       <IntelTopBanner />
       <div className="flex min-h-screen bg-[#060a12] text-zinc-100">
-        <aside className="hidden w-[240px] shrink-0 flex-col border-r border-white/[0.06] bg-[#080d16] lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col border-r border-white/[0.06] bg-[#080d16] lg:flex">
           <div className="px-5 py-5">
             <Link href="/app/overview" className="flex items-center gap-2.5">
               <BrandLogo className="h-9 w-9 rounded-xl object-cover ring-1 ring-emerald-500/30" />
@@ -148,7 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          <nav className="flex-1 space-y-1 px-3">
+          <nav className="flex-1 space-y-1 overflow-y-auto px-3">
             {NAV.map((item) => {
               const active =
                 pathname === item.href || pathname?.startsWith(item.href + "/");
@@ -240,7 +242,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="flex-1 overflow-y-auto pb-24 lg:pb-10">{children}</main>
+          <main className="flex-1 overflow-y-auto pb-24 lg:pb-12">
+            <div className="mx-auto w-full max-w-3xl px-0 lg:max-w-5xl xl:max-w-6xl">
+              {children}
+            </div>
+          </main>
 
           <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] bg-[#080d16]/95 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)]">
