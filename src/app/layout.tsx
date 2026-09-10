@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { NativeInit } from "@/components/native-init";
-import { InstallPrompt } from "@/components/install-prompt";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
 
 const inter = Inter({
@@ -93,7 +92,6 @@ export default function RootLayout({
       >
         <AnalyticsScripts />
         <NativeInit />
-        <InstallPrompt />
         {children}
       </body>
     </html>
