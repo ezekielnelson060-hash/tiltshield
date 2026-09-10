@@ -103,7 +103,7 @@ export default function HomePage() {
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                     <p className="text-[9px] uppercase text-zinc-600">Digital</p>
                     <p className="mt-1 text-lg font-bold text-zinc-100">0 days</p>
-                    <p className="text-[11px] text-zinc-500">No offline path to critical accounts</</p>
+                    <p className="text-[11px] text-zinc-500">No offline path to critical accounts</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                     <p className="text-[9px] uppercase text-zinc-600">Payment</p>
