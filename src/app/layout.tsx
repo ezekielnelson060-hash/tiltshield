@@ -10,13 +10,28 @@ const inter = Inter({
   variable: "--font-geist-sans",
 });
 
+const SITE_URL = "https://www.tiltshield.xyz";
+const SITE_TITLE = "TiltShield — Know What Could Break Before It Does";
+const SITE_DESCRIPTION =
+  "Measure your financial, digital, food, and payment exposure. See your break points — then fix them before the world tests them.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
     ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
     : undefined,
-  title: "TiltShield — Know What Could Break Before It Does",
-  description:
-    "TiltShield measures your personal exposure to financial, digital, household and infrastructure disruptions—and tells you what to fix first.",
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  applicationName: "TiltShield",
+  authors: [{ name: "TiltShield" }],
+  keywords: [
+    "exposure intelligence",
+    "break point",
+    "emergency fund",
+    "resilience",
+    "financial preparedness",
+    "personal risk",
+  ],
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -29,6 +44,31 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "TiltShield",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SITE_URL,
+    siteName: "TiltShield",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "TiltShield — personal exposure intelligence",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/icon-512.png"],
+  },
+  alternates: {
+    canonical: SITE_URL,
   },
 };
 
