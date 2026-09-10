@@ -14,6 +14,7 @@ const SITE_URL = "https://www.tiltshield.xyz";
 const SITE_TITLE = "TiltShield — Know What Could Break Before It Does";
 const SITE_DESCRIPTION =
   "Measure your financial, digital, food, and payment exposure. See your break points — then fix them before the world tests them.";
+const SHARE_IMAGE = "https://www.tiltshield.xyz/share-card";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -52,11 +53,21 @@ export const metadata: Metadata = {
     siteName: "TiltShield",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: SHARE_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "TiltShield — Know what could break before it does",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [SHARE_IMAGE],
   },
   alternates: {
     canonical: SITE_URL,
