@@ -13,7 +13,7 @@ const SITE_URL = "https://www.tiltshield.xyz";
 const SITE_TITLE = "TiltShield — Know What Could Break Before It Does";
 const SITE_DESCRIPTION =
   "Measure your financial, digital, food, and payment exposure. See your break points — then fix them before the world tests them.";
-const SHARE_IMAGE = "https://www.tiltshield.xyz/share-card";
+const SHARE_IMAGE = "https://www.tiltshield.xyz/card";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
