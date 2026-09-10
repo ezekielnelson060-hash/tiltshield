@@ -112,13 +112,33 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 lg:hidden">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Example profile · not live data</p>
-                <p className="mt-3 text-3xl font-bold text-zinc-50">67 <span className="text-base font-medium text-zinc-600">/ 100</span></p>
-                <p className="mt-1 text-sm text-zinc-400">4 significant dependencies</p>
-                <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
-                  <p className="text-sm text-zinc-200"><span className="text-red-400">● Financial · 31 days</span></p>
-                  <p className="text-sm text-zinc-400">Digital · 0 days · Payment · 24 hours</p>
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#080d16] ring-1 ring-white/5 lg:hidden">
+                <div className="flex items-center gap-2 border-b border-white/10 bg-[#0c1220] px-3 py-2">
+                  <span className="text-[10px] font-semibold tracking-wide text-zinc-400">Today · Exposure board</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 p-3">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-amber-400/90">Exposure</p>
+                    <p className="mt-1 text-2xl font-bold text-zinc-50">
+                      67 <span className="text-sm text-zinc-600">/ 100</span>
+                    </p>
+                    <p className="mt-1 text-[11px] text-zinc-500">4 significant dependencies</p>
+                  </div>
+                  <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider text-red-400">Weakest</p>
+                    <p className="mt-1 text-2xl font-bold text-zinc-50">31 days</p>
+                    <p className="mt-1 text-[11px] text-zinc-500">Financial break point</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-[9px] uppercase text-zinc-600">Digital</p>
+                    <p className="mt-1 text-lg font-bold text-zinc-100">0 days</p>
+                    <p className="text-[11px] text-zinc-500">No offline path</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-[9px] uppercase text-zinc-600">Payment</p>
+                    <p className="mt-1 text-lg font-bold text-zinc-100">24 hrs</p>
+                    <p className="text-[11px] text-zinc-500">Single rail on file</p>
+                  </div>
                 </div>
               </div>
               <p className="text-sm leading-relaxed text-zinc-400">
