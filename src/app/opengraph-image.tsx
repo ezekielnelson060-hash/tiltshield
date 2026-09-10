@@ -1,11 +1,10 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "TiltShield — Know what could break before it does";
-export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+export const size = { width: 1200, height: 630 };
 
-export default function OgImage() {
+export default async function Image() {
   return new ImageResponse(
     (
       <div
@@ -14,11 +13,12 @@ export default function OgImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           justifyContent: "center",
           background:
-            "linear-gradient(160deg, #060a12 0%, #0c1624 55%, #0a1f1a 100%)",
-          padding: "64px 72px",
-          fontFamily: "system-ui, sans-serif",
+            "linear-gradient(165deg, #05080f 0%, #0a121c 50%, #0a1a16 100%)",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          position: "relative",
         }}
       >
         <div
@@ -27,106 +27,112 @@ export default function OgImage() {
             left: 0,
             top: 0,
             bottom: 0,
-            width: 10,
+            width: 8,
             background: "#10b981",
           }}
         />
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            padding: "40px 56px",
+            maxWidth: 920,
+          }}
+        >
           <div
             style={{
-              width: 72,
-              height: 72,
-              borderRadius: 16,
-              background: "linear-gradient(135deg, #34d399, #0d9488)",
+              width: 96,
+              height: 96,
+              borderRadius: 22,
+              background: "linear-gradient(145deg, #34d399 0%, #0d9488 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#042f2e",
-              fontSize: 36,
-              fontWeight: 800,
+              marginBottom: 28,
+              boxShadow: "0 12px 40px rgba(16,185,129,0.35)",
             }}
           >
-            TS
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
-                fontSize: 28,
-                fontWeight: 700,
-                color: "#fafafa",
-                letterSpacing: 2,
+                fontSize: 42,
+                fontWeight: 800,
+                color: "#042f2e",
+                letterSpacing: -1,
               }}
             >
-              TILTSHIELD
-            </div>
-            <div
-              style={{
-                fontSize: 16,
-                color: "#6ee7b7",
-                letterSpacing: 3,
-              }}
-            >
-              PERSONAL EXPOSURE INTELLIGENCE
+              TS
             </div>
           </div>
-        </div>
-        <div
-          style={{
-            marginTop: 48,
-            fontSize: 52,
-            fontWeight: 700,
-            color: "#fafafa",
-            lineHeight: 1.15,
-            maxWidth: 900,
-          }}
-        >
-          Know what could break before it does.
-        </div>
-        <div
-          style={{
-            marginTop: 24,
-            fontSize: 26,
-            color: "#a1a1aa",
-            maxWidth: 820,
-            lineHeight: 1.4,
-          }}
-        >
-          Measure financial, digital, food, and payment exposure. See your break
-          points — then fix them.
-        </div>
-        <div
-          style={{
-            marginTop: 40,
-            display: "flex",
-            gap: 16,
-            alignItems: "center",
-          }}
-        >
+
           <div
             style={{
-              background: "#064e3b",
-              color: "#6ee7b7",
-              padding: "10px 18px",
-              borderRadius: 999,
-              fontSize: 18,
+              fontSize: 13,
               fontWeight: 600,
+              letterSpacing: 5,
+              color: "#34d399",
+              textTransform: "uppercase",
+              marginBottom: 18,
             }}
           >
-            Break points
+            Personal exposure intelligence
           </div>
+
           <div
             style={{
-              background: "#18181b",
-              color: "#d4d4d8",
-              padding: "10px 18px",
-              borderRadius: 999,
-              fontSize: 18,
+              fontSize: 50,
+              fontWeight: 700,
+              color: "#fafafa",
+              lineHeight: 1.12,
+              letterSpacing: -1.2,
+              marginBottom: 18,
             }}
           >
-            12-month plan
+            Know what could break before it does.
           </div>
-          <div style={{ color: "#71717a", fontSize: 18, marginLeft: 12 }}>
-            tiltshield.xyz
+
+          <div
+            style={{
+              fontSize: 22,
+              color: "#a1a1aa",
+              lineHeight: 1.45,
+              maxWidth: 680,
+              marginBottom: 36,
+            }}
+          >
+            Measure financial, digital, food, and payment exposure. See your
+            break points — then fix them.
+          </div>
+
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div
+              style={{
+                background: "#064e3b",
+                color: "#6ee7b7",
+                padding: "10px 18px",
+                borderRadius: 999,
+                fontSize: 15,
+                fontWeight: 600,
+              }}
+            >
+              Break points
+            </div>
+            <div
+              style={{
+                background: "#18181b",
+                color: "#d4d4d8",
+                padding: "10px 18px",
+                borderRadius: 999,
+                fontSize: 15,
+              }}
+            >
+              12-month plan
+            </div>
+            <div style={{ color: "#71717a", fontSize: 15, marginLeft: 6 }}>
+              tiltshield.xyz
+            </div>
           </div>
         </div>
       </div>
