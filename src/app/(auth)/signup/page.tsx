@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { loadSession } from "@/lib/session";
+import { syncLocalSessionToCloudIfNeeded } from "@/lib/persist";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -39,7 +41,10 @@ export default function SignupPage() {
         );
       }
       if (data.session) {
-        router.push("/assessment");
+        // Push any local assessment to this account, then enter app
+        await syncLocalSessionToCloudIfNeeded();
+        const has = !!loadSession();
+        router.push(has ? "/app/overview" : "/assessment");
         router.refresh();
       } else {
         setMessage("Check your email to confirm your account, then log in.");
@@ -60,7 +65,7 @@ export default function SignupPage() {
           </Link>
           <h1 className="mt-4 text-2xl font-semibold text-zinc-50">Create account</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Save your score and track progress over time
+            Save your exposure score — restore it on any device after login
           </p>
         </div>
 

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { hydrateSubscriptionFromProfile } from "@/lib/subscription";
+import { loadSession } from "@/lib/session";
+import { loadLatestAssessmentFromCloud } from "@/lib/persist";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,6 +31,10 @@ export default function LoginPage() {
         return;
       }
       await hydrateSubscriptionFromProfile();
+      // Restore assessment on this device if missing
+      if (!loadSession()) {
+        await loadLatestAssessmentFromCloud();
+      }
       router.push("/app/overview");
       router.refresh();
     } catch {
@@ -47,7 +53,7 @@ export default function LoginPage() {
           </Link>
           <h1 className="mt-4 text-2xl font-semibold text-zinc-50">Log in</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Restore Pro on any device. Access score history when synced.
+            Restore Pro and your assessment on any device.
           </p>
         </div>
 
