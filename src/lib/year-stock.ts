@@ -155,3 +155,62 @@ export function applyJournalToStock(text: string): string[] {
 export function labelForStockId(id: string): string {
   return YEAR_STOCK.find((i) => i.id === id)?.label || id;
 }
+
+/** 12-month plan phases — what “done” looks like by horizon */
+export type YearPhase = {
+  id: string;
+  title: string;
+  months: string;
+  stockIds: string[];
+  outcome: string;
+};
+
+export const YEAR_PHASES: YearPhase[] = [
+  {
+    id: "q1",
+    title: "Foundation",
+    months: "Months 1–3",
+    stockIds: ["water_plan", "cash_float", "docs_offline", "first_aid"],
+    outcome:
+      "You can drink, pay cash, prove identity, and treat basic injury without systems.",
+  },
+  {
+    id: "q2",
+    title: "Buffers",
+    months: "Months 4–6",
+    stockIds: ["food_90", "alt_pay", "light_power", "meds_30"],
+    outcome:
+      "Ninety days of food you eat, a second payment rail, light/power, critical meds.",
+  },
+  {
+    id: "q3",
+    title: "Network",
+    months: "Months 7–9",
+    stockIds: ["vendor_3", "family_plan", "food_rotate"],
+    outcome:
+      "People and places that work when apps do not. Stock is dated, not hope.",
+  },
+  {
+    id: "q4",
+    title: "Year depth",
+    months: "Months 10–12",
+    stockIds: ["food_90", "cash_float", "water_plan"],
+    outcome:
+      "Re-verify every foundation item. Layer toward a full year of meals and cash discipline.",
+  },
+];
+
+export function phaseProgress(checks?: Record<string, boolean>) {
+  const c = checks || loadStockChecks();
+  return YEAR_PHASES.map((p) => {
+    const done = p.stockIds.filter((id) => c[id]).length;
+    const total = p.stockIds.length;
+    return {
+      ...p,
+      done,
+      total,
+      pct: total ? Math.round((done / total) * 100) : 0,
+      complete: done >= total,
+    };
+  });
+}
