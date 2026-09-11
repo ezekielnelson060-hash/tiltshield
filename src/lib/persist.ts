@@ -260,3 +260,84 @@ export async function setSubscriptionOnProfile(
     /* */
   }
 }
+
+/** Pull latest assessment from cloud into local session (new device / login). */
+export async function loadLatestAssessmentFromCloud(): Promise<TiltSession | null> {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: assessment, error } = await supabase
+      .from("assessments")
+      .select("id, answers_json, overall_score, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !assessment?.answers_json) return null;
+
+    const answers = assessment.answers_json as TiltSession["answers"];
+
+    const { data: scoreRow } = await supabase
+      .from("category_scores")
+      .select(
+        "money, food, digital, communication, documents, skills, home, emergency, overall"
+      )
+      .eq("assessment_id", assessment.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const { calculateCategoryScores, calculateVulnerabilities } = await import(
+      "@/lib/scoring"
+    );
+    const scores = scoreRow
+      ? {
+          money: Number(scoreRow.money ?? 0),
+          food: Number(scoreRow.food ?? 0),
+          digital: Number(scoreRow.digital ?? 0),
+          communication: Number(scoreRow.communication ?? 0),
+          documents: Number(scoreRow.documents ?? 0),
+          skills: Number(scoreRow.skills ?? 0),
+          home: Number(scoreRow.home ?? 0),
+          emergency: Number(scoreRow.emergency ?? 0),
+          overall: Number(
+            scoreRow.overall ?? assessment.overall_score ?? 0
+          ),
+        }
+      : calculateCategoryScores(answers);
+
+    const vulnerabilities = calculateVulnerabilities(answers, scores);
+
+    const { saveSession } = await import("@/lib/session");
+    const session: TiltSession = {
+      answers,
+      scores,
+      vulnerabilities,
+      memberId: "self",
+      completedAt: assessment.created_at ?? new Date().toISOString(),
+      savedAt: new Date().toISOString(),
+    };
+    saveSession(session);
+    return session;
+  } catch (e) {
+    console.warn("loadLatestAssessmentFromCloud", e);
+    return null;
+  }
+}
+
+/** If local session exists and user is signed in, push it to cloud. */
+export async function syncLocalSessionToCloudIfNeeded(): Promise<void> {
+  try {
+    const { loadSession } = await import("@/lib/session");
+    const local = loadSession();
+    if (!local) return;
+    await persistAssessmentToCloud(local);
+  } catch {
+    /* */
+  }
+}
