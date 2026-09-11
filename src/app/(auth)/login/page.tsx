@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { hydrateSubscriptionFromProfile } from "@/lib/subscription";
 import { loadSession } from "@/lib/session";
 import { loadLatestAssessmentFromCloud } from "@/lib/persist";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const next = params.get("next") || "/app/overview";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +33,10 @@ export default function LoginPage() {
         return;
       }
       await hydrateSubscriptionFromProfile();
-      // Restore assessment on this device if missing
       if (!loadSession()) {
         await loadLatestAssessmentFromCloud();
       }
-      router.push("/app/overview");
+      router.push(next.startsWith("/") ? next : "/app/overview");
       router.refresh();
     } catch {
       setError("Something went wrong. Try again.");
@@ -100,5 +101,19 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">
+          Loading…
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
