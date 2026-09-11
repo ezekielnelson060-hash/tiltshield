@@ -23,9 +23,15 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const supabase = createClient();
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "https://www.tiltshield.xyz";
+
       const { data, error: err } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: `${origin}/login?next=/app/overview`,
+        },
       });
       if (err) {
         setError(err.message);
@@ -40,15 +46,30 @@ export default function SignupPage() {
           { onConflict: "id" }
         );
       }
+
       if (data.session) {
-        // Push any local assessment to this account, then enter app
         await syncLocalSessionToCloudIfNeeded();
         const has = !!loadSession();
         router.push(has ? "/app/overview" : "/assessment");
         router.refresh();
-      } else {
-        setMessage("Check your email to confirm your account, then log in.");
+        return;
       }
+
+      const { data: signed, error: signErr } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (!signErr && signed.session) {
+        await syncLocalSessionToCloudIfNeeded();
+        const has = !!loadSession();
+        router.push(has ? "/app/overview" : "/assessment");
+        router.refresh();
+        return;
+      }
+
+      setMessage(
+        "Account created. If you are not signed in yet, open the confirmation email — or turn OFF Confirm email in Supabase → Authentication → Providers → Email so access is instant."
+      );
     } catch {
       setError("Something went wrong. Try again.");
     } finally {
