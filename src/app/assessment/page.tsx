@@ -268,6 +268,32 @@ function AssessmentInner() {
             <p className="text-center text-xs text-emerald-400">{shareNote}</p>
           )}
 
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 text-center">
+            <p className="text-sm font-medium text-zinc-100">
+              Save this result to your account
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Create an account so this device is not the only place your break points live.
+              Log in later on any phone and continue without retaking the assessment.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/signup")}
+                className="flex-1 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-zinc-950"
+              >
+                Create account
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-xs font-medium text-zinc-200"
+              >
+                Log in
+              </button>
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={() => {
