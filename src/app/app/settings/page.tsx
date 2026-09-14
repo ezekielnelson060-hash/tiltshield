@@ -279,6 +279,11 @@ export default function SettingsPage() {
         <p className="mt-2 text-[11px] text-zinc-500">
           Payment unlocks this device immediately. An account restores Pro on your next device after login.
         </p>
+        <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">
+          Offline: once you have used the app on this phone, your score, break points, journal, and
+          year checklist stay available without internet. Login and live intel need a network once;
+          after that the local session is the offline copy.
+        </p>
       </section>
 
       <section className="space-y-2">
