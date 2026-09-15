@@ -77,8 +77,16 @@ export function TodayScreen() {
     remaining: YEAR_STOCK,
   });
   const [journalCount, setJournalCount] = useState(0);
-  const { coords, places, placeLabel, daysSince, pipeline, assessedLabel } =
-    useTodayData();
+  const {
+    coords,
+    places,
+    placeLabel,
+    daysSince,
+    pipeline,
+    assessedLabel,
+    locStatus,
+    requestLocation,
+  } = useTodayData();
 
   useEffect(() => {
     function refreshProgress() {
@@ -167,9 +175,21 @@ export function TodayScreen() {
           {greetingForHour()}, {name}
         </h1>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-            {placeLabel || (coords ? "Locating…" : "Enable location")}
-          </span>
+          <button
+            type="button"
+            onClick={() => requestLocation()}
+            className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-left hover:border-emerald-500/30"
+          >
+            {placeLabel
+              ? placeLabel
+              : locStatus === "locating"
+                ? "Locating…"
+                : locStatus === "denied"
+                  ? "Tap for location"
+                  : coords
+                    ? "Locating…"
+                    : "Your area"}
+          </button>
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
             {assessedLabel(daysSince)}
           </span>
@@ -436,7 +456,7 @@ export function TodayScreen() {
                 ? `Near ${placeLabel}`
                 : coords
                   ? "Near your location"
-                  : "Turn on location to pin this map"}
+                  : "Tap the area chip above to pin this map"}
             </p>
           </div>
           <Link
