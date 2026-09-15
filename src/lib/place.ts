@@ -1,6 +1,6 @@
 /**
  * Lightweight place resolution for Today chips — no API key.
- * Uses OpenStreetMap Nominatim reverse geocode.
+ * Uses OpenStreetMap Nominatim reverse geocode via our API.
  */
 
 export type PlaceInfo = {
@@ -49,31 +49,18 @@ export async function reverseGeocode(
   if (cached) return cached;
 
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=12&addressdetails=1`;
-    const res = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Tiltshield/1.0 (resilience app)",
-      },
-    });
+    const res = await fetch(
+      `/api/place/reverse?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`
+    );
     if (!res.ok) return null;
-    const j = await res.json();
-    const a = j.address || {};
-    const city =
-      a.city ||
-      a.town ||
-      a.village ||
-      a.municipality ||
-      a.suburb ||
-      a.county ||
-      "";
-    const region = a.state || a.region || a.state_district || "";
-    const country = a.country_code
-      ? String(a.country_code).toUpperCase()
-      : a.country || "";
-    if (!city && !region) return null;
-    const label = [city, region].filter(Boolean).join(", ") || country;
-    const info: PlaceInfo = { city: city || region || "Your area", region, country, label };
+    const j = (await res.json()) as PlaceInfo & { error?: string };
+    if (j.error || !j.label) return null;
+    const info: PlaceInfo = {
+      city: j.city || "Your area",
+      region: j.region,
+      country: j.country,
+      label: j.label,
+    };
     writeCache(lat, lng, info);
     return info;
   } catch {
