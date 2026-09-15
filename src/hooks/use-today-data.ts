@@ -46,7 +46,6 @@ export function useTodayData() {
         (pos) => {
           const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setCoords(c);
-          // Mix of essentials — not pharmacy-only
           void (async () => {
             try {
               const batches = await Promise.all([
@@ -76,10 +75,9 @@ export function useTodayData() {
           });
         },
         () => {
-          // No location — do not dump national/world places
           setPlaces([]);
         },
-        { timeout: 10000, enableHighAccuracy: false, maximumAge: 60000 }
+        { timeout: 15000, enableHighAccuracy: true, maximumAge: 120000 }
       );
     }
     void (async () => {
@@ -98,11 +96,10 @@ export function useTodayData() {
             relevanceKeys: Array.isArray(h.relevanceKeys)
               ? (h.relevanceKeys as string[])
               : [],
-          }))
-          .filter((h: TodayIntel) => h.title && h.title.length > 3);
+          }));
         setIntel(list);
         const s = loadSession();
-        if (s && list.length) {
+        if (s?.scores && s?.answers) {
           const asIntel: IntelItem[] = list.map((h, i) => ({
             id: h.id || `live-${i}`,
             scope: "global",
@@ -118,11 +115,11 @@ export function useTodayData() {
               intel: asIntel,
               scores: s.scores,
               answers: s.answers,
-            }).slice(0, 3)
+            })
           );
         }
       } catch {
-        setIntel([]);
+        /* offline */
       }
     })();
   }, []);
