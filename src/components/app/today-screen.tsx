@@ -159,10 +159,6 @@ export function TodayScreen() {
   }
 
   const finDays = financial?.days ?? runwayDays;
-  const upgradeWhy =
-    finDays <= 7
-      ? `Your financial break point is ${financial?.value || finDays + " days"}. Free leaves digital, payment, and food clocks blind — that is how people get surprised.`
-      : `Free shows one clock. The other three are still running whether you see them or not.`;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
@@ -172,7 +168,7 @@ export function TodayScreen() {
         </h1>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-            {placeLabel || "Your area"}
+            {placeLabel || (coords ? "Locating…" : "Enable location")}
           </span>
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
             {assessedLabel(daysSince)}
@@ -294,30 +290,6 @@ export function TodayScreen() {
         </div>
       )}
 
-      {!premium && (
-        <GlassCard tone="accent">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400/90">
-            Why upgrade
-          </p>
-          <p className="mt-2 text-sm font-medium text-zinc-50">{upgradeWhy}</p>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-            Pro unlocks digital, payment, and food clocks, What If?, live intel matched to your
-            gaps, and the full 12-month tracker. $15/mo or $79/yr.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button size="sm" disabled={paying} onClick={() => void unlock()}>
-              {paying ? "Opening…" : "Unlock Pro · $15/mo"}
-            </Button>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center rounded-lg border border-white/15 px-3 py-2 text-xs font-medium text-zinc-300"
-            >
-              See plans
-            </Link>
-          </div>
-        </GlassCard>
-      )}
-
       <TodaysPriority answers={answers} vulnerabilities={vulnerabilities} />
       {premium && (
         <p className="text-xs leading-relaxed text-zinc-500">
@@ -325,63 +297,86 @@ export function TodayScreen() {
         </p>
       )}
 
-      <GlassCard>
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            Year plan · where you are
-          </p>
-          <Link href="/app/prepare" className="text-xs font-medium text-emerald-400">
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.08] to-white/[0.02] p-4 shadow-[0_0_40px_-12px_rgba(16,185,129,0.35)]">
+        <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
+        <div className="relative flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-400/90">
+              Year plan
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-zinc-50">Where you are</p>
+          </div>
+          <Link
+            href="/app/prepare"
+            className="shrink-0 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/25"
+          >
             Log move →
           </Link>
         </div>
-        <div className="mt-3 flex items-end gap-3">
-          <p className="text-3xl font-bold tabular-nums text-zinc-50">
-            {stock.done}
-            <span className="text-base font-medium text-zinc-500">/{stock.total}</span>
-          </p>
-          <p className="mb-1 text-xs text-zinc-500">{stock.pct}% of year checklist</p>
+
+        <div className="relative mt-4 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-4xl font-bold tracking-tight tabular-nums text-zinc-50">
+              {stock.done}
+              <span className="text-lg font-medium text-zinc-500">/{stock.total}</span>
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">checklist complete</p>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold tabular-nums text-emerald-400">{stock.pct}%</p>
+            <p className="text-[10px] uppercase tracking-wide text-zinc-600">progress</p>
+          </div>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+
+        <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-zinc-900/80 ring-1 ring-white/[0.06]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400"
-            style={{ width: `${stock.pct}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-300 transition-all duration-500"
+            style={{ width: `${Math.max(stock.pct, stock.pct > 0 ? 4 : 0)}%` }}
           />
         </div>
-        <div className="mt-4 space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            Where you need to be
+
+        <div className="relative mt-4 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            Next up
           </p>
-          {stock.remaining.slice(0, 3).map((item) => (
-            <p key={item.id} className="text-xs text-zinc-300">
-              <span className="text-zinc-600">○</span> {item.label}
-            </p>
-          ))}
-          {stock.remaining.length === 0 && (
-            <p className="text-xs text-emerald-400/90">
-              Checklist complete — re-verify quarterly.
-            </p>
-          )}
+          <ul className="mt-2 space-y-2">
+            {stock.remaining.slice(0, 3).map((item, i) => (
+              <li key={item.id} className="flex items-start gap-2 text-xs text-zinc-300">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/10 text-[9px] text-zinc-500">
+                  {i + 1}
+                </span>
+                <span>{item.label}</span>
+              </li>
+            ))}
+            {stock.remaining.length === 0 && (
+              <li className="text-xs text-emerald-400/90">
+                Checklist complete — re-verify quarterly.
+              </li>
+            )}
+          </ul>
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+
+        <p className="relative mt-3 text-[11px] leading-relaxed text-zinc-500">
           {journalCount === 0
-            ? "Why: Progress needs evidence. Log cash, food, meds, or power in Prepare → Journal."
-            : `Why: ${journalCount} journal ${journalCount === 1 ? "entry" : "entries"} on file. Real moves close exposure on your shortest clocks.`}
+            ? "Evidence still empty. One journal line in Prepare ticks the checklist."
+            : `${journalCount} journal ${journalCount === 1 ? "entry" : "entries"} on file — real moves, not hopes.`}
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+
+        <div className="relative mt-3 flex gap-2">
           <Link
             href="/app/prepare"
-            className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300 hover:border-emerald-500/30"
+            className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-white/10 hover:bg-white/[0.1]"
           >
             Year stock
           </Link>
           <Link
             href="/app/history"
-            className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-zinc-300 hover:border-emerald-500/30"
+            className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-white/10 hover:bg-white/[0.1]"
           >
             Full progress
           </Link>
         </div>
-      </GlassCard>
+      </div>
 
       <GlassCard>
         <div className="flex items-center justify-between">
@@ -438,8 +433,10 @@ export function TodayScreen() {
             </p>
             <p className="text-xs text-zinc-500">
               {placeLabel
-                ? `Pharmacies near ${placeLabel}`
-                : "Pharmacies and essentials near you"}
+                ? `Near ${placeLabel}`
+                : coords
+                  ? "Near your location"
+                  : "Turn on location to pin this map"}
             </p>
           </div>
           <Link
