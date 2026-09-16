@@ -8,7 +8,6 @@ import type { AssessmentAnswers, CategoryScores } from "@/types";
 import { PageHeader } from "@/components/app/page-header";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
-import { UpgradeGate } from "@/components/app/upgrade-gate";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -224,9 +223,7 @@ export default function IntelPage() {
       </div>
 
       <p className="text-[11px] text-zinc-500">
-        {premium
-          ? "Sorted by your weakest areas first."
-          : "Top 3 items matched to your gaps. Full board is Pro."}
+        Sorted by your weakest areas first.
       </p>
       <p className="text-xs text-zinc-600">
         {liveOk
@@ -317,13 +314,6 @@ export default function IntelPage() {
           );
         })}
       </div>
-
-      {!premium && (
-        <UpgradeGate
-          title="See every category and the full intel board"
-          body="Free shows the top 3 matched to your gaps. Pro unlocks Money, Food, Health, Digital, Energy — full board."
-        />
-      )}
     </div>
   );
 }
