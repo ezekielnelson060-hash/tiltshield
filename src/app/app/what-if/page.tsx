@@ -3,7 +3,6 @@
 import { useEffect, useState, type JSX } from "react";
 import Link from "next/link";
 import { loadSession, isPremium, type TiltSession } from "@/lib/session";
-import { UpgradeGate } from "@/components/app/upgrade-gate";
 import { PageHeader } from "@/components/app/page-header";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
@@ -55,7 +54,6 @@ export default function WhatIfPage() {
   const [result, setResult] = useState<WhatIfResult | null>(null);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [placesLoading, setPlacesLoading] = useState(false);
-  const [needPro, setNeedPro] = useState(false);
 
   useEffect(() => {
     setSession(loadSession());
@@ -65,10 +63,8 @@ export default function WhatIfPage() {
   async function run(id: WhatIfScenario, free?: boolean) {
     if (!session) return;
     if (!free && !premium) {
-      setNeedPro(true);
       return;
     }
-    setNeedPro(false);
     setActive(id);
     const r = runWhatIf(id, session.answers);
     setResult(r);
@@ -113,13 +109,6 @@ export default function WhatIfPage() {
         backHref="/app/overview"
         showBack
       />
-
-      {!premium && (
-        <UpgradeGate
-          title={needPro ? "That scenario is Pro" : "Two free scenarios. Full board needs Pro."}
-          body="Free: Income stops + Phone gone. Pro unlocks every scenario with personal impact and nearby places."
-        />
-      )}
 
       {GROUPS.map((group) => {
         const items = SCENARIOS.filter((s) => s.group === group);
