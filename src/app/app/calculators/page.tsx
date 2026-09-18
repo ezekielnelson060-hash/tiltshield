@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { loadSession } from "@/lib/session";
 import {
   calcRunway,
@@ -11,7 +10,6 @@ import {
   calcJobLoss,
 } from "@/lib/calculators";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
 
 type Tab = "runway" | "job" | "food" | "digital";
@@ -44,55 +42,116 @@ const inputCls =
 export default function CalculatorsPage() {
   const [tab, setTab] = useState<Tab>("runway");
   const [hydrated, setHydrated] = useState(false);
-  const [monthlyExpenses, setMonthlyExpenses] = useState(2000);
-  const [liquidSavings, setLiquidSavings] = useState(2000);
+  const [monthlyExpenses, setMonthlyExpenses] = useState("");
+  const [liquidSavings, setLiquidSavings] = useState("");
   const [incomeSources, setIncomeSources] = useState(1);
-  const [pantryDays, setPantryDays] = useState(3);
-  const [emergencyWeeks, setEmergencyWeeks] = useState(0.5);
+  const [pantryDays, setPantryDays] = useState("");
+  const [emergencyWeeks, setEmergencyWeeks] = useState("");
   const [diverseSources, setDiverseSources] = useState(false);
   const [digitalDep, setDigitalDep] = useState(4);
   const [hasAlt, setHasAlt] = useState(false);
   const [offlineValue, setOfflineValue] = useState(0);
-  const [fromAssessment, setFromAssessment] = useState(false);
+
+  const num = (s: string) => {
+    if (s === "" || s === undefined || s === null) return 0;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem("tiltshield_calc_inputs");
+      if (cached) {
+        const c = JSON.parse(cached) as Record<string, unknown>;
+        if (c.monthlyExpenses != null) setMonthlyExpenses(String(c.monthlyExpenses));
+        if (c.liquidSavings != null) setLiquidSavings(String(c.liquidSavings));
+        if (c.incomeSources != null) setIncomeSources(Number(c.incomeSources) || 1);
+        if (c.pantryDays != null) setPantryDays(String(c.pantryDays));
+        if (c.emergencyWeeks != null) setEmergencyWeeks(String(c.emergencyWeeks));
+        if (c.diverseSources != null) setDiverseSources(!!c.diverseSources);
+        if (c.digitalDep != null) setDigitalDep(Number(c.digitalDep) || 4);
+        if (c.hasAlt != null) setHasAlt(!!c.hasAlt);
+        if (c.offlineValue != null) setOfflineValue(Number(c.offlineValue) || 0);
+        setHydrated(true);
+        return;
+      }
+    } catch {
+      /* */
+    }
     const s = loadSession();
     if (s?.answers) {
       const a = s.answers;
-      const expenses = a.monthly_expenses || 2000;
-      const months = a.emergency_fund_months || 0;
-      setMonthlyExpenses(expenses);
-      setLiquidSavings(Math.round(months * expenses));
+      const expenses = a.monthly_expenses;
+      const months = a.emergency_fund_months;
+      if (expenses != null && expenses !== 0) setMonthlyExpenses(String(expenses));
+      if (months != null && expenses) setLiquidSavings(String(Math.round(months * expenses)));
       setIncomeSources(a.income_sources || 1);
-      setPantryDays(a.food_buffer_days || 3);
-      setEmergencyWeeks(a.emergency_supply_weeks || 0.5);
+      if (a.food_buffer_days) setPantryDays(String(a.food_buffer_days));
+      if (a.emergency_supply_weeks) setEmergencyWeeks(String(a.emergency_supply_weeks));
       setDiverseSources(!!a.food_source_diversity);
       setDigitalDep(a.digital_payment_dependency || 4);
       setHasAlt(!!a.alt_payment_method);
       setOfflineValue(a.offline_value_store || 0);
-      setFromAssessment(true);
     }
     setHydrated(true);
   }, []);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(
+        "tiltshield_calc_inputs",
+        JSON.stringify({
+          monthlyExpenses,
+          liquidSavings,
+          incomeSources,
+          pantryDays,
+          emergencyWeeks,
+          diverseSources,
+          digitalDep,
+          hasAlt,
+          offlineValue,
+        })
+      );
+    } catch {
+      /* */
+    }
+  }, [
+    hydrated,
+    monthlyExpenses,
+    liquidSavings,
+    incomeSources,
+    pantryDays,
+    emergencyWeeks,
+    diverseSources,
+    digitalDep,
+    hasAlt,
+    offlineValue,
+  ]);
+
+  const me = num(monthlyExpenses);
+  const ls = num(liquidSavings);
+  const pd = num(pantryDays);
+  const ew = num(emergencyWeeks);
+
   const runway = useMemo(
-    () => calcRunway({ monthlyExpenses, liquidSavings, incomeSources }),
-    [monthlyExpenses, liquidSavings, incomeSources]
+    () => calcRunway({ monthlyExpenses: me, liquidSavings: ls, incomeSources }),
+    [me, ls, incomeSources]
   );
   const job = useMemo(
-    () => calcJobLoss({ monthlyExpenses, liquidSavings, incomeSources }),
-    [monthlyExpenses, liquidSavings, incomeSources]
+    () => calcJobLoss({ monthlyExpenses: me, liquidSavings: ls, incomeSources }),
+    [me, ls, incomeSources]
   );
   const food = useMemo(
     () =>
       calcFood({
-        monthlyExpenses,
-        pantryDays,
-        emergencyWeeks,
-        liquidSavings,
+        monthlyExpenses: me,
+        pantryDays: pd,
+        emergencyWeeks: ew,
+        liquidSavings: ls,
         diverseSources,
       }),
-    [monthlyExpenses, pantryDays, emergencyWeeks, liquidSavings, diverseSources]
+    [me, pd, ew, ls, diverseSources]
   );
   const digital = useMemo(
     () =>
@@ -120,20 +179,6 @@ export default function CalculatorsPage() {
         backHref="/app/more"
         showBack
       />
-
-      {fromAssessment ? (
-        <p className="-mt-3 text-xs text-emerald-500/90">
-          Prefixed from your latest assessment. Change any field to explore “what if.”
-        </p>
-      ) : (
-        <p className="-mt-3 text-xs text-zinc-600">
-          No assessment on this device yet.{" "}
-          <Link href="/assessment" className="text-emerald-400 hover:underline">
-            Get your score
-          </Link>{" "}
-          for personal defaults.
-        </p>
-      )}
 
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
@@ -164,8 +209,9 @@ export default function CalculatorsPage() {
                 min={0}
                 step={50}
                 value={monthlyExpenses}
-                onChange={(e) => setMonthlyExpenses(Number(e.target.value) || 0)}
+                onChange={(e) => setMonthlyExpenses(e.target.value)}
                 className={inputCls}
+                placeholder=""
               />
             </Field>
             <Field label="Liquid savings you could access in days ($)">
@@ -174,8 +220,9 @@ export default function CalculatorsPage() {
                 min={0}
                 step={100}
                 value={liquidSavings}
-                onChange={(e) => setLiquidSavings(Number(e.target.value) || 0)}
+                onChange={(e) => setLiquidSavings(e.target.value)}
                 className={inputCls}
+                placeholder=""
               />
             </Field>
           </>
@@ -203,7 +250,7 @@ export default function CalculatorsPage() {
                 min={0}
                 max={90}
                 value={pantryDays}
-                onChange={(e) => setPantryDays(Number(e.target.value) || 0)}
+                onChange={(e) => setPantryDays(e.target.value)}
                 className={inputCls}
               />
             </Field>
@@ -214,7 +261,7 @@ export default function CalculatorsPage() {
                 max={12}
                 step={0.5}
                 value={emergencyWeeks}
-                onChange={(e) => setEmergencyWeeks(Number(e.target.value) || 0)}
+                onChange={(e) => setEmergencyWeeks(e.target.value)}
                 className={inputCls}
               />
             </Field>
@@ -294,8 +341,8 @@ export default function CalculatorsPage() {
           headline={`${job.days} days liquid`}
           sub={job.summary}
           rows={[
-            { k: "Essential monthly", v: `$${monthlyExpenses.toLocaleString()}` },
-            { k: "Accessible savings", v: `$${liquidSavings.toLocaleString()}` },
+            { k: "Essential monthly", v: `$${me.toLocaleString()}` },
+            { k: "Accessible savings", v: `$${ls.toLocaleString()}` },
             { k: "Income sources", v: String(incomeSources) },
             {
               k: "Gap to 90-day buffer",
@@ -349,15 +396,6 @@ export default function CalculatorsPage() {
           ]}
         />
       )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link href="/app/what-if">Open What If scenarios</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/app/prepare">Open Prepare</Link>
-        </Button>
-      </div>
     </div>
   );
 }
