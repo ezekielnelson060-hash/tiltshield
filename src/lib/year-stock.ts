@@ -79,10 +79,10 @@ export const YEAR_STOCK: YearStockItem[] = [
     patterns: [/vendor|market|shop nearby|trusted place|offline store/i],
   },
   {
-    id: "family_plan",
-    label: "Household meetup plan",
+    id: "contact_card",
+    label: "Offline contact list for the household",
     group: "Docs & people",
-    patterns: [/family|contact tree|rally|meetup|household plan/i],
+    patterns: [/contact|phone list|offline numbers|family numbers/i],
   },
 ];
 
@@ -91,8 +91,7 @@ export function loadStockChecks(): Record<string, boolean> {
   try {
     const raw = localStorage.getItem(STOCK_KEY);
     if (!raw) return {};
-    const o = JSON.parse(raw) as Record<string, boolean>;
-    return o && typeof o === "object" ? o : {};
+    return JSON.parse(raw) as Record<string, boolean>;
   } catch {
     return {};
   }
@@ -108,13 +107,14 @@ export function saveStockChecks(checks: Record<string, boolean>) {
 
 export function stockProgress(checks?: Record<string, boolean>) {
   const c = checks || loadStockChecks();
-  const done = YEAR_STOCK.filter((i) => c[i.id]).length;
-  const total = YEAR_STOCK.length;
+  const items = typeof window !== "undefined" ? allStockItems() : YEAR_STOCK;
+  const done = items.filter((i) => c[i.id]).length;
+  const total = items.length;
   return {
     done,
     total,
     pct: total ? Math.round((done / total) * 100) : 0,
-    remaining: YEAR_STOCK.filter((i) => !c[i.id]),
+    remaining: items.filter((i) => !c[i.id]),
   };
 }
 
@@ -153,64 +153,108 @@ export function applyJournalToStock(text: string): string[] {
 }
 
 export function labelForStockId(id: string): string {
-  return YEAR_STOCK.find((i) => i.id === id)?.label || id;
+  const fromCore = YEAR_STOCK.find((i) => i.id === id)?.label;
+  if (fromCore) return fromCore;
+  if (typeof window !== "undefined") {
+    const custom = loadCustomStock().find((i) => i.id === id)?.label;
+    if (custom) return custom;
+  }
+  return id;
 }
 
 /** 12-month plan phases — what “done” looks like by horizon */
-export type YearPhase = {
-  id: string;
-  title: string;
-  months: string;
-  stockIds: string[];
-  outcome: string;
-};
-
-export const YEAR_PHASES: YearPhase[] = [
+export const YEAR_PHASES = [
   {
-    id: "q1",
-    title: "Foundation",
+    id: "foundation",
+    label: "Foundation",
     months: "Months 1–3",
-    stockIds: ["water_plan", "cash_float", "docs_offline", "first_aid"],
-    outcome:
-      "You can drink, pay cash, prove identity, and treat basic injury without systems.",
+    ids: ["water_plan", "food_90", "cash_float", "docs_offline"],
   },
   {
-    id: "q2",
-    title: "Buffers",
+    id: "buffers",
+    label: "Buffers",
     months: "Months 4–6",
-    stockIds: ["food_90", "alt_pay", "light_power", "meds_30"],
-    outcome:
-      "Ninety days of food you eat, a second payment rail, light/power, critical meds.",
+    ids: ["food_rotate", "alt_pay", "meds_30", "first_aid"],
   },
   {
-    id: "q3",
-    title: "Network",
+    id: "network",
+    label: "Network",
     months: "Months 7–9",
-    stockIds: ["vendor_3", "family_plan", "food_rotate"],
-    outcome:
-      "People and places that work when apps do not. Stock is dated, not hope.",
+    ids: ["light_power", "vendor_3", "contact_card"],
   },
   {
-    id: "q4",
-    title: "Year depth",
+    id: "depth",
+    label: "Depth",
     months: "Months 10–12",
-    stockIds: ["food_90", "cash_float", "water_plan"],
-    outcome:
-      "Re-verify every foundation item. Layer toward a full year of meals and cash discipline.",
+    ids: ["food_90", "cash_float", "alt_pay"],
   },
-];
+] as const;
 
 export function phaseProgress(checks?: Record<string, boolean>) {
   const c = checks || loadStockChecks();
-  return YEAR_PHASES.map((p) => {
-    const done = p.stockIds.filter((id) => c[id]).length;
-    const total = p.stockIds.length;
+  return YEAR_PHASES.map((ph) => {
+    const done = ph.ids.filter((id) => c[id]).length;
+    const total = ph.ids.length;
     return {
-      ...p,
+      ...ph,
       done,
       total,
       pct: total ? Math.round((done / total) * 100) : 0,
-      complete: done >= total,
     };
   });
+}
+
+/** User-added stock / plan lines (local) */
+export const CUSTOM_STOCK_KEY = "tiltshield_custom_stock";
+
+export type CustomStockItem = {
+  id: string;
+  label: string;
+  group: string;
+  hint?: string;
+};
+
+export function loadCustomStock(): CustomStockItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(CUSTOM_STOCK_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw) as CustomStockItem[];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomStock(items: CustomStockItem[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CUSTOM_STOCK_KEY, JSON.stringify(items));
+}
+
+export function addCustomStockItem(label: string, group = "Your plan"): CustomStockItem {
+  const item: CustomStockItem = {
+    id: `custom_${Date.now()}`,
+    label: label.trim(),
+    group,
+    hint: "You added this",
+  };
+  const next = [...loadCustomStock(), item];
+  saveCustomStock(next);
+  return item;
+}
+
+export function removeCustomStockItem(id: string) {
+  saveCustomStock(loadCustomStock().filter((x) => x.id !== id));
+}
+
+/** Built-in + custom as YearStockItem-compatible list */
+export function allStockItems(): YearStockItem[] {
+  const custom = loadCustomStock().map((c) => ({
+    id: c.id,
+    label: c.label,
+    group: c.group,
+    hint: c.hint,
+    patterns: [] as RegExp[],
+  }));
+  return [...YEAR_STOCK, ...custom];
 }
