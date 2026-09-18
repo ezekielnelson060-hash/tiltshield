@@ -201,8 +201,8 @@ export default function IntelPage() {
         title="Intel"
         subtitle={
           liveOk
-            ? `Live · updated ${liveAt ? new Date(liveAt).toLocaleString() : "just now"}`
-            : "World signals for your plan"
+            ? `World signals for your plan · Live · updated ${liveAt ? new Date(liveAt).toLocaleString() : "just now"}`
+            : "World signals translated into what it means for your plan."
         }
         backHref="/app/overview"
         showBack
