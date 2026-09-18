@@ -18,34 +18,34 @@ export const YEAR_STOCK: YearStockItem[] = [
   {
     id: "water_plan",
     label: "Water you can reach at home",
-    group: "Year foundation",
+    group: "Food & water",
     hint: "Store + a simple purify method",
     patterns: [/water|filter|purify|jerrycan|borehole/i],
   },
   {
     id: "food_90",
     label: "90 days on the way to a full year of food you already eat",
-    group: "Year foundation",
+    group: "Food & water",
     hint: "Same meals, deeper shelves — then layer toward 365",
     patterns: [/food|pantry|rice|beans|stocked|grocery|provisions|garri|yam|pasta|flour/i],
   },
   {
     id: "food_rotate",
     label: "Dates on every package",
-    group: "Year foundation",
+    group: "Food & water",
     hint: "Oldest first so nothing is wasted",
     patterns: [/rotate|dated|expiry|fifo|oldest first/i],
   },
   {
     id: "cash_float",
     label: "Cash for 2 to 4 weeks of essentials",
-    group: "Money & access",
+    group: "Money",
     patterns: [/cash|withdraw|atm|float|naira|notes|bills in hand/i],
   },
   {
     id: "alt_pay",
     label: "A second way to pay (tested)",
-    group: "Money & access",
+    group: "Money",
     patterns: [/backup pay|second (card|pay|bank)|alt(ernate)? pay|another bank|ussd|pos/i],
   },
   {
@@ -69,20 +69,20 @@ export const YEAR_STOCK: YearStockItem[] = [
   {
     id: "docs_offline",
     label: "ID copies you can reach offline",
-    group: "Docs & people",
+    group: "Documents & people",
     patterns: [/doc(ument)?s?|passport|id card|offline copy|nin|driver.?s? licen[cs]e/i],
   },
   {
     id: "vendor_3",
     label: "Three places nearby that work offline",
-    group: "Docs & people",
+    group: "Documents & people",
     patterns: [/vendor|market|shop nearby|trusted place|offline store/i],
   },
   {
-    id: "contact_card",
-    label: "Offline contact list for the household",
-    group: "Docs & people",
-    patterns: [/contact|phone list|offline numbers|family numbers/i],
+    id: "family_plan",
+    label: "Household meetup plan",
+    group: "Documents & people",
+    patterns: [/family|contact tree|rally|meetup|household plan/i],
   },
 ];
 
@@ -163,43 +163,56 @@ export function labelForStockId(id: string): string {
 }
 
 /** 12-month plan phases — what “done” looks like by horizon */
-export const YEAR_PHASES = [
+export type YearPhase = {
+  id: string;
+  title: string;
+  months: string;
+  stockIds: string[];
+  outcome: string;
+};
+
+export const YEAR_PHASES: YearPhase[] = [
   {
-    id: "foundation",
-    label: "Foundation",
+    id: "q1",
+    title: "Foundation",
     months: "Months 1–3",
-    ids: ["water_plan", "food_90", "cash_float", "docs_offline"],
+    stockIds: ["water_plan", "cash_float", "docs_offline", "first_aid"],
+    outcome: "Water, cash, ID, and basic first aid work without apps or power.",
   },
   {
-    id: "buffers",
-    label: "Buffers",
+    id: "q2",
+    title: "Buffers",
     months: "Months 4–6",
-    ids: ["food_rotate", "alt_pay", "meds_30", "first_aid"],
+    stockIds: ["food_90", "alt_pay", "light_power", "meds_30"],
+    outcome: "Ninety days of meals you already eat, a backup way to pay, power, and critical meds.",
   },
   {
-    id: "network",
-    label: "Network",
+    id: "q3",
+    title: "Network",
     months: "Months 7–9",
-    ids: ["light_power", "vendor_3", "contact_card"],
+    stockIds: ["vendor_3", "family_plan", "food_rotate"],
+    outcome: "Named places and people that still work when the network does not. Stock is dated.",
   },
   {
-    id: "depth",
-    label: "Depth",
+    id: "q4",
+    title: "Year depth",
     months: "Months 10–12",
-    ids: ["food_90", "cash_float", "alt_pay"],
+    stockIds: ["food_90", "cash_float", "water_plan"],
+    outcome: "Re-check the basics. Stretch food and cash toward a full year.",
   },
-] as const;
+];
 
 export function phaseProgress(checks?: Record<string, boolean>) {
   const c = checks || loadStockChecks();
-  return YEAR_PHASES.map((ph) => {
-    const done = ph.ids.filter((id) => c[id]).length;
-    const total = ph.ids.length;
+  return YEAR_PHASES.map((p) => {
+    const done = p.stockIds.filter((id) => c[id]).length;
+    const total = p.stockIds.length;
     return {
-      ...ph,
+      ...p,
       done,
       total,
       pct: total ? Math.round((done / total) * 100) : 0,
+      complete: done >= total,
     };
   });
 }
