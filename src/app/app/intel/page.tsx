@@ -199,7 +199,11 @@ export default function IntelPage() {
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:max-w-none lg:px-8 lg:py-8">
       <PageHeader
         title="Intel"
-        subtitle="World signals translated into what it means for your plan."
+        subtitle={
+          liveOk
+            ? `Live · updated ${liveAt ? new Date(liveAt).toLocaleString() : "just now"}`
+            : "World signals for your plan"
+        }
         backHref="/app/overview"
         showBack
       />
@@ -221,15 +225,6 @@ export default function IntelPage() {
           </button>
         ))}
       </div>
-
-      <p className="text-[11px] text-zinc-500">
-        Sorted by your weakest areas first.
-      </p>
-      <p className="text-xs text-zinc-600">
-        {liveOk
-          ? `Live feed · updated ${liveAt ? new Date(liveAt).toLocaleString() : "recently"}`
-          : "Baseline watch list · live feed connects when available"}
-      </p>
 
       <div className="space-y-3">
         {show.map((item) => {
