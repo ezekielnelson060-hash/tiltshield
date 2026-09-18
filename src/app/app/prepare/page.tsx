@@ -51,6 +51,15 @@ const NearbyMap = dynamic(
 
 type Tab = "plan" | "stock" | "journal" | "finder";
 
+const STOCK_CATEGORIES = [
+  "Food & water",
+  "Money",
+  "Health",
+  "Home",
+  "Documents & people",
+  "Your plan",
+] as const;
+
 const KINDS: { id: JournalKind; label: string }[] = [
   { id: "got", label: "Got" },
   { id: "did", label: "Did" },
@@ -73,6 +82,7 @@ export default function PreparePage() {
   const [loading, setLoading] = useState(false);
   const [justTicked, setJustTicked] = useState<string[]>([]);
   const [customDraft, setCustomDraft] = useState("");
+  const [customGroup, setCustomGroup] = useState("Your plan");
   const [stockVersion, setStockVersion] = useState(0);
 
   useEffect(() => {
@@ -122,37 +132,42 @@ export default function PreparePage() {
       const c = loadStockChecks();
       for (const id of pickedStock) c[id] = true;
       saveStockChecks(c);
+      setChecks(c);
+    } else {
+      setChecks(loadStockChecks());
     }
     setJournal(loadJournal());
-    setChecks(loadStockChecks());
     setDraft("");
     setPickedStock([]);
     setJustTicked(newly.length ? newly : pickedStock);
+    try {
+      window.dispatchEvent(new Event("tiltshield:progress"));
+    } catch {
+      /* */
+    }
   }
 
-  async function runSearch(q: string) {
+  function removeEntry(id: string) {
+    deleteJournalEntry(id);
+    setJournal(loadJournal());
+  }
+
+  async function search(q: string) {
     setLoading(true);
     try {
-      const list = await searchNearbyPlaces(q || "market", coords, {
-        scope: "city",
-        limit: 12,
-      });
-      setPlaces(list);
-      setSelected(list[0] || null);
-    } catch {
-      setPlaces([]);
+      const r = await searchNearbyPlaces(q, coords, { scope: "global", limit: 20 });
+      setPlaces(r);
+      setSelected(r[0] ?? null);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:max-w-none lg:px-8 lg:py-8 pb-24">
+    <div className="space-y-5 pb-24">
       <PageHeader
         title="Prepare"
         subtitle="Your 12-month readiness plan. Track stock, log progress, map places."
-        backHref="/app/overview"
-        showBack
       />
 
       <div className="flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03] p-1">
@@ -334,32 +349,45 @@ export default function PreparePage() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
               Add to your list
             </p>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 space-y-2">
               <input
                 value={customDraft}
                 onChange={(e) => setCustomDraft(e.target.value)}
                 placeholder="Something you need on the shelf or in the plan"
-                className="min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600 focus:border-emerald-500/50 focus:outline-none"
+                className="w-full rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600 focus:border-emerald-500/50 focus:outline-none"
               />
-              <button
-                type="button"
-                disabled={!customDraft.trim()}
-                onClick={() => {
-                  const label = customDraft.trim();
-                  if (!label) return;
-                  const item = addCustomStockItem(label);
-                  setStockVersion((v) => v + 1);
-                  setCustomDraft("");
-                  setChecks((prev) => {
-                    const next = { ...prev, [item.id]: false };
-                    saveStockChecks(next);
-                    return next;
-                  });
-                }}
-                className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-40"
-              >
-                Add
-              </button>
+              <div className="flex gap-2">
+                <select
+                  value={customGroup}
+                  onChange={(e) => setCustomGroup(e.target.value)}
+                  className="min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-200 focus:border-emerald-500/50 focus:outline-none"
+                >
+                  {STOCK_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={!customDraft.trim()}
+                  onClick={() => {
+                    const label = customDraft.trim();
+                    if (!label) return;
+                    const item = addCustomStockItem(label, customGroup);
+                    setStockVersion((v) => v + 1);
+                    setCustomDraft("");
+                    setChecks((prev) => {
+                      const next = { ...prev, [item.id]: false };
+                      saveStockChecks(next);
+                      return next;
+                    });
+                  }}
+                  className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
             </div>
           </div>
 
@@ -394,9 +422,6 @@ export default function PreparePage() {
                         ✓
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="mb-1 inline-block rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-                          {item.group}
-                        </span>
                         <span className="block text-sm font-medium text-zinc-100">
                           {item.label}
                         </span>
@@ -436,11 +461,13 @@ export default function PreparePage() {
             </p>
             {primary && (
               <p className="mt-2 text-xs text-amber-200/90">
-                Priority: <span className="font-semibold">{primary.label}</span> ({primary.value}).
+                Priority:{" "}
+                <span className="font-semibold">{primary.label}</span> ({primary.value}).
                 Entries that close this gap matter most.
               </p>
             )}
           </div>
+
           <div className="flex flex-wrap gap-1.5">
             {KINDS.map((k) => (
               <button
@@ -450,7 +477,7 @@ export default function PreparePage() {
                 className={cn(
                   "rounded-full px-3 py-1 text-[11px] font-medium",
                   kind === k.id
-                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/40"
+                    ? "bg-emerald-500 text-zinc-950"
                     : "border border-white/10 text-zinc-400"
                 )}
               >
@@ -458,111 +485,151 @@ export default function PreparePage() {
               </button>
             ))}
           </div>
+
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={3}
-            placeholder="What did you get or finish?"
-            className="w-full rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm text-zinc-50"
+            placeholder={
+              kind === "got"
+                ? "e.g. Bought 25kg rice + labeled cash envelope"
+                : kind === "did"
+                  ? "e.g. Tested backup card at the market"
+                  : kind === "checked"
+                    ? "e.g. Verified water store and purify tabs"
+                    : "What moved this week?"
+            }
+            className="w-full rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-emerald-500/40 focus:outline-none"
           />
-          <div className="flex flex-wrap gap-2">
-            {catalog.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => togglePick(item.id)}
-                className={cn(
-                  "rounded-full border px-2.5 py-1 text-[11px]",
-                  pickedStock.includes(item.id) || checks[item.id]
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                    : "border-white/10 text-zinc-500"
-                )}
-              >
-                {item.label.slice(0, 28)}
-              </button>
-            ))}
+
+          <div>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              Tag year-stock items (optional)
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {catalog.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => togglePick(item.id)}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-[10px]",
+                    pickedStock.includes(item.id) || checks[item.id]
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "border border-white/10 text-zinc-500"
+                  )}
+                >
+                  {item.label.length > 28 ? item.label.slice(0, 26) + "…" : item.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <Button type="button" onClick={submitJournal} disabled={!draft.trim()}>
+
+          <Button className="w-full" disabled={!draft.trim()} onClick={submitJournal}>
             Save entry
           </Button>
+
           {justTicked.length > 0 && (
-            <p className="text-xs text-emerald-400">
+            <p className="text-center text-xs text-emerald-400">
               Ticked: {justTicked.map(labelForStockId).join(", ")}
             </p>
           )}
-          <div className="space-y-2">
-            {journal.map((e) => (
-              <div
-                key={e.id}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2"
-              >
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                  {kindLabel(e.kind)} · {formatLongDate(e.at)}
-                </p>
-                <p className="mt-1 text-sm text-zinc-200">{e.text}</p>
-                {e.stockIds?.length ? (
-                  <p className="mt-1 text-[11px] text-emerald-400/80">
-                    → {e.stockIds.map(labelForStockId).join(" · ")}
-                  </p>
-                ) : null}
-                <button
-                  type="button"
-                  className="mt-1 text-[11px] text-zinc-600 hover:text-red-400"
-                  onClick={() => {
-                    deleteJournalEntry(e.id);
-                    setJournal(loadJournal());
-                  }}
+
+          {journal.length === 0 ? (
+            <p className="text-center text-xs text-zinc-600">
+              No entries yet. One honest line beats a blank checklist.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {journal.map((e) => (
+                <li
+                  key={e.id}
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
                 >
-                  Delete
-                </button>
-              </div>
-            ))}
-          </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-[10px] text-zinc-500">
+                        <span className="font-semibold text-emerald-400/90">
+                          {kindLabel(e.kind)}
+                        </span>
+                        {" · "}
+                        {formatLongDate(e.at)}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-100">{e.text}</p>
+                      {e.stockIds && e.stockIds.length > 0 && (
+                        <p className="mt-1 text-[10px] text-zinc-500">
+                          → {e.stockIds.map(labelForStockId).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeEntry(e.id)}
+                      className="text-[10px] text-zinc-600 hover:text-red-400"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
       {tab === "finder" && (
         <div className="space-y-4">
+          <p className="text-xs text-zinc-500">
+            Search suppliers when local is not enough. Save contacts offline.
+          </p>
           <div className="flex gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search places near you"
-              className="min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-[#060a12] px-3 py-2.5 text-sm"
+              onKeyDown={(e) => e.key === "Enter" && search(query)}
+              placeholder="e.g. pharmacy, hardware, grain store"
+              className="flex-1 rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 focus:border-emerald-500/40 focus:outline-none"
             />
-            <Button type="button" onClick={() => void runSearch(query)}>
-              Search
+            <Button disabled={loading || !query.trim()} onClick={() => search(query)}>
+              {loading ? "…" : "Search"}
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {NEARBY_CATEGORIES.map((c) => (
+          <div className="flex flex-wrap gap-1.5">
+            {NEARBY_CATEGORIES.slice(0, 8).map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => {
                   setQuery(c.label);
-                  void runSearch(c.query);
+                  void search(c.label);
                 }}
-                className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400"
+                className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] text-zinc-400"
               >
                 {c.label}
               </button>
             ))}
           </div>
-          {loading && <p className="text-xs text-zinc-500">Searching…</p>}
-          <NearbyMap places={places} selected={selected} user={coords} />
+          {typeof window !== "undefined" && places.length > 0 && (
+            <NearbyMap places={places} selected={selected} onSelect={setSelected} />
+          )}
           <div className="space-y-2">
-            {places.map((pl) => (
+            {places.map((p) => (
               <PlaceRow
-                key={pl.id}
-                place={pl}
-                onSelect={() => setSelected(pl)}
-                active={selected?.id === pl.id}
+                key={p.id}
+                place={p}
+                selected={selected?.id === p.id}
+                onSelect={() => setSelected(p)}
               />
             ))}
           </div>
         </div>
       )}
+
+      <p className="text-center text-[11px] text-zinc-600">
+        <Link href="/app/history" className="text-zinc-400 hover:text-emerald-400">
+          See full progress →
+        </Link>
+      </p>
     </div>
   );
 }
