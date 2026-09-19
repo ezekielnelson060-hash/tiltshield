@@ -197,7 +197,7 @@ export function TodayScreen() {
             </span>
           ) : (
             <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-zinc-500">
-              Free · one clock
+              Free · financial clock
             </span>
           )}
         </div>
@@ -277,80 +277,59 @@ export function TodayScreen() {
         </GlassCard>
       </div>
 
-      {exposure && (
+      {exposure && premium && (
         <div className="grid gap-2 sm:grid-cols-3">
           {exposure.points
-            .filter((bp) => {
-              if (premium) return bp.id !== exposure.primary?.id;
-              return bp.id !== "financial";
-            })
+            .filter((bp) => bp.id !== exposure.primary?.id)
             .slice(0, 3)
-            .map((bp) => {
-              const locked = !premium;
-              return (
-                <div
-                  key={bp.id}
-                  role={locked ? "button" : undefined}
-                  tabIndex={locked ? 0 : undefined}
-                  onClick={
-                    locked
-                      ? () =>
-                          openUpgrade({
-                            feature: bp.label,
-                            title: `${bp.label} is Pro`,
-                            body: "Free shows your financial break point. Pro reveals every clock that is still running.",
-                          })
-                      : undefined
-                  }
-                  onKeyDown={
-                    locked
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            openUpgrade({
-                              feature: bp.label,
-                              title: `${bp.label} is Pro`,
-                              body: "Free shows your financial break point. Pro reveals every clock that is still running.",
-                            });
-                          }
-                        }
-                      : undefined
-                  }
+            .map((bp) => (
+              <div
+                key={bp.id}
+                className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                  {bp.label}
+                </p>
+                <p
                   className={
-                    locked
-                      ? "relative cursor-pointer overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 transition hover:border-emerald-500/30"
-                      : "relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+                    bp.severity === "critical"
+                      ? "mt-1 text-lg font-bold tabular-nums text-red-400"
+                      : bp.severity === "high"
+                        ? "mt-1 text-lg font-bold tabular-nums text-amber-400"
+                        : "mt-1 text-lg font-bold tabular-nums text-zinc-100"
                   }
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                    {bp.label}
-                  </p>
-                  {locked ? (
-                    <>
-                      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">Locked</p>
-                      <p className="mt-1 text-[11px] leading-snug text-zinc-600">
-                        Tap to unlock · Pro shows the number.
-                      </p>
-                      <span className="absolute right-2 top-2 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-400">
-                        Pro
-                      </span>
-                    </>
-                  ) : (
-                    <p
-                      className={
-                        bp.severity === "critical"
-                          ? "mt-1 text-lg font-bold tabular-nums text-red-400"
-                          : bp.severity === "high"
-                            ? "mt-1 text-lg font-bold tabular-nums text-amber-400"
-                            : "mt-1 text-lg font-bold tabular-nums text-zinc-100"
-                      }
-                    >
-                      {bp.value}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+                  {bp.value}
+                </p>
+              </div>
+            ))}
         </div>
+      )}
+      {exposure && !premium && (
+        <button
+          type="button"
+          onClick={() =>
+            openUpgrade({
+              feature: "Break points",
+              title: "More clocks are still running",
+              body: "Free shows the financial break point. Pro reveals payment, digital, food, and the rest.",
+            })
+          }
+          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-left transition hover:border-emerald-500/30"
+        >
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+              More break points
+            </p>
+            <p className="mt-0.5 text-sm text-zinc-300">
+              Payment · Digital · Food
+              <span className="text-zinc-600"> · still timed</span>
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">
+            Pro
+          </span>
+        </button>
       )}
 
       <TodaysPriority answers={answers} vulnerabilities={vulnerabilities} />
@@ -365,7 +344,7 @@ export function TodayScreen() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-400/90">
               Year plan
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-zinc-50">Where you are</p>
+            <p className="mt-0.5 text-sm font-semibold text-zinc-50">Progress this year</p>
           </div>
           <Link
             href="/app/prepare"
@@ -380,7 +359,7 @@ export function TodayScreen() {
               {stock.done}
               <span className="text-lg font-medium text-zinc-500">/{stock.total}</span>
             </p>
-            <p className="mt-1 text-xs text-zinc-500">checklist complete</p>
+            <p className="mt-1 text-xs text-zinc-500">of year stock</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold tabular-nums text-emerald-400">{stock.pct}%</p>
@@ -411,7 +390,7 @@ export function TodayScreen() {
         </div>
         <p className="relative mt-3 text-[11px] leading-relaxed text-zinc-500">
           {journalCount === 0
-            ? "Evidence still empty. One journal line in Prepare ticks the checklist."
+            ? "No journal yet. One line in Prepare counts as evidence."
             : `${journalCount} journal ${journalCount === 1 ? "entry" : "entries"} on file — real moves, not hopes.`}
         </p>
         <div className="relative mt-3 flex gap-2">
@@ -452,7 +431,10 @@ export function TodayScreen() {
         {pipeline.length > 0 ? (
           <ul className="mt-3 space-y-3">
             {(premium ? pipeline : pipeline.slice(0, 1)).map((link) => (
-              <li key={link.eventId} className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
+              <li
+                key={link.eventId}
+                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3"
+              >
                 <p className="text-[10px] uppercase tracking-wide text-zinc-600">
                   World → {link.exposureLabel}
                 </p>
@@ -537,44 +519,29 @@ export function TodayScreen() {
         )}
       </GlassCard>
 
-      {!premium && (
-        <GlassCard tone="accent">
-          <p className="text-sm font-semibold text-zinc-50">Unlock every clock</p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-            Free shows the financial break point. Pro unlocks payment, digital, food, full What If, and full intel.
-          </p>
-          <button
-            type="button"
-            onClick={() =>
-              openUpgrade({
-                feature: "Pro",
-                title: "You hit the free limit",
-                body: "Free shows the financial clock only. Pro unlocks every break point, full intel, and full What If.",
-              })
-            }
-            className="mt-3 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
-          >
-            Unlock Pro · $15/mo
-          </button>
-        </GlassCard>
-      )}
-
-      <div className="grid grid-cols-4 gap-2">
-        {CATEGORY_TILES.map((c) => {
-          const val = Number(scores[c.key] ?? 0);
-          const Icon = CATEGORY_ICONS[c.key];
-          return (
-            <Link
-              key={c.key}
-              href={c.href}
-              className="flex flex-col items-center gap-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-1 py-3 text-center transition hover:border-emerald-500/25"
-            >
-              {Icon && <Icon className="h-4 w-4 text-emerald-400/80" />}
-              <span className="text-[10px] text-zinc-500">{c.label}</span>
-              <span className="text-sm font-semibold tabular-nums text-zinc-100">{val}</span>
-            </Link>
-          );
-        })}
+      <div>
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          Exposure at a glance
+        </p>
+        <div className="grid grid-cols-4 gap-2">
+          {CATEGORY_TILES.map((tile) => {
+            const Icon = CATEGORY_ICONS[tile.key];
+            const val = scores[tile.key] ?? 0;
+            return (
+              <Link
+                key={tile.key}
+                href={tile.href}
+                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 text-center transition hover:border-emerald-500/30"
+              >
+                <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
+                </span>
+                <p className="mt-2 text-[10px] text-zinc-500">{tile.label}</p>
+                <p className="text-lg font-semibold tabular-nums text-zinc-100">{val}</p>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
