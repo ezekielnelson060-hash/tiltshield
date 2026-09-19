@@ -95,7 +95,7 @@ export default function GuidesPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Guides"
-        subtitle="Clear field notes — read like a post, act when you are ready."
+        subtitle="Short cards for the year — bank, food, phone, income."
         backHref="/app/more"
         showBack
       />

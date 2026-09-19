@@ -40,27 +40,35 @@ export default function OfflineValuePage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Offline value"
-        subtitle="If cards and banks stall for a long stretch — practical paths, not predictions."
-        backHref="/app/risk"
+        subtitle="Cash, second rails, and value that does not live only in an app."
+        backHref="/app/more"
         showBack
       />
 
       <GlassCard tone="danger" className="relative overflow-hidden">
         <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-red-500/15 blur-3xl" />
         <div className="relative flex gap-4">
-          <IconBadge tone="red"><span className="text-lg">⚠</span></IconBadge>
+          <IconBadge tone="red">
+            <span className="text-lg">⚠</span>
+          </IconBadge>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400/90">Scenario</p>
-            <p className="mt-1 text-base font-semibold text-zinc-50">Payment rails stressed for months</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-red-400/90">
+              Scenario
+            </p>
+            <p className="mt-1 text-base font-semibold text-zinc-50">
+              Payment rails stressed for months
+            </p>
             <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-              Cash float and a second rail first. Then documents offline.
-              Store-of-value research is optional and educational — not a buy signal.
+              Cash float and a second rail first. Then documents offline. Store-of-value research
+              is optional and educational — not a buy signal.
             </p>
           </div>
         </div>
       </GlassCard>
 
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Practical paths</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        Practical paths
+      </p>
 
       <div className="space-y-3">
         {OFFLINE_VALUE_PATHS.map((p, i) => (
@@ -98,12 +106,16 @@ export default function OfflineValuePage() {
                     disabled={loading && activeQuery === p.searchQuery}
                     onClick={() => void runSearch(p.searchQuery!)}
                   >
-                    {loading && activeQuery === p.searchQuery ? "Searching…" : "Find near you"}
+                    {loading && activeQuery === p.searchQuery
+                      ? "Searching…"
+                      : "Find near you"}
                   </Button>
                 )}
                 {p.href && (
                   <Button asChild size="sm" variant="outline">
-                    <a href={p.href} target="_blank" rel="noopener noreferrer">Official site →</a>
+                    <a href={p.href} target="_blank" rel="noopener noreferrer">
+                      Official site →
+                    </a>
                   </Button>
                 )}
                 {p.id === "land-records" && (
@@ -123,9 +135,13 @@ export default function OfflineValuePage() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
               Places for “{activeQuery}”
             </p>
-            <Link href="/app/nearby" className="text-xs font-medium text-emerald-400">Full finder →</Link>
+            <Link href="/app/nearby" className="text-xs font-medium text-emerald-400">
+              Full finder →
+            </Link>
           </div>
-          {loading && <p className="text-center text-xs text-zinc-500">Searching near you…</p>}
+          {loading && (
+            <p className="text-center text-xs text-zinc-500">Searching near you…</p>
+          )}
           <div className="space-y-2">
             {results.map((r) => (
               <PlaceRow key={r.id} place={r} showSave={false} />
@@ -133,7 +149,9 @@ export default function OfflineValuePage() {
           </div>
           {!loading && results.length === 0 && activeQuery && (
             <GlassCard>
-              <p className="text-sm text-zinc-400">No venues nearby. Try Independent Finder or a different word.</p>
+              <p className="text-sm text-zinc-400">
+                No venues nearby. Try Nearby with a different word.
+              </p>
               <Button asChild size="sm" className="mt-3" variant="outline">
                 <Link href="/app/nearby">Open Nearby</Link>
               </Button>

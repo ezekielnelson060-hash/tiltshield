@@ -27,7 +27,7 @@ export default function NetworkPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Your network"
-        subtitle="Places you chose on purpose — pharmacy, cash, food, people anchors."
+        subtitle="Pharmacy, cash, food, people — places you would use on a hard day."
         backHref="/app/more"
         showBack
       />
@@ -81,7 +81,7 @@ export default function NetworkPage() {
 
       {places.length > 0 && (
         <p className="text-center text-[11px] text-zinc-600">
-          Stored on this device. Export or cloud sync can come later — your pins stay local for now.
+          Saved on this device. Use these pins when the usual route is closed.
         </p>
       )}
     </div>
