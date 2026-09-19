@@ -19,10 +19,10 @@ import { syncFamilyToCloud, loadFamilyFromCloud } from "@/lib/persist";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
-import { detectHouseholdDependencies } from "@/lib/household";
+import { detectFamilyDependencies } from "@/lib/household";
 import { createClient } from "@/lib/supabase/client";
-import { HouseholdPlanCard } from "@/components/app/household-plan-card";
-import { HouseholdInvite } from "@/components/app/household-invite";
+import { FamilyPlanCard } from "@/components/app/household-plan-card";
+import { FamilyInvite } from "@/components/app/household-invite";
 
 export default function FamilyPage() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function FamilyPage() {
   const [relation, setRelation] = useState<FamilyRelation>("partner");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [householdScore, setHouseholdScore] = useState(0);
+  const [householdScore, setFamilyScore] = useState(0);
 
   async function refresh() {
     await loadFamilyFromCloud();
@@ -46,7 +46,7 @@ export default function FamilyPage() {
       scores.length > 0
         ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
         : loadSession()?.scores.overall ?? 0;
-    setHouseholdScore(avg);
+    setFamilyScore(avg);
   }
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function FamilyPage() {
     if (!unlocked) return;
     if (!name.trim()) return;
     if (members.length >= 6) {
-      setError("Household plan supports up to 6 profiles.");
+      setError("Family plan supports up to 6 profiles.");
       return;
     }
     addFamilyMember(name, relation);
@@ -121,7 +121,7 @@ export default function FamilyPage() {
   const session = typeof window !== "undefined" ? loadSession() : null;
   const deps =
     session
-      ? detectHouseholdDependencies({
+      ? detectFamilyDependencies({
           members,
           answers: session.answers,
         }).slice(0, 6)
@@ -130,15 +130,15 @@ export default function FamilyPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
-        title="Household"
-        subtitle="Scores for everyone under one roof — then the shared plan."
+        title="Family"
+        subtitle="Profiles under one roof. Shared risks. One year plan."
         backHref="/app/more"
         showBack
       />
 
       <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] px-5 py-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Household resilience
+          Family resilience
         </p>
         <p className="mt-2 text-4xl font-bold tabular-nums text-zinc-50">
           {householdScore}{" "}
@@ -251,21 +251,21 @@ export default function FamilyPage() {
         </section>
       ) : (
         <section className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-5">
-          <p className="text-sm font-medium text-zinc-100">
-            Unlock household profiles
+          <p className="text-sm font-medium text-zinc-100">Unlock household profiles</p>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+            Family adds up to 6 profiles plus Pro tools for the household — $29/mo or $99/yr.
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Household plan $49 lifetime — premium tools plus up to 6 profiles.
-            Individual lifetime does not include family seats.
-          </p>
-          <Button
-            className="mt-4"
-            size="sm"
-            disabled={paying}
-            onClick={() => void unlockFamily()}
-          >
-            {paying ? "Opening checkout…" : "Unlock household · $49"}
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button size="sm" disabled={paying} onClick={() => void unlockFamily()}>
+              {paying ? "Opening…" : "Family · $29/mo"}
+            </Button>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 hover:border-emerald-500/30"
+            >
+              See $99/yr →
+            </Link>
+          </div>
           {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
         </section>
       )}
@@ -308,8 +308,8 @@ export default function FamilyPage() {
 
       {unlocked && (
         <>
-          <HouseholdPlanCard />
-          <HouseholdInvite />
+          <FamilyPlanCard />
+          <FamilyInvite />
         </>
       )}
 
