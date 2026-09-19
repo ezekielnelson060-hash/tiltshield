@@ -224,7 +224,7 @@ export default function SituationPage() {
       </Button>
 
       <p className="text-center text-xs text-zinc-600">
-        Stock ticks and journal entries can also move these numbers automatically.
+        Stock ticks, journal, and Calculators → Apply to my score also move these numbers.
       </p>
     </div>
   );

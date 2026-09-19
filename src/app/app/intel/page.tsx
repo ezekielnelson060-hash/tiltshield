@@ -196,7 +196,7 @@ export default function IntelPage() {
   const show = premium ? ranked : ranked.slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:max-w-none lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Intel"
         subtitle={
@@ -321,7 +321,7 @@ export default function IntelPage() {
             href="/pricing"
             className="mt-2 inline-block text-sm font-semibold text-emerald-400"
           >
-            Unlock full intel →
+            Full intel · Pro →
           </Link>
         </div>
       )}
