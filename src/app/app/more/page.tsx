@@ -17,12 +17,7 @@ import {
 } from "@/components/app/icons";
 
 const LINKS = [
-  {
-    href: "/app/situation",
-    label: "Update my situation",
-    desc: "Change cash, food, payment — score moves",
-    Icon: IconTarget,
-  },
+  { href: "/app/situation", label: "Update my situation", desc: "Change cash, food, payment — score moves", Icon: IconTarget },
   { href: "/app/nearby", label: "Nearby", desc: "What do you need? Map + places", Icon: IconPin },
   { href: "/app/network", label: "Your network", desc: "Trusted places you saved", Icon: IconCommunity },
   { href: "/app/family", label: "Household", desc: "Family scores & emergency plan", Icon: IconCommunity },
@@ -84,7 +79,9 @@ export default function MorePage() {
         </span>
         <div>
           <p className="text-sm font-medium text-zinc-100">{name}</p>
-          <p className="text-xs text-zinc-500">Building toward a safer year at home</p>
+          <p className="text-xs text-zinc-500">
+            Plan, stock, and secure the year — from this device.
+          </p>
           <Link href="/app/settings" className="mt-1 inline-block text-xs text-emerald-400">
             Edit profile →
           </Link>
@@ -103,11 +100,16 @@ export default function MorePage() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-zinc-100">{l.label}</p>
-              <p className="text-xs text-zinc-500">{l.desc}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">{l.desc}</p>
             </div>
+            <span className="text-zinc-600">→</span>
           </Link>
         ))}
       </div>
+
+      <p className="pt-2 text-center text-[10px] text-zinc-600">
+        App build · Sep 2026 · cache v4
+      </p>
     </div>
   );
 }

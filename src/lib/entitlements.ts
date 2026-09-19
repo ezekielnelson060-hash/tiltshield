@@ -1,19 +1,21 @@
 import { isPremium, getPremiumTier } from "@/lib/session";
 
 /**
- * Free (habit + hook)
- * - Assessment, exposure score
+ * Free — build the habit
+ * - Assessment + exposure score
  * - Financial break point only
- * - Prepare: Plan / Stock / Journal
- * - What If: 2 free scenarios
+ * - Prepare (Plan / Stock / Journal / Places)
+ * - What If: 2 scenarios
  * - Intel: top 3 matched signals
- * - Calculators (local)
+ * - Calculators + Update my situation
  *
- * Pro ($15/mo or $79/yr)
+ * Pro — $15/mo or $79/yr
  * - Every break point
  * - Full What If board
  * - Full intel
- * - Vault, deeper household tools
+ * - Vault
+ *
+ * Family — household seats + Pro tools
  */
 export function hasProAccess(): boolean {
   return isPremium();
@@ -39,7 +41,7 @@ export function canUseFullIntel(): boolean {
   return hasProAccess();
 }
 
-/** Prepare plan/stock/journal stays free so daily use builds the habit. */
+/** Prepare stays free so daily use builds the habit. */
 export function canUseYearPlan(): boolean {
   return true;
 }

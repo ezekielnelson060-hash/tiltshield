@@ -102,10 +102,10 @@ export default function WhatIfPage() {
   const activeMeta = SCENARIOS.find((s) => s.id === active);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:max-w-none lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="What If?"
-        subtitle="Test systems — money, digital, food, mobility — before the world does."
+        subtitle="Run the hit before it lands. Free: two scenarios. Pro: the full board."
         backHref="/app/overview"
         showBack
       />

@@ -89,20 +89,20 @@ export default function VaultPage() {
       <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
         <PageHeader
           title="Document vault"
-          subtitle="Encrypted local storage for IDs and recovery files — Lifetime or Household."
+          subtitle="Encrypted local storage for IDs and recovery files — Pro."
           backHref="/app/more"
           showBack
         />
         <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
           <p className="text-sm font-medium text-zinc-100">Premium feature</p>
           <p className="mt-2 text-sm text-zinc-400">
-            Vault unlocks with Lifetime ($29) or Household ($49). Files never leave this device.
+            Vault unlocks with Pro ($15/mo or $79/yr). Files never leave this device.
           </p>
           <Link
-            href="/app/overview"
+            href="/pricing"
             className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
           >
-            Unlock from Today →
+            See Pro plans →
           </Link>
         </div>
       </div>
