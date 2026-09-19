@@ -18,14 +18,14 @@ import {
 
 const LINKS = [
   { href: "/app/situation", label: "Update my situation", desc: "Change cash, food, payment — score moves", Icon: IconTarget },
-  { href: "/app/nearby", label: "Nearby", desc: "What do you need? Map + places", Icon: IconPin },
+  { href: "/app/nearby", label: "Nearby", desc: "Pharmacy, ATM, market near you", Icon: IconPin },
   { href: "/app/network", label: "Your network", desc: "Trusted places you saved", Icon: IconCommunity },
-  { href: "/app/family", label: "Household", desc: "Family scores & emergency plan", Icon: IconCommunity },
+  { href: "/app/family", label: "Household", desc: "Family scores & shared plan", Icon: IconCommunity },
   { href: "/app/history", label: "Progress", desc: "Score now vs last check", Icon: IconTarget },
   { href: "/app/calculators", label: "Calculators", desc: "Runway, buffer, exposure", Icon: IconWallet },
   { href: "/app/vault", label: "Vault", desc: "Encrypted document storage", Icon: IconShield },
-  { href: "/app/guides", label: "Guides", desc: "Simple year prep cards", Icon: IconHouse },
-  { href: "/app/offline-value", label: "Offline value", desc: "Cash, metals, hardware paths", Icon: IconWallet },
+  { href: "/app/guides", label: "Guides", desc: "Year prep field cards", Icon: IconHouse },
+  { href: "/app/offline-value", label: "Offline value", desc: "Cash, metals, second rails", Icon: IconWallet },
   { href: "/app/settings", label: "Settings", desc: "Profile, plan, privacy", Icon: IconDigital },
 ];
 
@@ -63,7 +63,7 @@ export default function MorePage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="More"
-        subtitle={`${name}${premium ? " · Premium" : " · Free plan"}`}
+        subtitle={`${name}${premium ? " · Pro" : " · Free"}`}
         backHref="/app/overview"
         showBack
       />
@@ -80,7 +80,7 @@ export default function MorePage() {
         <div>
           <p className="text-sm font-medium text-zinc-100">{name}</p>
           <p className="text-xs text-zinc-500">
-            Plan, stock, and secure the year — from this device.
+            Plan and secure the year from this device.
           </p>
           <Link href="/app/settings" className="mt-1 inline-block text-xs text-emerald-400">
             Edit profile →

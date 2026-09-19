@@ -17,7 +17,7 @@ export function TodaysPriority({
   return (
     <GlassCard tone="success">
       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-        Fix the shortest clock first · 3 actions
+        Shortest clock · do these next
       </p>
       <ol className="mt-4 space-y-3">
         {actions.map((a, i) => (
@@ -40,7 +40,7 @@ export function TodaysPriority({
                     href={a.href}
                     className="text-xs font-semibold text-emerald-400"
                   >
-                    Start →
+                    Do this →
                   </Link>
                 </div>
               </div>
