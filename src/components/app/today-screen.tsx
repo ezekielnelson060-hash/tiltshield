@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { loadSession, isPremium, type TiltSession } from "@/lib/session";
+import { openUpgrade } from "@/lib/upgrade";
 import { computeBufferPlan } from "@/lib/buffer";
 import { greetingForHour, resilienceLabel, formatDistance } from "@/lib/locale";
 import { getActiveMember } from "@/lib/family";
@@ -70,7 +71,6 @@ export function TodayScreen() {
   const [name, setName] = useState("there");
   const [premium, setPrem] = useState(false);
   const [ready, setReady] = useState(false);
-  const [paying, setPaying] = useState(false);
   const [stock, setStock] = useState({
     done: 0,
     total: YEAR_STOCK.length,
@@ -123,21 +123,6 @@ export function TodayScreen() {
       window.removeEventListener("tiltshield:session-update", refreshSession);
     };
   }, []);
-
-  async function unlock() {
-    setPaying(true);
-    try {
-      const res = await fetch("/api/flutterwave/initialize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: "pro_monthly" }),
-      });
-      const json = await res.json();
-      if (json.link) window.location.href = json.link;
-    } finally {
-      setPaying(false);
-    }
-  }
 
   if (!ready) {
     return (
@@ -267,12 +252,28 @@ export function TodayScreen() {
               : financial?.meaning ||
                 `If primary income stops, reserves cover about ${runwayDays} days.`}
           </p>
-          <Link
-            href={premium ? "/app/what-if" : "/pricing"}
-            className="mt-3 inline-block text-xs font-semibold text-emerald-400"
-          >
-            {premium ? "Run the scenario →" : "See what else is timed →"}
-          </Link>
+          {premium ? (
+            <Link
+              href="/app/what-if"
+              className="mt-3 inline-block text-xs font-semibold text-emerald-400"
+            >
+              Run the scenario →
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                openUpgrade({
+                  feature: "Break points",
+                  title: "You only see the financial clock",
+                  body: "Pro unlocks payment, digital, and food break points — every clock that is still running.",
+                })
+              }
+              className="mt-3 text-xs font-semibold text-emerald-400"
+            >
+              See what else is timed →
+            </button>
+          )}
         </GlassCard>
       </div>
 
@@ -289,7 +290,36 @@ export function TodayScreen() {
               return (
                 <div
                   key={bp.id}
-                  className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+                  role={locked ? "button" : undefined}
+                  tabIndex={locked ? 0 : undefined}
+                  onClick={
+                    locked
+                      ? () =>
+                          openUpgrade({
+                            feature: bp.label,
+                            title: `${bp.label} is Pro`,
+                            body: "Free shows your financial break point. Pro reveals every clock that is still running.",
+                          })
+                      : undefined
+                  }
+                  onKeyDown={
+                    locked
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            openUpgrade({
+                              feature: bp.label,
+                              title: `${bp.label} is Pro`,
+                              body: "Free shows your financial break point. Pro reveals every clock that is still running.",
+                            });
+                          }
+                        }
+                      : undefined
+                  }
+                  className={
+                    locked
+                      ? "relative cursor-pointer overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3 transition hover:border-emerald-500/30"
+                      : "relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+                  }
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
                     {bp.label}
@@ -298,7 +328,7 @@ export function TodayScreen() {
                     <>
                       <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">Locked</p>
                       <p className="mt-1 text-[11px] leading-snug text-zinc-600">
-                        Still running. Pro shows the number.
+                        Tap to unlock · Pro shows the number.
                       </p>
                       <span className="absolute right-2 top-2 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-400">
                         Pro
@@ -397,11 +427,27 @@ export function TodayScreen() {
       <GlassCard>
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            What&apos;s changed · for you
+            What's changed · for you
           </p>
-          <Link href={premium ? "/app/intel" : "/pricing"} className="text-xs font-medium text-emerald-400">
-            {premium ? "All intel →" : "Unlock intel →"}
-          </Link>
+          {premium ? (
+            <Link href="/app/intel" className="text-xs font-medium text-emerald-400">
+              All intel →
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                openUpgrade({
+                  feature: "Intel",
+                  title: "Full intel is Pro",
+                  body: "Free shows one matched signal. Pro opens the full board mapped to your gaps.",
+                })
+              }
+              className="text-xs font-medium text-emerald-400"
+            >
+              Unlock intel →
+            </button>
+          )}
         </div>
         {pipeline.length > 0 ? (
           <ul className="mt-3 space-y-3">
@@ -412,14 +458,28 @@ export function TodayScreen() {
                 </p>
                 <p className="mt-1 text-sm font-medium text-zinc-100">{link.eventTitle}</p>
                 <p className="mt-1 text-xs text-zinc-500">{link.exposureReason}</p>
-                <Link
-                  href={premium ? link.actionHref : "/pricing"}
-                  className="mt-2 inline-flex text-xs font-semibold text-emerald-400"
-                >
-                  {premium
-                    ? `${link.actionTitle} · ${link.actionMinutes} min →`
-                    : "Pro matches this to your clocks →"}
-                </Link>
+                {premium ? (
+                  <Link
+                    href={link.actionHref}
+                    className="mt-2 inline-flex text-xs font-semibold text-emerald-400"
+                  >
+                    {link.actionTitle} · {link.actionMinutes} min →
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openUpgrade({
+                        feature: "Intel",
+                        title: "Pro matches this to your clocks",
+                        body: "See every signal that maps to your gaps — not just one.",
+                      })
+                    }
+                    className="mt-2 text-xs font-semibold text-emerald-400"
+                  >
+                    Pro matches this to your clocks →
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -477,44 +537,45 @@ export function TodayScreen() {
         )}
       </GlassCard>
 
-      <div>
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Exposure at a glance
-        </p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {CATEGORY_TILES.map((tile) => {
-            const Icon = CATEGORY_ICONS[tile.key];
-            const val = scores[tile.key] ?? 0;
-            return (
-              <Link
-                key={tile.key}
-                href={tile.href}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 transition hover:border-emerald-500/30"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
-                  {Icon ? <Icon className="h-4 w-4" /> : null}
-                </span>
-                <p className="mt-2 text-xs text-zinc-500">{tile.label}</p>
-                <p className="text-lg font-semibold tabular-nums text-zinc-100">{val}</p>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
       {!premium && (
         <GlassCard tone="accent">
-          <p className="text-sm font-medium text-zinc-100">
-            Free shows one clock. The others still run.
+          <p className="text-sm font-semibold text-zinc-50">Unlock every clock</p>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+            Free shows the financial break point. Pro unlocks payment, digital, food, full What If, and full intel.
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            Pro unlocks every break point, full intel, and every What If — $15/mo or $79/yr.
-          </p>
-          <Button size="sm" className="mt-3" disabled={paying} onClick={() => void unlock()}>
-            {paying ? "Opening…" : "Unlock Pro"}
-          </Button>
+          <button
+            type="button"
+            onClick={() =>
+              openUpgrade({
+                feature: "Pro",
+                title: "You hit the free limit",
+                body: "Free shows the financial clock only. Pro unlocks every break point, full intel, and full What If.",
+              })
+            }
+            className="mt-3 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
+          >
+            Unlock Pro · $15/mo
+          </button>
         </GlassCard>
       )}
+
+      <div className="grid grid-cols-4 gap-2">
+        {CATEGORY_TILES.map((c) => {
+          const val = Number(scores[c.key] ?? 0);
+          const Icon = CATEGORY_ICONS[c.key];
+          return (
+            <Link
+              key={c.key}
+              href={c.href}
+              className="flex flex-col items-center gap-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-1 py-3 text-center transition hover:border-emerald-500/25"
+            >
+              {Icon && <Icon className="h-4 w-4 text-emerald-400/80" />}
+              <span className="text-[10px] text-zinc-500">{c.label}</span>
+              <span className="text-sm font-semibold tabular-nums text-zinc-100">{val}</span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
