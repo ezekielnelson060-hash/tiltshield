@@ -6,6 +6,7 @@ import { loadSession, isPremium } from "@/lib/session";
 import { meaningForYou } from "@/lib/intel-meaning";
 import type { AssessmentAnswers, CategoryScores } from "@/types";
 import { PageHeader } from "@/components/app/page-header";
+import { openUpgrade } from "@/lib/upgrade";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
 
@@ -63,10 +64,10 @@ function cleanText(s: string): string {
   let t = String(s);
   t = t
     .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
+    .replace(/&/gi, "&")
+    .replace(/</gi, "<")
+    .replace(/>/gi, ">")
+    .replace(/"/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/&#x27;/gi, "'")
     .replace(/&#\d+;/g, " ");
@@ -317,12 +318,19 @@ export default function IntelPage() {
           <p className="text-xs text-zinc-400">
             {ranked.length - 3} more signals match your gaps.
           </p>
-          <Link
-            href="/pricing"
-            className="mt-2 inline-block text-sm font-semibold text-emerald-400"
+          <button
+            type="button"
+            onClick={() =>
+              openUpgrade({
+                feature: "Intel",
+                title: "You hit the free intel limit",
+                body: "Free shows the top 3 signals matched to your gaps. Pro opens the full board.",
+              })
+            }
+            className="mt-2 text-sm font-semibold text-emerald-400"
           >
             Full intel · Pro →
-          </Link>
+          </button>
         </div>
       )}
     </div>
