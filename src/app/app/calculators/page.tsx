@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { loadSession } from "@/lib/session";
+import { applyAnswerPatch } from "@/lib/update-situation";
+import { Button } from "@/components/ui/button";
 import {
   calcRunway,
   calcFood,
@@ -42,6 +44,7 @@ const inputCls =
 export default function CalculatorsPage() {
   const [tab, setTab] = useState<Tab>("runway");
   const [hydrated, setHydrated] = useState(false);
+  const [applied, setApplied] = useState(false);
   const [monthlyExpenses, setMonthlyExpenses] = useState("");
   const [liquidSavings, setLiquidSavings] = useState("");
   const [incomeSources, setIncomeSources] = useState(1);
@@ -84,7 +87,8 @@ export default function CalculatorsPage() {
       const expenses = a.monthly_expenses;
       const months = a.emergency_fund_months;
       if (expenses != null && expenses !== 0) setMonthlyExpenses(String(expenses));
-      if (months != null && expenses) setLiquidSavings(String(Math.round(months * expenses)));
+      if (months != null && expenses)
+        setLiquidSavings(String(Math.round(months * expenses)));
       setIncomeSources(a.income_sources || 1);
       if (a.food_buffer_days) setPantryDays(String(a.food_buffer_days));
       if (a.emergency_supply_weeks) setEmergencyWeeks(String(a.emergency_supply_weeks));
@@ -163,6 +167,30 @@ export default function CalculatorsPage() {
     [digitalDep, hasAlt, offlineValue]
   );
 
+  function applyToScore() {
+    const expenses = me;
+    const months =
+      expenses > 0 ? Math.round((ls / expenses) * 100) / 100 : 0;
+    const updated = applyAnswerPatch(
+      {
+        monthly_expenses: expenses || undefined,
+        emergency_fund_months: months || undefined,
+        food_buffer_days: pd || undefined,
+        emergency_supply_weeks: ew || undefined,
+        income_sources: incomeSources,
+        alt_payment_method: hasAlt,
+        offline_value_store: offlineValue,
+        digital_payment_dependency: digitalDep,
+        food_source_diversity: diverseSources,
+      },
+      "situation"
+    );
+    if (updated) {
+      setApplied(true);
+      setTimeout(() => setApplied(false), 2500);
+    }
+  }
+
   if (!hydrated) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center text-zinc-500">
@@ -175,7 +203,7 @@ export default function CalculatorsPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 lg:px-8">
       <PageHeader
         title="Calculators"
-        subtitle="Standalone tools. Adjust the numbers — results update instantly."
+        subtitle="Model a number. Apply it to your score when it is true."
         backHref="/app/more"
         showBack
       />
@@ -211,7 +239,6 @@ export default function CalculatorsPage() {
                 value={monthlyExpenses}
                 onChange={(e) => setMonthlyExpenses(e.target.value)}
                 className={inputCls}
-                placeholder=""
               />
             </Field>
             <Field label="Liquid savings you could access in days ($)">
@@ -222,7 +249,6 @@ export default function CalculatorsPage() {
                 value={liquidSavings}
                 onChange={(e) => setLiquidSavings(e.target.value)}
                 className={inputCls}
-                placeholder=""
               />
             </Field>
           </>
@@ -396,6 +422,17 @@ export default function CalculatorsPage() {
           ]}
         />
       )}
+
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-4">
+        <p className="text-sm font-medium text-zinc-100">Apply to your score</p>
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+          Writes these numbers into your profile. Exposure and break points update — no
+          re-assessment.
+        </p>
+        <Button className="mt-3 w-full" onClick={applyToScore}>
+          {applied ? "Applied — score updated" : "Apply to my score"}
+        </Button>
+      </div>
     </div>
   );
 }
