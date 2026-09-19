@@ -17,6 +17,7 @@ import { useTodayData } from "@/hooks/use-today-data";
 import type { CategoryScores } from "@/types";
 import { stockProgress, YEAR_STOCK } from "@/lib/year-stock";
 import { loadJournal } from "@/lib/journal";
+import { ScorePulseBanner } from "@/components/app/score-pulse-banner";
 
 const NearbyMap = dynamic(
   () => import("@/components/map/nearby-map").then((m) => m.NearbyMap),
@@ -107,8 +108,20 @@ export function TodayScreen() {
     }
     refreshProgress();
     setReady(true);
+    function refreshSession() {
+      try {
+        setSession(loadSession());
+      } catch {
+        /* */
+      }
+      refreshProgress();
+    }
     window.addEventListener("tiltshield:progress", refreshProgress);
-    return () => window.removeEventListener("tiltshield:progress", refreshProgress);
+    window.addEventListener("tiltshield:session-update", refreshSession);
+    return () => {
+      window.removeEventListener("tiltshield:progress", refreshProgress);
+      window.removeEventListener("tiltshield:session-update", refreshSession);
+    };
   }, []);
 
   async function unlock() {
@@ -199,11 +212,13 @@ export function TodayScreen() {
             </span>
           ) : (
             <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-zinc-500">
-              Free · financial only
+              Free · one clock
             </span>
           )}
         </div>
       </div>
+
+      <ScorePulseBanner />
 
       <div className="grid gap-3 sm:grid-cols-[1fr_1.1fr]">
         <GlassCard className="flex items-center gap-4">
@@ -281,9 +296,7 @@ export function TodayScreen() {
                   </p>
                   {locked ? (
                     <>
-                      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">
-                        Locked
-                      </p>
+                      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">Locked</p>
                       <p className="mt-1 text-[11px] leading-snug text-zinc-600">
                         Still running. Pro shows the number.
                       </p>
@@ -312,9 +325,7 @@ export function TodayScreen() {
 
       <TodaysPriority answers={answers} vulnerabilities={vulnerabilities} />
       {premium && (
-        <p className="text-xs leading-relaxed text-zinc-500">
-          {yearPlanSummary(answers)}
-        </p>
+        <p className="text-xs leading-relaxed text-zinc-500">{yearPlanSummary(answers)}</p>
       )}
 
       <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.08] to-white/[0.02] p-4 shadow-[0_0_40px_-12px_rgba(16,185,129,0.35)]">
@@ -333,7 +344,6 @@ export function TodayScreen() {
             Log move →
           </Link>
         </div>
-
         <div className="relative mt-4 flex items-end justify-between gap-4">
           <div>
             <p className="text-4xl font-bold tracking-tight tabular-nums text-zinc-50">
@@ -347,18 +357,14 @@ export function TodayScreen() {
             <p className="text-[10px] uppercase tracking-wide text-zinc-600">progress</p>
           </div>
         </div>
-
         <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-zinc-900/80 ring-1 ring-white/[0.06]">
           <div
             className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-300 transition-all duration-500"
             style={{ width: `${Math.max(stock.pct, stock.pct > 0 ? 4 : 0)}%` }}
           />
         </div>
-
         <div className="relative mt-4 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Next up
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Next up</p>
           <ul className="mt-2 space-y-2">
             {stock.remaining.slice(0, 3).map((item, i) => (
               <li key={item.id} className="flex items-start gap-2 text-xs text-zinc-300">
@@ -369,30 +375,20 @@ export function TodayScreen() {
               </li>
             ))}
             {stock.remaining.length === 0 && (
-              <li className="text-xs text-emerald-400/90">
-                Checklist complete — re-verify quarterly.
-              </li>
+              <li className="text-xs text-emerald-400/90">Checklist complete — re-verify quarterly.</li>
             )}
           </ul>
         </div>
-
         <p className="relative mt-3 text-[11px] leading-relaxed text-zinc-500">
           {journalCount === 0
             ? "Evidence still empty. One journal line in Prepare ticks the checklist."
             : `${journalCount} journal ${journalCount === 1 ? "entry" : "entries"} on file — real moves, not hopes.`}
         </p>
-
         <div className="relative mt-3 flex gap-2">
-          <Link
-            href="/app/prepare"
-            className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-white/10 hover:bg-white/[0.1]"
-          >
+          <Link href="/app/prepare" className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-white/10">
             Year stock
           </Link>
-          <Link
-            href="/app/history"
-            className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-white/10 hover:bg-white/[0.1]"
-          >
+          <Link href="/app/history" className="rounded-lg bg-white/[0.06] px-3 py-1.5 text-[11px] font-medium text-zinc-200 ring-1 ring-white/10">
             Full progress
           </Link>
         </div>
@@ -401,22 +397,16 @@ export function TodayScreen() {
       <GlassCard>
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            What's changed · for you
+            What&apos;s changed · for you
           </p>
-          <Link
-            href={premium ? "/app/intel" : "/pricing"}
-            className="text-xs font-medium text-emerald-400"
-          >
+          <Link href={premium ? "/app/intel" : "/pricing"} className="text-xs font-medium text-emerald-400">
             {premium ? "All intel →" : "Unlock intel →"}
           </Link>
         </div>
         {pipeline.length > 0 ? (
           <ul className="mt-3 space-y-3">
             {(premium ? pipeline : pipeline.slice(0, 1)).map((link) => (
-              <li
-                key={link.eventId}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3"
-              >
+              <li key={link.eventId} className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3">
                 <p className="text-[10px] uppercase tracking-wide text-zinc-600">
                   World → {link.exposureLabel}
                 </p>
@@ -448,9 +438,7 @@ export function TodayScreen() {
       <GlassCard className="!p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-              Nearby
-            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Nearby</p>
             <p className="text-xs text-zinc-500">
               {placeLabel
                 ? `Near ${placeLabel}`
@@ -459,10 +447,7 @@ export function TodayScreen() {
                   : "Tap the area chip above to pin this map"}
             </p>
           </div>
-          <Link
-            href="/app/nearby?q=pharmacy"
-            className="text-xs font-medium text-emerald-400"
-          >
+          <Link href="/app/nearby?q=pharmacy" className="text-xs font-medium text-emerald-400">
             Open map →
           </Link>
         </div>
@@ -519,13 +504,14 @@ export function TodayScreen() {
 
       {!premium && (
         <GlassCard tone="accent">
-          <p className="text-sm font-medium text-zinc-100">Stop flying half-blind</p>
+          <p className="text-sm font-medium text-zinc-100">
+            Free shows one clock. The others still run.
+          </p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            You already know financial is weak. Digital, payment, and food clocks are not optional
-            — they are just hidden on Free. Pro · $15/mo or $79/yr.
+            Pro unlocks every break point, full intel, and every What If — $15/mo or $79/yr.
           </p>
           <Button size="sm" className="mt-3" disabled={paying} onClick={() => void unlock()}>
-            {paying ? "Opening…" : "Unlock Pro · $15/mo"}
+            {paying ? "Opening…" : "Unlock Pro"}
           </Button>
         </GlassCard>
       )}
