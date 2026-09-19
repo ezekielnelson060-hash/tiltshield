@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   loadVaultMeta,
   encryptAndStore,
@@ -12,6 +11,7 @@ import {
 import { isPremium } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
+import { openUpgrade } from "@/lib/upgrade";
 import { IllusEmptyVault } from "@/components/illustrations";
 
 export default function VaultPage() {
@@ -94,16 +94,23 @@ export default function VaultPage() {
           showBack
         />
         <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-6">
-          <p className="text-sm font-medium text-zinc-100">Premium feature</p>
+          <p className="text-sm font-medium text-zinc-100">Pro feature</p>
           <p className="mt-2 text-sm text-zinc-400">
-            Vault unlocks with Pro ($15/mo or $79/yr). Files never leave this device.
+            Vault encrypts IDs and recovery files on this device only.
           </p>
-          <Link
-            href="/pricing"
+          <button
+            type="button"
+            onClick={() =>
+              openUpgrade({
+                feature: "Vault",
+                title: "Vault is Pro",
+                body: "Encrypt IDs, insurance PDFs, and recovery sheets on this device. Never uploaded.",
+              })
+            }
             className="mt-4 inline-flex rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-zinc-950"
           >
-            See Pro plans →
-          </Link>
+            Unlock Pro →
+          </button>
         </div>
       </div>
     );

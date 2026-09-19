@@ -4,6 +4,7 @@ import { useEffect, useState, type JSX } from "react";
 import Link from "next/link";
 import { loadSession, isPremium, type TiltSession } from "@/lib/session";
 import { PageHeader } from "@/components/app/page-header";
+import { openUpgrade } from "@/lib/upgrade";
 import { GlassCard } from "@/components/app/glass-card";
 import { cn } from "@/lib/utils";
 import { runWhatIf } from "@/lib/whatif";
@@ -63,6 +64,11 @@ export default function WhatIfPage() {
   async function run(id: WhatIfScenario, free?: boolean) {
     if (!session) return;
     if (!free && !premium) {
+      openUpgrade({
+        feature: "What If",
+        title: "This scenario is Pro",
+        body: "Free includes two scenarios. Pro opens the full board so you can stress-test money, digital, food, and mobility.",
+      });
       return;
     }
     setActive(id);
