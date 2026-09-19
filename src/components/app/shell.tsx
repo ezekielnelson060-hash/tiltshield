@@ -9,6 +9,7 @@ import { getActiveMember } from "@/lib/family";
 import type { CategoryScores } from "@/types";
 import { BrandLogo } from "@/components/brand-logo";
 import { IntelTopBanner } from "@/components/app/intel-top-banner";
+import { UpgradeModal } from "@/components/app/upgrade-modal";
 
 const NAV = [
   { href: "/app/overview", label: "Today", icon: "home" },
@@ -280,6 +281,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </div>
+      <UpgradeModal />
     </>
   );
 }
