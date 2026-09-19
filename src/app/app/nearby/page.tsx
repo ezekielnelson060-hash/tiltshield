@@ -78,12 +78,12 @@ export default function NearbyPage() {
         if (!results.length) {
           setError(
             s === "global"
-              ? "No places found worldwide. Try a more specific name or city + type."
-              : "No venues found. Switch to Country or Global, or open Google Maps."
+              ? "No places found. Try a more specific name or city + type."
+              : "No venues found. Switch to Country or Global, or open Maps."
           );
         }
       } catch {
-        setError("Search failed. Try again or use Google Maps.");
+        setError("Search failed. Try again or use Maps.");
         setPlaces([]);
       } finally {
         setLoading(false);
@@ -108,7 +108,7 @@ export default function NearbyPage() {
     <div className="mx-auto max-w-2xl space-y-5 px-4 py-6 lg:px-8">
       <PageHeader
         title="Nearby"
-        subtitle="Nearby is city/country. Switch to Global for places anywhere."
+        subtitle="Search your city or country. Global for places anywhere."
         backHref="/app/overview"
         showBack
       />
@@ -203,7 +203,7 @@ export default function NearbyPage() {
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs font-medium text-emerald-400"
           >
-            Open in Google Maps →
+            Open in Maps →
           </a>
         </GlassCard>
       )}
@@ -242,7 +242,7 @@ export default function NearbyPage() {
 
       {!loading && places.length === 0 && !error && (
         <p className="text-center text-xs text-zinc-600">
-          Pick a need above or type what you're looking for.
+          Pick a need above or type what you need.
         </p>
       )}
 

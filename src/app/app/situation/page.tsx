@@ -106,7 +106,7 @@ export default function SituationPage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 pb-24 lg:px-8">
       <PageHeader
         title="Update my situation"
-        subtitle="Change what is true now. Your score moves without redoing the full assessment."
+        subtitle="Edit what is true now. Score and break points update immediately."
         backHref="/app/more"
         showBack
       />
@@ -224,7 +224,7 @@ export default function SituationPage() {
       </Button>
 
       <p className="text-center text-xs text-zinc-600">
-        Stock ticks, journal, and Calculators → Apply to my score also move these numbers.
+        Stock, journal, and Calculators also move your score when you apply them.
       </p>
     </div>
   );
