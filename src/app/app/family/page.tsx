@@ -19,7 +19,7 @@ import { syncFamilyToCloud, loadFamilyFromCloud } from "@/lib/persist";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/app/page-header";
-import { detectFamilyDependencies } from "@/lib/household";
+import { detectHouseholdDependencies } from "@/lib/household";
 import { createClient } from "@/lib/supabase/client";
 import { FamilyPlanCard } from "@/components/app/household-plan-card";
 import { FamilyInvite } from "@/components/app/household-invite";
@@ -121,7 +121,7 @@ export default function FamilyPage() {
   const session = typeof window !== "undefined" ? loadSession() : null;
   const deps =
     session
-      ? detectFamilyDependencies({
+      ? detectHouseholdDependencies({
           members,
           answers: session.answers,
         }).slice(0, 6)
