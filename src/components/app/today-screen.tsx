@@ -251,53 +251,49 @@ export function TodayScreen() {
         </GlassCard>
       </div>
 
-      {exposure && (
-        <div className="grid gap-2 sm:grid-cols-3">
+      {exposure && premium && (
+        <div className="grid grid-cols-3 gap-2">
           {exposure.points
-            .filter((bp) => {
-              if (premium) return bp.id !== exposure.primary?.id;
-              return bp.id !== "financial";
-            })
+            .filter((bp) => bp.id !== exposure.primary?.id)
             .slice(0, 3)
-            .map((bp) => {
-              const locked = !premium;
-              return (
-                <div
-                  key={bp.id}
-                  className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+            .map((bp) => (
+              <div
+                key={bp.id}
+                className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-3"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                  {bp.label.replace(" break point", "")}
+                </p>
+                <p
+                  className={
+                    bp.severity === "critical"
+                      ? "mt-1 text-lg font-bold tabular-nums text-red-400"
+                      : bp.severity === "high"
+                        ? "mt-1 text-lg font-bold tabular-nums text-amber-400"
+                        : "mt-1 text-lg font-bold tabular-nums text-zinc-100"
+                  }
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
-                    {bp.label}
-                  </p>
-                  {locked ? (
-                    <>
-                      <p className="mt-1 text-lg font-bold tabular-nums text-zinc-500">
-                        Locked
-                      </p>
-                      <p className="mt-1 text-[11px] leading-snug text-zinc-600">
-                        Pro shows the number.
-                      </p>
-                      <span className="absolute right-2 top-2 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-400">
-                        Pro
-                      </span>
-                    </>
-                  ) : (
-                    <p
-                      className={
-                        bp.severity === "critical"
-                          ? "mt-1 text-lg font-bold tabular-nums text-red-400"
-                          : bp.severity === "high"
-                            ? "mt-1 text-lg font-bold tabular-nums text-amber-400"
-                            : "mt-1 text-lg font-bold tabular-nums text-zinc-100"
-                      }
-                    >
-                      {bp.value}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+                  {bp.value}
+                </p>
+              </div>
+            ))}
         </div>
+      )}
+      {exposure && !premium && (
+        <Link
+          href="/pricing"
+          className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 transition hover:border-emerald-500/25"
+        >
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              More break points
+            </p>
+            <p className="mt-0.5 text-sm text-zinc-300">Payment · Digital · Food</p>
+          </div>
+          <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">
+            Pro
+          </span>
+        </Link>
       )}
 
       <TodaysPriority answers={answers} vulnerabilities={vulnerabilities} />
@@ -345,9 +341,7 @@ export function TodayScreen() {
           />
         </div>
         <div className="relative mt-4 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Next up
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Next up</p>
           <ul className="mt-2 space-y-2">
             {stock.remaining.slice(0, 3).map((item, i) => (
               <li key={item.id} className="flex items-start gap-2 text-xs text-zinc-300">
@@ -437,9 +431,7 @@ export function TodayScreen() {
       <GlassCard className="!p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 pt-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-              Nearby
-            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Nearby</p>
             <p className="text-xs text-zinc-500">
               {placeLabel
                 ? `Near ${placeLabel}`
