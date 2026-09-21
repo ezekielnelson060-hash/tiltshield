@@ -130,7 +130,7 @@ export function planMovesFromAssessment(a: AssessmentAnswers): PlanMove[] {
     });
   }
 
-  if (!a.has_offline_contacts && !seen.has("contacts")) {
+  if (!a.offline_contacts && !seen.has("contacts")) {
     moves.push({
       id: "contacts",
       title: "Write three important numbers on paper",
