@@ -53,6 +53,7 @@ export function applyAnswerPatch(
     ...patch,
   };
 
+  // Normalize
   nextAnswers.monthly_expenses = Math.max(0, num(nextAnswers.monthly_expenses));
   nextAnswers.monthly_income = Math.max(0, num(nextAnswers.monthly_income));
   nextAnswers.emergency_fund_months = Math.max(
@@ -171,6 +172,13 @@ function writePulse(pulse: ScorePulse) {
   } catch {
     /* */
   }
+  try {
+    window.dispatchEvent(
+      new CustomEvent("tiltshield:score-pulse", { detail: pulse })
+    );
+  } catch {
+    /* */
+  }
 }
 
 export function readScorePulse(): ScorePulse | null {
@@ -192,7 +200,9 @@ export function clearScorePulse() {
   }
 }
 
-/** When a stock item is completed, lift related assessment fields (never lower on untick). */
+/**
+ * When a stock item is completed, lift related assessment fields (never lower on untick).
+ */
 export function boostFromStockComplete(stockId: string): AnswerPatch | null {
   const session = loadSession();
   if (!session?.answers) return null;
@@ -207,6 +217,7 @@ export function boostFromStockComplete(stockId: string): AnswerPatch | null {
     if ((a.food_buffer_days || 0) < 14) patch.food_buffer_days = 14;
   }
   if (stockId === "cash_float") {
+    // ~0.5–1 month of essentials as a floor
     if ((a.emergency_fund_months || 0) < 0.5) patch.emergency_fund_months = 0.5;
     if ((a.offline_value_store || 0) < 1) patch.offline_value_store = 1;
   }
@@ -216,51 +227,41 @@ export function boostFromStockComplete(stockId: string): AnswerPatch | null {
   if (stockId === "docs_offline" && !a.has_offline_docs) {
     patch.has_offline_docs = true;
   }
-  if ((stockId === "meds_30" || stockId === "first_aid") && !a.has_med_kit) {
-    patch.has_med_kit = true;
-  }
-  if (stockId === "vendor_3" && !a.has_local_vendors) {
-    patch.has_local_vendors = true;
-  }
-  if (stockId === "family_plan" && !a.offline_contacts) {
+  if (stockId === "contacts_paper" && !a.offline_contacts) {
     patch.offline_contacts = true;
   }
-  if (stockId === "water_plan" && (a.emergency_supply_weeks || 0) < 1) {
-    patch.emergency_supply_weeks = Math.max(1, a.emergency_supply_weeks || 0);
+  if (stockId === "phone_plan" && !a.phone_backup_plan) {
+    patch.phone_backup_plan = true;
+  }
+  if (stockId === "meds_check") {
+    /* no direct assessment field — pulse still records stock action via session progress */
   }
 
   return Object.keys(patch).length ? patch : null;
 }
 
-/** Infer light boosts from journal text when stock tags absent. */
+/** Heuristic boosts from free-text journal lines. */
 export function boostFromJournalText(text: string): AnswerPatch | null {
   const session = loadSession();
   if (!session?.answers) return null;
-  const a = session.answers;
   const t = text.toLowerCase();
+  const a = session.answers;
   const patch: AnswerPatch = {};
 
-  if (
-    /rice|beans|garri|pantry|stocked|provisions|food for/.test(t) &&
-    (a.food_buffer_days || 0) < 30
-  ) {
-    patch.food_buffer_days = Math.max(a.food_buffer_days || 0, 30);
+  if (/(cash|envelope|float|reserve)/.test(t) && (a.emergency_fund_months || 0) < 0.25) {
+    patch.emergency_fund_months = 0.25;
   }
-  if (
-    /cash|withdraw|atm|envelope|naira/.test(t) &&
-    (a.emergency_fund_months || 0) < 0.5
-  ) {
-    patch.emergency_fund_months = 0.5;
-    if ((a.offline_value_store || 0) < 1) patch.offline_value_store = 1;
+  if (/(food|rice|beans|meal|stock)/.test(t) && (a.food_buffer_days || 0) < 7) {
+    patch.food_buffer_days = 7;
   }
-  if (
-    /second (card|bank)|backup (card|pay)|ussd|pos/.test(t) &&
-    !a.alt_payment_method
-  ) {
+  if (/(second (card|pay)|backup pay|cash app|pos)/.test(t) && !a.alt_payment_method) {
     patch.alt_payment_method = true;
   }
-  if (/passport|id card|nin|license|offline (copy|doc)/.test(t) && !a.has_offline_docs) {
+  if (/(print|id copy|offline doc)/.test(t) && !a.has_offline_docs) {
     patch.has_offline_docs = true;
+  }
+  if (/(phone|sim|contact).*paper|wrote.*number/.test(t) && !a.offline_contacts) {
+    patch.offline_contacts = true;
   }
 
   return Object.keys(patch).length ? patch : null;
