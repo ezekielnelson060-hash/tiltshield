@@ -2,31 +2,141 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+html.dark {
   color-scheme: dark;
+  --background: #060a12;
+  --foreground: #f4f4f5;
+  --surface: #080d16;
+  --muted: #71717a;
+  --border: rgba(255, 255, 255, 0.08);
+  --card: rgba(255, 255, 255, 0.03);
+  --input-bg: #060a12;
+  --map-bg: #0a1018;
+}
+
+html.light {
+  color-scheme: light;
+  --background: #f4f6f9;
+  --foreground: #18181b;
+  --surface: #ffffff;
+  --muted: #71717a;
+  --border: rgba(24, 24, 27, 0.1);
+  --card: rgba(255, 255, 255, 0.9);
+  --input-bg: #ffffff;
+  --map-bg: #e8edf4;
 }
 
 body {
-  @apply bg-[#060a12] text-zinc-100 antialiased;
+  background-color: var(--background);
+  color: var(--foreground);
+  @apply antialiased;
 }
 
 .bg-grid {
   background-image: linear-gradient(
       to right,
-      rgb(39 39 42 / 0.4) 1px,
+      rgb(39 39 42 / 0.35) 1px,
       transparent 1px
     ),
-    linear-gradient(to bottom, rgb(39 39 42 / 0.4) 1px, transparent 1px);
+    linear-gradient(to bottom, rgb(39 39 42 / 0.35) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
+html.light .bg-grid {
+  background-image: linear-gradient(
+      to right,
+      rgb(24 24 27 / 0.08) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(24 24 27 / 0.08) 1px, transparent 1px);
+}
+
 .tilt-map-chrome {
-  @apply overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a1018] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset];
+  @apply overflow-hidden rounded-2xl border shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset];
+  border-color: var(--border);
+  background: var(--map-bg);
 }
 .tilt-map-chrome .leaflet-container {
-  background: #0a1018;
+  background: var(--map-bg);
   font: inherit;
 }
 .tilt-chip {
-  @apply rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] text-zinc-400;
+  @apply rounded-full border px-2.5 py-1 text-[11px];
+  border-color: var(--border);
+  color: var(--muted);
+  background: var(--card);
+}
+
+html.light .tilt-app-shell {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+html.light .tilt-app-aside {
+  background-color: var(--surface);
+  border-color: var(--border);
+}
+html.light .tilt-app-nav {
+  background-color: var(--surface);
+  border-color: var(--border);
+}
+
+html.light [class*="bg-[#060a12]"],
+html.light [class*="bg-[#080d16]"],
+html.light [class*="bg-[#0a1018]"],
+html.light [class*="bg-[#0c1420]"] {
+  background-color: var(--surface) !important;
+}
+html.light [class*="bg-[#060a12]"] {
+  background-color: var(--background) !important;
+}
+
+html.light .text-zinc-50,
+html.light .text-zinc-100 {
+  color: #18181b;
+}
+html.light .text-zinc-200 {
+  color: #27272a;
+}
+html.light .text-zinc-300 {
+  color: #3f3f46;
+}
+html.light .text-zinc-400 {
+  color: #52525b;
+}
+html.light .text-zinc-500 {
+  color: #71717a;
+}
+html.light .text-zinc-600 {
+  color: #a1a1aa;
+}
+html.light .border-white\/\[0\.08\],
+html.light .border-white\/\[0\.06\],
+html.light .border-white\/\[0\.1\],
+html.light .border-white\/10 {
+  border-color: rgba(24, 24, 27, 0.12);
+}
+html.light .bg-white\/\[0\.03\],
+html.light .bg-white\/\[0\.02\],
+html.light .bg-white\/\[0\.04\],
+html.light .bg-white\/\[0\.05\] {
+  background-color: rgba(24, 24, 27, 0.04);
+}
+html.light .from-white\/\[0\.05\],
+html.light .from-white\/\[0\.04\] {
+  --tw-gradient-from: rgba(24, 24, 27, 0.06) var(--tw-gradient-from-position);
+}
+html.light .bg-zinc-800,
+html.light .bg-zinc-800\/80,
+html.light .bg-zinc-900\/80 {
+  background-color: #e4e4e7;
+}
+html.light input,
+html.light textarea,
+html.light select {
+  color: #18181b;
+}
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #a1a1aa;
 }
