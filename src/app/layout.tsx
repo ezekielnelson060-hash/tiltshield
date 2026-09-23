@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { NativeInit } from "@/components/native-init";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -87,13 +88,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
-        className={`${inter.variable} min-h-screen bg-zinc-950 font-sans text-zinc-100 antialiased`}
+        className={`${inter.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
       >
-        <AnalyticsScripts />
-        <NativeInit />
-        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("tiltshield_theme")||"dark";var r=t==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):(t==="light"?"light":"dark");document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r;}catch(e){document.documentElement.classList.add("dark");}})();`,
+          }}
+        />
+        <ThemeProvider>
+          <AnalyticsScripts />
+          <NativeInit />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

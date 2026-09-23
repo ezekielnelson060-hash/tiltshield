@@ -9,7 +9,7 @@ type Props = {
   showBack?: boolean;
 };
 
-/** Premium header — circular back (Guides style) + title inline. */
+/** Premium header — circular back + title. Light/dark aware. */
 export function PageHeader({
   title,
   subtitle,
@@ -40,7 +40,7 @@ export function PageHeader({
             </svg>
           </Link>
         )}
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-50 sm:text-2xl">
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
           {title}
         </h1>
       </div>
@@ -51,7 +51,6 @@ export function PageHeader({
   );
 }
 
-/** Same circular back chrome */
 export function AppTopBar({
   title,
   backHref = "/app/more",
