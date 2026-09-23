@@ -4,7 +4,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { loadSession } from "@/lib/session";
 import { applyAnswerPatch } from "@/lib/update-situation";
+import type { AssessmentAnswers } from "@/types";
 import { PageHeader } from "@/components/app/page-header";
+import { ScorePulseBanner } from "@/components/app/score-pulse-banner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -31,9 +33,13 @@ export default function SituationPage() {
     const s = loadSession();
     if (s?.answers) {
       const a = s.answers;
-      setMonthlyExpenses(a.monthly_expenses ? String(a.monthly_expenses) : "");
+      setMonthlyExpenses(
+        a.monthly_expenses ? String(a.monthly_expenses) : ""
+      );
       setLiquidMonths(
-        a.emergency_fund_months != null ? String(a.emergency_fund_months) : ""
+        a.emergency_fund_months != null
+          ? String(a.emergency_fund_months)
+          : ""
       );
       setFoodDays(a.food_buffer_days ? String(a.food_buffer_days) : "");
       setSupplyWeeks(
@@ -81,7 +87,9 @@ export default function SituationPage() {
 
   if (!ready) {
     return (
-      <div className="px-4 py-16 text-center text-sm text-zinc-500">Loading…</div>
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Loading…
+      </div>
     );
   }
 
@@ -109,6 +117,13 @@ export default function SituationPage() {
         subtitle="Edit what is true now. Score and break points update immediately."
         backHref="/app/more"
         showBack
+      />
+
+      <ScorePulseBanner
+        onSessionRefresh={() => {
+          const s = loadSession();
+          if (s?.scores) setOverall(s.scores.overall);
+        }}
       />
 
       <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
@@ -160,7 +175,11 @@ export default function SituationPage() {
             <option value={3}>3 or more</option>
           </select>
         </Field>
-        <Toggle label="Tested second way to pay" on={altPay} set={setAltPay} />
+        <Toggle
+          label="Tested second way to pay"
+          on={altPay}
+          set={setAltPay}
+        />
         <Field label="Value outside bank apps">
           <select
             value={offlineValue}
@@ -211,7 +230,11 @@ export default function SituationPage() {
           on={offlineDocs}
           set={setOfflineDocs}
         />
-        <Toggle label="Plan if phone is gone" on={phoneBackup} set={setPhoneBackup} />
+        <Toggle
+          label="Plan if phone is gone"
+          on={phoneBackup}
+          set={setPhoneBackup}
+        />
         <Toggle
           label="Offline contact list for the household"
           on={offlineContacts}

@@ -68,6 +68,7 @@ html.light .bg-grid {
   background: var(--card);
 }
 
+/* Light-mode readability for common dark-only utilities inside /app */
 html.light .tilt-app-shell {
   background-color: var(--background);
   color: var(--foreground);
@@ -81,6 +82,7 @@ html.light .tilt-app-nav {
   border-color: var(--border);
 }
 
+/* Soften pure black hardcodes when light */
 html.light [class*="bg-[#060a12]"],
 html.light [class*="bg-[#080d16]"],
 html.light [class*="bg-[#0a1018]"],
@@ -139,4 +141,30 @@ html.light select {
 html.light input::placeholder,
 html.light textarea::placeholder {
   color: #a1a1aa;
+}
+
+/* Premium pulse + cards readable in light */
+html.light .text-emerald-300,
+html.light .text-emerald-400 {
+  color: #047857;
+}
+html.light .border-emerald-500\/30,
+html.light .border-emerald-500\/35,
+html.light .border-emerald-500\/25 {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+html.light .bg-emerald-500\/\[0\.08\],
+html.light .bg-emerald-500\/\[0\.1\],
+html.light .bg-emerald-500\/\[0\.06\],
+html.light .bg-emerald-500\/15 {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+html.light .border-red-500\/25 {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+html.light .text-red-400 {
+  color: #b91c1c;
+}
+html.light .from-red-500\/\[0\.08\] {
+  --tw-gradient-from: rgba(239, 68, 68, 0.08) var(--tw-gradient-from-position);
 }
